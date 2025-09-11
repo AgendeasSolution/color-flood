@@ -7,6 +7,7 @@ import '../constants/game_constants.dart';
 import '../types/game_types.dart';
 import '../services/game_service.dart';
 import '../services/level_progression_service.dart';
+import '../services/interstitial_ad_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
 import '../components/hud_card.dart';
@@ -42,6 +43,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     super.initState();
     _initializeAnimations();
     _startNewGame();
+    _preloadInterstitialAd();
+  }
+
+  void _preloadInterstitialAd() {
+    // Preload interstitial ad for better user experience
+    InterstitialAdService.instance.preloadAd();
   }
 
   void _initializeAnimations() {
@@ -71,7 +78,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     });
   }
 
-  void _restartCurrentLevel() {
+  Future<void> _restartCurrentLevel() async {
+    // Show interstitial ad with 50% probability for restart (user-friendly)
+    final adShown = await InterstitialAdService.instance.showAdWithProbability();
+    
     setState(() {
       _gameConfig = _gameConfig.copyWith(
         grid: _gameService.cloneGrid(_gameConfig.originalGrid),
@@ -80,9 +90,18 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       _isGameOver = false;
       _gameState = GameState.playing;
     });
+    
+    // Preload next ad for future use
+    if (adShown) {
+      InterstitialAdService.instance.preloadAd();
+    }
   }
 
-  void _nextLevel() {
+  Future<void> _nextLevel() async {
+    // Show interstitial ad with 100% probability when advancing to next level
+    // Since there are only a few levels, show ad every time
+    final adShown = await InterstitialAdService.instance.showAdAlways();
+    
     final nextLevel = _gameConfig.level + 1;
     if (nextLevel <= GameConstants.maxLevel) {
       setState(() {
@@ -94,6 +113,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     } else {
       // Game completed - all levels finished
       _showGameCompletedDialog();
+    }
+    
+    // Preload next ad for future use
+    if (adShown) {
+      InterstitialAdService.instance.preloadAd();
     }
   }
 
@@ -155,13 +179,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         level: _gameConfig.level,
         moves: _moves,
         maxMoves: _gameConfig.maxMoves,
-        onNextLevel: () {
+        onNextLevel: () async {
           Navigator.of(context).pop();
-          _nextLevel();
+          await _nextLevel();
         },
-        onRestart: () {
+        onRestart: () async {
           Navigator.of(context).pop();
-          _restartCurrentLevel();
+          await _restartCurrentLevel();
         },
       ),
       transitionBuilder: (context, anim1, anim2, child) {
@@ -298,9 +322,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             left: 0,
             right: 0,
             bottom: 0,
-            child: const AdBannerWithState(
+            child: const AdBanner(
               height: 90,
-              margin: EdgeInsets.zero,
             ),
           ),
         ],

@@ -1,261 +1,167 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-/// A reusable ad banner component that displays at the bottom of screens
-/// This is a placeholder implementation that can be replaced with real ad SDK
-class AdBanner extends StatelessWidget {
+/// A reusable ad banner component that displays Google AdMob banner ads
+class AdBanner extends StatefulWidget {
   final double? height;
-  final EdgeInsets? margin;
-  final EdgeInsets? padding;
+  final String? adUnitId;
+  final VoidCallback? onAdLoaded;
+  final VoidCallback? onAdFailedToLoad;
 
   const AdBanner({
     super.key,
     this.height,
-    this.margin,
-    this.padding,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: height ?? 50.0,
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: padding ?? const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1A1A2E).withOpacity(0.8),
-            const Color(0xFF16213E).withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.ads_click,
-              color: Colors.white.withOpacity(0.7),
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Advertisement',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                '320x50',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A more sophisticated ad banner with loading state and error handling
-class AdBannerWithState extends StatefulWidget {
-  final double? height;
-  final EdgeInsets? margin;
-  final EdgeInsets? padding;
-  final VoidCallback? onAdLoaded;
-  final VoidCallback? onAdFailedToLoad;
-
-  const AdBannerWithState({
-    super.key,
-    this.height,
-    this.margin,
-    this.padding,
+    this.adUnitId,
     this.onAdLoaded,
     this.onAdFailedToLoad,
   });
 
   @override
-  State<AdBannerWithState> createState() => _AdBannerWithStateState();
+  State<AdBanner> createState() => _AdBannerState();
 }
 
-class _AdBannerWithStateState extends State<AdBannerWithState> {
-  bool _isLoading = true;
-  bool _hasError = false;
+class _AdBannerState extends State<AdBanner> {
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
+  bool _isAdLoading = false;
+  bool _hasAdError = false;
+
+  // Test ad unit ID for development
+  static const String _testAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  
+  // Production ad unit ID (use this when ready for production)
+  static const String _productionAdUnitId = 'ca-app-pub-3772142815301617/4936791314';
 
   @override
   void initState() {
     super.initState();
-    _simulateAdLoad();
+    _initializeAndLoadAd();
   }
 
-  void _simulateAdLoad() {
-    // Simulate ad loading delay
-    Future.delayed(const Duration(seconds: 1), () {
+  void _initializeAndLoadAd() async {
+    try {
+      // Initialize MobileAds if not already initialized
+      await MobileAds.instance.initialize();
+      _loadBannerAd();
+    } catch (e) {
+      print('Failed to initialize Google Mobile Ads: $e');
+      // If plugin is not available, show placeholder
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isAdLoading = false;
+          _hasAdError = false;
+          _isAdLoaded = false;
         });
-        widget.onAdLoaded?.call();
       }
+    }
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  void _loadBannerAd() {
+    if (_isAdLoading || _isAdLoaded || !mounted) return;
+
+    setState(() {
+      _isAdLoading = true;
+      _hasAdError = false;
     });
+
+    try {
+      _bannerAd = BannerAd(
+        adUnitId: widget.adUnitId ?? _testAdUnitId ,
+        size: AdSize.banner,
+        request: const AdRequest(),
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            if (mounted) {
+              setState(() {
+                _isAdLoaded = true;
+                _isAdLoading = false;
+                _hasAdError = false;
+              });
+              widget.onAdLoaded?.call();
+            }
+          },
+          onAdFailedToLoad: (ad, error) {
+            if (mounted) {
+              print('Banner ad failed to load: $error');
+              print('Error code: ${error.code}, Message: ${error.message}');
+              
+              // Handle different error types
+              if (error.code == 3) {
+                print('No fill error - no ads available for this ad unit');
+              } else if (error.code == 0) {
+                print('Internal error - check ad unit ID and configuration');
+              } else if (error.code == 1) {
+                print('Invalid request - check ad unit ID format');
+              }
+              
+              setState(() {
+                _isAdLoaded = false;
+                _isAdLoading = false;
+                _hasAdError = true;
+              });
+              ad.dispose();
+              widget.onAdFailedToLoad?.call();
+            }
+          },
+        ),
+      );
+
+      _bannerAd!.load();
+    } catch (e) {
+      print('Error creating banner ad: $e');
+      if (mounted) {
+        setState(() {
+          _isAdLoaded = false;
+          _isAdLoading = false;
+          _hasAdError = true;
+        });
+        widget.onAdFailedToLoad?.call();
+      }
+    }
   }
 
   void _retryLoadAd() {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-    _simulateAdLoad();
+    if (_bannerAd != null) {
+      _bannerAd!.dispose();
+      _bannerAd = null;
+    }
+    _loadBannerAd();
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasZeroMargin = widget.margin == EdgeInsets.zero;
-    
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: widget.height ?? 50.0,
-      margin: widget.margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: widget.padding ?? const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1A1A2E).withOpacity(0.8),
-            const Color(0xFF16213E).withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: hasZeroMargin 
-            ? BorderRadius.zero 
-            : BorderRadius.circular(12),
-        border: hasZeroMargin 
-            ? null 
-            : Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-        boxShadow: hasZeroMargin 
-            ? null 
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: _buildContent(),
+      child: _buildAdContent(),
     );
   }
 
-  Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-          ),
-        ),
+  Widget _buildAdContent() {
+    if (_isAdLoading) {
+      return const SizedBox.shrink(); // Hide loading indicator completely
+    }
+
+    if (_isAdLoaded && _bannerAd != null) {
+      return SizedBox(
+        width: double.infinity,
+        height: widget.height ?? 50.0,
+        child: AdWidget(ad: _bannerAd!),
       );
     }
 
-    if (_hasError) {
-      return Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.red.withOpacity(0.7),
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _retryLoadAd,
-              child: Text(
-                'Retry Ad',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    if (_hasAdError) {
+      return const SizedBox.shrink(); // Hide error state completely
     }
 
-    return Center(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.ads_click,
-            color: Colors.white.withOpacity(0.7),
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Advertisement',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              '320x50',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    // Show placeholder when plugin is not available or ad is not loaded
+    return const SizedBox.shrink(); // Hide placeholder completely
   }
 }
+

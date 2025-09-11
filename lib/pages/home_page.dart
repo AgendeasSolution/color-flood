@@ -355,9 +355,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             left: 0,
             right: 0,
             bottom: 0,
-            child: const AdBannerWithState(
+            child: const AdBanner(
               height: 90,
-              margin: EdgeInsets.zero,
             ),
           ),
         ],
