@@ -33,7 +33,7 @@ class GameConstants {
   static const int maxPatternComplexity = 7;
   static const double maxColorDominance = 0.6; // Max 60% of any single color
   
-  // Level progression configuration (level 1-14 only)
+  // Level progression configuration (level 1-12 only)
   static const Map<int, int> levelGridSizes = {
     1: 5,   // level 1 - 5x5
     2: 6,   // level 2 - 6x6
@@ -47,11 +47,9 @@ class GameConstants {
     10: 14, // level 10 - 14x14
     11: 15, // level 11 - 15x15
     12: 16, // level 12 - 16x16
-    13: 17, // level 13 - 17x17
-    14: 18, // level 14 - 18x18
   };
   
-  static const int maxLevel = 14;
+  static const int maxLevel = 12;
 
   // UI configuration
   static const double gameBoardPadding = 12.0;

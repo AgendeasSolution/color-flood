@@ -123,13 +123,13 @@ class _ColorFloodLogoState extends State<ColorFloodLogo>
     
     final screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth < 360) {
-      return 32.0; // Smaller for very small screens
+      return 40.0; // Increased from 32.0 for very small screens
     } else if (screenWidth < 480) {
-      return 40.0; // Smaller for small mobile
+      return 50.0; // Increased from 40.0 for small mobile
     } else if (screenWidth < 768) {
-      return 48.0; // Smaller for mobile
+      return 60.0; // Increased from 48.0 for mobile
     } else {
-      return 64.0; // Smaller for desktop
+      return 80.0; // Increased from 64.0 for desktop
     }
   }
 

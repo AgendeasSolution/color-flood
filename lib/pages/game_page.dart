@@ -13,6 +13,7 @@ import '../components/color_palette.dart';
 import '../components/hud_card.dart';
 import '../components/glass_button.dart';
 import '../components/ad_banner.dart';
+import '../components/animated_background.dart';
 
 /// Main game page where the Color Flood game is played
 class GamePage extends StatefulWidget {
@@ -236,7 +237,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       body: Stack(
         children: [
           // Animated Background
-          _buildAnimatedBackground(),
+          const AnimatedBackground(),
           
           // Main Content
           SafeArea(
@@ -391,203 +392,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
 
-  /// Creates a beautiful static background with floating particles and gradients
-  Widget _buildAnimatedBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1A1A2E),
-            const Color(0xFF16213E),
-            const Color(0xFF0F3460),
-            const Color(0xFF533A7B),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: const [0.0, 0.3, 0.7, 1.0],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Floating particles - static random positions
-          ...List.generate(16, (index) => _buildFloatingParticle(index)),
-          
-          // Glowing orbs - static random positions
-          ...List.generate(10, (index) => _buildGlowingOrb(index)),
-          
-          // Color swatches - static random positions
-          ...List.generate(8, (index) => _buildFloatingColorSwatch(index)),
-          
-          // Subtle overlay for depth
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withOpacity(0.1),
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.05),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Creates floating particles at random fixed positions
-  Widget _buildFloatingParticle(int index) {
-    final random = Random(index);
-    final size = 2.0 + random.nextDouble() * 3.0;
-    
-    // Fixed random positions - no movement
-    final x = random.nextDouble();
-    final y = random.nextDouble();
-    
-    return Positioned(
-      left: x * MediaQuery.of(context).size.width,
-      top: y * MediaQuery.of(context).size.height,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: [
-            const Color(0xFFEF4444),
-            const Color(0xFFEC4899),
-            const Color(0xFF3B82F6),
-            const Color(0xFF10B981),
-            const Color(0xFFF59E0B),
-          ][index % 5].withOpacity(0.6),
-          boxShadow: [
-            BoxShadow(
-              color: [
-                const Color(0xFFEF4444),
-                const Color(0xFFEC4899),
-                const Color(0xFF3B82F6),
-                const Color(0xFF10B981),
-                const Color(0xFFF59E0B),
-              ][index % 5].withOpacity(0.4),
-              blurRadius: 8,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Creates glowing orbs at random fixed positions
-  Widget _buildGlowingOrb(int index) {
-    final random = Random(index + 100);
-    final size = 40.0 + random.nextDouble() * 60.0;
-    
-    // Fixed random positions - no movement
-    final x = random.nextDouble();
-    final y = random.nextDouble();
-    
-    return Positioned(
-      left: x * MediaQuery.of(context).size.width,
-      top: y * MediaQuery.of(context).size.height,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              [
-                const Color(0xFFEF4444),
-                const Color(0xFFEC4899),
-                const Color(0xFF3B82F6),
-                const Color(0xFF10B981),
-                const Color(0xFFF59E0B),
-              ][index % 5].withOpacity(0.15),
-              [
-                const Color(0xFFEF4444),
-                const Color(0xFFEC4899),
-                const Color(0xFF3B82F6),
-                const Color(0xFF10B981),
-                const Color(0xFFF59E0B),
-              ][index % 5].withOpacity(0.05),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: [
-                const Color(0xFFEF4444),
-                const Color(0xFFEC4899),
-                const Color(0xFF3B82F6),
-                const Color(0xFF10B981),
-                const Color(0xFFF59E0B),
-              ][index % 5].withOpacity(0.2),
-              blurRadius: 30,
-              spreadRadius: 10,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Creates floating color swatches at random fixed positions
-  Widget _buildFloatingColorSwatch(int index) {
-    final random = Random(index + 200);
-    final size = 20.0 + random.nextDouble() * 15.0;
-    
-    // Fixed random positions - no movement
-    final x = random.nextDouble();
-    final y = random.nextDouble();
-    final rotation = random.nextDouble() * 2 * pi; // Random rotation angle
-    
-    return Positioned(
-      left: x * MediaQuery.of(context).size.width,
-      top: y * MediaQuery.of(context).size.height,
-      child: Transform.rotate(
-        angle: rotation,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            gradient: LinearGradient(
-              colors: [
-                [
-                  const Color(0xFFEF4444),
-                  const Color(0xFFEC4899),
-                  const Color(0xFF3B82F6),
-                  const Color(0xFF10B981),
-                  const Color(0xFFF59E0B),
-                ][index % 5].withOpacity(0.3),
-                [
-                  const Color(0xFFEF4444),
-                  const Color(0xFFEC4899),
-                  const Color(0xFF3B82F6),
-                  const Color(0xFF10B981),
-                  const Color(0xFFF59E0B),
-                ][index % 5].withOpacity(0.1),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: [
-                  const Color(0xFFEF4444),
-                  const Color(0xFFEC4899),
-                  const Color(0xFF3B82F6),
-                  const Color(0xFF10B981),
-                  const Color(0xFFF59E0B),
-                ][index % 5].withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Game over dialog widget
