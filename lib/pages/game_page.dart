@@ -18,7 +18,7 @@ import '../components/animated_background.dart';
 /// Main game page where the Color Flood game is played
 class GamePage extends StatefulWidget {
   final int? initialLevel;
-  
+
   const GamePage({super.key, this.initialLevel});
 
   @override
@@ -32,8 +32,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   bool _isGameOver = false;
   GameState _gameState = GameState.notStarted;
   final GameService _gameService = GameService();
-  final LevelProgressionService _levelService = LevelProgressionService.instance;
-  
+  final LevelProgressionService _levelService =
+      LevelProgressionService.instance;
 
   // Animation controllers
   late AnimationController _popupAnimationController;
@@ -50,6 +50,22 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   void _preloadInterstitialAd() {
     // Preload interstitial ad for better user experience
     InterstitialAdService.instance.preloadAd();
+  }
+
+  Future<void> _handleExit() async {
+    // Show interstitial ad with 50% probability when exiting
+    final adShown = await InterstitialAdService.instance
+        .showAdWithProbability();
+
+    // Navigate back to home page immediately after ad (or if no ad shown)
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+
+    // Preload next ad for future use
+    if (adShown) {
+      InterstitialAdService.instance.preloadAd();
+    }
   }
 
   void _initializeAnimations() {
@@ -81,8 +97,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Future<void> _restartCurrentLevel() async {
     // Show interstitial ad with 50% probability for restart (user-friendly)
-    final adShown = await InterstitialAdService.instance.showAdWithProbability();
-    
+    final adShown = await InterstitialAdService.instance
+        .showAdWithProbability();
+
     setState(() {
       _gameConfig = _gameConfig.copyWith(
         grid: _gameService.cloneGrid(_gameConfig.originalGrid),
@@ -91,7 +108,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       _isGameOver = false;
       _gameState = GameState.playing;
     });
-    
+
     // Preload next ad for future use
     if (adShown) {
       InterstitialAdService.instance.preloadAd();
@@ -102,7 +119,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     // Show interstitial ad with 100% probability when advancing to next level
     // Since there are only a few levels, show ad every time
     final adShown = await InterstitialAdService.instance.showAdAlways();
-    
+
     final nextLevel = _gameConfig.level + 1;
     if (nextLevel <= GameConstants.maxLevel) {
       setState(() {
@@ -115,7 +132,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       // Game completed - all levels finished
       _showGameCompletedDialog();
     }
-    
+
     // Preload next ad for future use
     if (adShown) {
       InterstitialAdService.instance.preloadAd();
@@ -124,7 +141,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   void _handleColorSelection(Color newColor) {
     if (_isGameOver || _gameState != GameState.playing) return;
-    
+
     if (!_gameService.isValidMove(_gameConfig.grid, newColor)) return;
 
     setState(() {
@@ -161,7 +178,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       _isGameOver = true;
       _gameState = GameState.gameOver;
     });
-    
+
     Future.delayed(GameConstants.gameOverDelay, () {
       if (mounted) {
         _showGameOverDialog(result);
@@ -193,10 +210,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         _popupAnimationController.forward(from: 0.0);
         return ScaleTransition(
           scale: _popupScaleAnimation,
-          child: FadeTransition(
-            opacity: anim1,
-            child: child,
-          ),
+          child: FadeTransition(opacity: anim1, child: child),
         );
       },
     );
@@ -222,10 +236,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         _popupAnimationController.forward(from: 0.0);
         return ScaleTransition(
           scale: _popupScaleAnimation,
-          child: FadeTransition(
-            opacity: anim1,
-            child: child,
-          ),
+          child: FadeTransition(opacity: anim1, child: child),
         );
       },
     );
@@ -233,101 +244,106 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Animated Background
-          const AnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Stack(
-              children: [
-                // Main game content
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Moves Display (Above Game Board - with background)
-                      HudCard(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              AppConstants.movesLabel,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white70,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                            const SizedBox(width: GameConstants.smallSpacing),
-                            Text(
-                              '$_moves',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const Text(
-                              ' / ',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white60,
-                              ),
-                            ),
-                            Text(
-                              '${_gameConfig.maxMoves}',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 30), // Increased gap below moves
-                      
-                      // Game Board - Moved down slightly
-                      GameBoard(
-                        grid: _gameConfig.grid,
-                        gridSize: _gameConfig.gridSize,
-                        gameStarted: true, // Always show the game board
-                      ),
-                      
-                      const SizedBox(height: 40),
-                      
-                      // Color Palette
-                      ColorPalette(
-                        colors: GameConstants.gameColors,
-                        onColorSelected: _handleColorSelection,
-                        isDisabled: _isGameOver,
-                      ),
-                    ],
-                  ),
-                ),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          await _handleExit();
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Animated Background
+            const AnimatedBackground(),
 
-                // HUD Elements
-                _buildHud(),
-              ],
+            // Main Content
+            SafeArea(
+              child: Stack(
+                children: [
+                  // Main game content
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Moves Display (Above Game Board - with background)
+                        HudCard(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                AppConstants.movesLabel,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white70,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              const SizedBox(width: GameConstants.smallSpacing),
+                              Text(
+                                '$_moves',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const Text(
+                                ' / ',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white60,
+                                ),
+                              ),
+                              Text(
+                                '${_gameConfig.maxMoves}',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 30), // Increased gap below moves
+                        // Game Board - Moved down slightly
+                        GameBoard(
+                          grid: _gameConfig.grid,
+                          gridSize: _gameConfig.gridSize,
+                          gameStarted: true, // Always show the game board
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // Color Palette
+                        ColorPalette(
+                          colors: GameConstants.gameColors,
+                          onColorSelected: _handleColorSelection,
+                          isDisabled: _isGameOver,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // HUD Elements
+                  _buildHud(),
+                ],
+              ),
             ),
-          ),
-          
-          // Fixed Ad Banner at bottom of screen
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: const AdBanner(
-              height: 90,
+
+            // Fixed Ad Banner at bottom of screen
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: const AdBanner(height: 90),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -341,17 +357,26 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           left: 0,
           right: 0,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GameConstants.mediumSpacing),
+            padding: const EdgeInsets.symmetric(
+              horizontal: GameConstants.mediumSpacing,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Exit Button (Left)
                 GlassButton(
-                  onTap: () => Navigator.of(context).pop(),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
+                  onTap: _handleExit,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-                
+
                 // Level Display (Center)
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -376,22 +401,27 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     ),
                   ],
                 ),
-                
+
                 // Reset Button (Right)
                 GlassButton(
                   onTap: _restartCurrentLevel,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: const Icon(Icons.refresh, color: Colors.white, size: 18),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ],
             ),
           ),
         ),
-
       ],
     );
   }
-
 }
 
 /// Game over dialog widget
@@ -447,7 +477,9 @@ class _GameOverDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: GameConstants.mediumSpacing),
                     Text(
-                      didWin ? AppConstants.levelCompleteText : AppConstants.gameOverText,
+                      didWin
+                          ? AppConstants.levelCompleteText
+                          : AppConstants.gameOverText,
                       style: const TextStyle(
                         fontSize: 32,
                         color: Colors.white,
@@ -470,9 +502,18 @@ class _GameOverDialog extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _StatItem(label: AppConstants.levelStatLabel, value: "$level"),
-                        _StatItem(label: AppConstants.movesUsedStatLabel, value: "$moves"),
-                        _StatItem(label: AppConstants.maxMovesStatLabel, value: "$maxMoves"),
+                        _StatItem(
+                          label: AppConstants.levelStatLabel,
+                          value: "$level",
+                        ),
+                        _StatItem(
+                          label: AppConstants.movesUsedStatLabel,
+                          value: "$moves",
+                        ),
+                        _StatItem(
+                          label: AppConstants.maxMovesStatLabel,
+                          value: "$maxMoves",
+                        ),
                       ],
                     ),
                     const SizedBox(height: GameConstants.extraLargeSpacing),
@@ -538,10 +579,7 @@ class _GameCompletedDialog extends StatelessWidget {
   final VoidCallback onPlayAgain;
   final VoidCallback onExit;
 
-  const _GameCompletedDialog({
-    required this.onPlayAgain,
-    required this.onExit,
-  });
+  const _GameCompletedDialog({required this.onPlayAgain, required this.onExit});
 
   @override
   Widget build(BuildContext context) {
@@ -572,10 +610,7 @@ class _GameCompletedDialog extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "🏆",
-                      style: TextStyle(fontSize: 50),
-                    ),
+                    const Text("🏆", style: TextStyle(fontSize: 50)),
                     const SizedBox(height: GameConstants.mediumSpacing),
                     const Text(
                       "Congratulations!",
@@ -652,9 +687,7 @@ class _PopupButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 8,
         shadowColor: Colors.black.withOpacity(0.5),
       ),
