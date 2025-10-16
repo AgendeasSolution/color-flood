@@ -20,7 +20,7 @@ class InterstitialAdService {
 
   /// Current ad unit ID (using test for development)
   /// Change to _productionAdUnitId when ready for production
-  static const String _adUnitId = _testAdUnitId;
+  static const String _adUnitId = _productionAdUnitId;
 
   /// Check if ad is ready to show
   bool get isAdReady => _isAdReady;
