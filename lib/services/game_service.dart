@@ -502,11 +502,11 @@ class GameService {
     _preventFourAdjacentCells(grid, gridSize);
   }
 
-  /// Ensure no 3+ same color cells are adjacent to each other - MUCH STRICTER
+  /// Ensure maximum 2 colors appear in adjacent cells for wild distribution
   void _preventFourAdjacentCells(List<List<Color>> grid, int gridSize) {
     bool hasAdjacent = true;
     int attempts = 0;
-    final maxAttempts = 200; // More attempts for stricter rules
+    final maxAttempts = 300; // More attempts for wild distribution
     
     while (hasAdjacent && attempts < maxAttempts) {
       hasAdjacent = false;
@@ -516,47 +516,39 @@ class GameService {
         for (int j = 0; j < gridSize; j++) {
           final currentColor = grid[i][j];
           
-          // Check horizontal 3-in-a-row (STRICTER)
-          if (j <= gridSize - 3) {
-            bool horizontalMatch = true;
-            for (int k = 0; k < 3; k++) {
-              if (grid[i][j + k] != currentColor) {
-                horizontalMatch = false;
-                break;
+          // Check horizontal 2-in-a-row and break any 3+ patterns
+          if (j <= gridSize - 2) {
+            if (grid[i][j] == currentColor && grid[i][j + 1] == currentColor) {
+              // Found 2 in a row, check if there's a 3rd
+              if (j <= gridSize - 3 && grid[i][j + 2] == currentColor) {
+                // Break the pattern by changing middle cell
+                final newColor = _getRandomDifferentColor(currentColor);
+                grid[i][j + 1] = newColor;
+                hasAdjacent = true;
               }
-            }
-            if (horizontalMatch) {
-              // Change the middle cell to break the pattern
-              final newColor = _getRandomDifferentColor(currentColor);
-              grid[i][j + 1] = newColor;
-              hasAdjacent = true;
             }
           }
           
-          // Check vertical 3-in-a-row (STRICTER)
-          if (i <= gridSize - 3) {
-            bool verticalMatch = true;
-            for (int k = 0; k < 3; k++) {
-              if (grid[i + k][j] != currentColor) {
-                verticalMatch = false;
-                break;
+          // Check vertical 2-in-a-row and break any 3+ patterns
+          if (i <= gridSize - 2) {
+            if (grid[i][j] == currentColor && grid[i + 1][j] == currentColor) {
+              // Found 2 in a row, check if there's a 3rd
+              if (i <= gridSize - 3 && grid[i + 2][j] == currentColor) {
+                // Break the pattern by changing middle cell
+                final newColor = _getRandomDifferentColor(currentColor);
+                grid[i + 1][j] = newColor;
+                hasAdjacent = true;
               }
-            }
-            if (verticalMatch) {
-              // Change the middle cell to break the pattern
-              final newColor = _getRandomDifferentColor(currentColor);
-              grid[i + 1][j] = newColor;
-              hasAdjacent = true;
             }
           }
           
-          // Check 2x2 square (STRICTER)
+          // Ensure no 2x2 squares of same color
           if (i <= gridSize - 2 && j <= gridSize - 2) {
             if (grid[i][j] == currentColor && 
                 grid[i][j + 1] == currentColor &&
                 grid[i + 1][j] == currentColor &&
                 grid[i + 1][j + 1] == currentColor) {
-              // Change two corners to break the 2x2 square
+              // Break the 2x2 square by changing two corners
               final newColor1 = _getRandomDifferentColor(currentColor);
               final newColor2 = _getRandomDifferentColor(currentColor);
               grid[i][j] = newColor1;
@@ -565,14 +557,14 @@ class GameService {
             }
           }
           
-          // Check L-shapes and other patterns
+          // Break L-shapes and other patterns
           _breakLShapes(grid, gridSize, i, j, currentColor);
         }
       }
     }
     
-    // Additional pass to ensure maximum scattering
-    _maximizeColorScattering(grid, gridSize);
+    // Additional pass to ensure maximum wild distribution
+    _maximizeWildColorDistribution(grid, gridSize);
   }
 
   /// Break L-shaped patterns of same colors
@@ -597,29 +589,145 @@ class GameService {
     }
   }
 
-  /// Maximize color scattering to prevent groups
-  void _maximizeColorScattering(List<List<Color>> grid, int gridSize) {
+  /// Maximize wild color distribution - no two adjacent cells can have the same color AND balanced color count
+  void _maximizeWildColorDistribution(List<List<Color>> grid, int gridSize) {
     final random = Random();
+    bool changed = true;
+    int attempts = 0;
+    final maxAttempts = 1000; // More attempts for complete distribution
     
-    // Multiple passes to ensure maximum scattering
-    for (int pass = 0; pass < 3; pass++) {
+    // Keep iterating until perfect distribution
+    while (changed && attempts < maxAttempts) {
+      changed = false;
+      attempts++;
+      
       for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
           final currentColor = grid[i][j];
-          int adjacentSameColor = 0;
           
-          // Count adjacent same colors
-          if (i > 0 && grid[i - 1][j] == currentColor) adjacentSameColor++;
-          if (i < gridSize - 1 && grid[i + 1][j] == currentColor) adjacentSameColor++;
-          if (j > 0 && grid[i][j - 1] == currentColor) adjacentSameColor++;
-          if (j < gridSize - 1 && grid[i][j + 1] == currentColor) adjacentSameColor++;
+          // Check all 8 adjacent cells (orthogonal + diagonal)
+          bool hasAdjacentSame = false;
           
-          // If more than 1 adjacent same color, change this cell
-          if (adjacentSameColor > 1) {
-            final newColor = _getRandomDifferentColor(currentColor);
+          // Check orthogonal neighbors (up, down, left, right)
+          if (i > 0 && grid[i - 1][j] == currentColor) hasAdjacentSame = true;
+          if (i < gridSize - 1 && grid[i + 1][j] == currentColor) hasAdjacentSame = true;
+          if (j > 0 && grid[i][j - 1] == currentColor) hasAdjacentSame = true;
+          if (j < gridSize - 1 && grid[i][j + 1] == currentColor) hasAdjacentSame = true;
+          
+          // Check diagonal neighbors (all 4 corners)
+          if (i > 0 && j > 0 && grid[i - 1][j - 1] == currentColor) hasAdjacentSame = true;
+          if (i > 0 && j < gridSize - 1 && grid[i - 1][j + 1] == currentColor) hasAdjacentSame = true;
+          if (i < gridSize - 1 && j > 0 && grid[i + 1][j - 1] == currentColor) hasAdjacentSame = true;
+          if (i < gridSize - 1 && j < gridSize - 1 && grid[i + 1][j + 1] == currentColor) hasAdjacentSame = true;
+          
+          // If any adjacent cell has the same color, change this cell to a color that's NOT adjacent
+          if (hasAdjacentSame) {
+            final newColor = _getBestDifferentColor(grid, gridSize, i, j, currentColor);
             grid[i][j] = newColor;
+            changed = true;
           }
         }
+      }
+    }
+  }
+  
+  /// Get the best color that's not adjacent AND helps balance color distribution
+  Color _getBestDifferentColor(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
+    // Get color counts to balance distribution
+    final colorCounts = <Color, int>{};
+    for (int x = 0; x < gridSize; x++) {
+      for (int y = 0; y < gridSize; y++) {
+        final color = grid[x][y];
+        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+      }
+    }
+    
+    // Get adjacent colors to exclude
+    final adjacentColors = <Color>{};
+    
+    // Check all 8 adjacent cells for colors to avoid
+    if (i > 0) adjacentColors.add(grid[i - 1][j]);
+    if (i < gridSize - 1) adjacentColors.add(grid[i + 1][j]);
+    if (j > 0) adjacentColors.add(grid[i][j - 1]);
+    if (j < gridSize - 1) adjacentColors.add(grid[i][j + 1]);
+    if (i > 0 && j > 0) adjacentColors.add(grid[i - 1][j - 1]);
+    if (i > 0 && j < gridSize - 1) adjacentColors.add(grid[i - 1][j + 1]);
+    if (i < gridSize - 1 && j > 0) adjacentColors.add(grid[i + 1][j - 1]);
+    if (i < gridSize - 1 && j < gridSize - 1) adjacentColors.add(grid[i + 1][j + 1]);
+    
+    // Find color with lowest count that's not adjacent
+    Color? bestColor;
+    int lowestCount = 9999;
+    
+    for (final color in GameConstants.gameColors) {
+      if (color == currentColor) continue;
+      if (adjacentColors.contains(color)) continue;
+      
+      final count = colorCounts[color] ?? 0;
+      if (count < lowestCount) {
+        lowestCount = count;
+        bestColor = color;
+      }
+    }
+    
+    // If no non-adjacent color found, use random different color
+    if (bestColor == null) {
+      return _getRandomDifferentColor(currentColor);
+    }
+    
+    return bestColor;
+  }
+
+  /// Break horizontal patterns of 3+ same colors
+  void _breakHorizontalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
+    if (j <= gridSize - 3) {
+      int count = 1;
+      for (int k = j + 1; k < gridSize && grid[i][k] == currentColor; k++) {
+        count++;
+      }
+      if (count >= 3) {
+        // Break the pattern by changing middle cells
+        for (int k = j + 1; k < j + count - 1; k++) {
+          if (k < gridSize) {
+            grid[i][k] = _getRandomDifferentColor(currentColor);
+          }
+        }
+      }
+    }
+  }
+
+  /// Break vertical patterns of 3+ same colors
+  void _breakVerticalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
+    if (i <= gridSize - 3) {
+      int count = 1;
+      for (int k = i + 1; k < gridSize && grid[k][j] == currentColor; k++) {
+        count++;
+      }
+      if (count >= 3) {
+        // Break the pattern by changing middle cells
+        for (int k = i + 1; k < i + count - 1; k++) {
+          if (k < gridSize) {
+            grid[k][j] = _getRandomDifferentColor(currentColor);
+          }
+        }
+      }
+    }
+  }
+
+  /// Break diagonal patterns of 3+ same colors
+  void _breakDiagonalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
+    // Check diagonal patterns and break them
+    if (i <= gridSize - 3 && j <= gridSize - 3) {
+      // Check main diagonal
+      if (grid[i + 1][j + 1] == currentColor && grid[i + 2][j + 2] == currentColor) {
+        grid[i + 1][j + 1] = _getRandomDifferentColor(currentColor);
+      }
+    }
+    
+    // Check anti-diagonal (need to ensure j is at least 2 to avoid negative indices)
+    if (i <= gridSize - 3 && j >= 2 && j <= gridSize - 1) {
+      if (grid[i + 1][j - 1] == currentColor && grid[i + 2][j - 2] == currentColor) {
+        grid[i + 1][j - 1] = _getRandomDifferentColor(currentColor);
       }
     }
   }

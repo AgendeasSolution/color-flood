@@ -7,6 +7,7 @@ import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
 import '../services/level_progression_service.dart';
+import '../services/audio_service.dart';
 import 'game_page.dart';
 
 
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
   final LevelProgressionService _levelService = LevelProgressionService.instance;
+  final AudioService _audioService = AudioService();
 
   @override
   void initState() {
@@ -76,6 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _onLevelSelected(int level) {
     // Navigate directly to game for unlocked levels
     if (_levelStatuses[level] != LevelStatus.locked) {
+      _audioService.playClickSound();
       _navigateToLevel(level);
     }
   }
@@ -93,11 +96,97 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 
   void _showHowToPlay() {
+    _audioService.playClickSound();
     HowToPlayDialog.show(context);
   }
 
   Widget _buildLevelSectionHeader() {
     return const SizedBox.shrink(); // Remove the "Select Level" label
+  }
+
+  void _toggleSound() {
+    _audioService.playClickSound();
+    setState(() {
+      _audioService.setEnabled(!_audioService.isEnabled);
+    });
+  }
+
+  Widget _buildSoundToggleButton() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 2000),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.2),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _toggleSound,
+                    borderRadius: BorderRadius.circular(10),
+                    splashColor: Colors.white.withOpacity(0.2),
+                    highlightColor: Colors.white.withOpacity(0.1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _audioService.isEnabled ? 'Sound On' : 'Sound Off',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildSmallHowToPlayButton() {
@@ -250,8 +339,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         
                         const SizedBox(height: GameConstants.smallSpacing),
                         
-                        // How to Play Button
-                        _buildSmallHowToPlayButton(),
+                        // How to Play and Sound Toggle Buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(child: _buildSmallHowToPlayButton()),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildSoundToggleButton()),
+                          ],
+                        ),
                         
                         const SizedBox(height: GameConstants.mediumSpacing),
                       ],
