@@ -1,4 +1,4 @@
-package com.example.color_flood;
+package com.fgtp.color_flood;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -10,3 +10,4 @@ public class MainActivity extends FlutterActivity {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
     }
 }
+
