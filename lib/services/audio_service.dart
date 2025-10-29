@@ -25,7 +25,6 @@ class AudioService {
       await _audioPlayer.play(AssetSource('audio/mouse_click_3.mp3'));
     } catch (e) {
       // Silently handle audio errors to prevent crashes
-      print('Audio error: $e');
     }
   }
 
@@ -37,7 +36,6 @@ class AudioService {
       await _audioPlayer.play(AssetSource('audio/win_2.mp3'));
     } catch (e) {
       // Silently handle audio errors to prevent crashes
-      print('Audio error: $e');
     }
   }
 
@@ -49,7 +47,6 @@ class AudioService {
       await _audioPlayer.play(AssetSource('audio/fail_1.mp3'));
     } catch (e) {
       // Silently handle audio errors to prevent crashes
-      print('Audio error: $e');
     }
   }
 
@@ -61,7 +58,6 @@ class AudioService {
       await _audioPlayer.play(AssetSource('audio/swipe_1.mp3'));
     } catch (e) {
       // Silently handle audio errors to prevent crashes
-      print('Audio error: $e');
     }
   }
 

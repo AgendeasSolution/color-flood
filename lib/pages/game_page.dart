@@ -175,11 +175,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Future<void> _markLevelCompleted() async {
     try {
-      print('Attempting to mark level ${_gameConfig.level} as completed...');
       await _levelService.completeLevel(_gameConfig.level);
-      print('Level ${_gameConfig.level} successfully marked as completed');
     } catch (e) {
-      print('Error marking level as completed: $e');
+      // Silently handle errors
     }
   }
 

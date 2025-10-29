@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'constants/app_constants.dart';
 import 'pages/splash_page.dart';
 import 'assets/styles/app_theme.dart';

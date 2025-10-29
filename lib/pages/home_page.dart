@@ -72,7 +72,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
     // Refresh level statuses when returning from game
-    print('Returned from game, refreshing level statuses...');
     await _loadLevelStatuses();
   }
 
@@ -85,9 +84,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadLevelStatuses() async {
-    print('Loading level statuses...');
     final statuses = await _levelService.getAllLevelStatuses();
-    print('Loaded level statuses: $statuses');
     if (mounted) {
       setState(() {
         _levelStatuses = statuses;

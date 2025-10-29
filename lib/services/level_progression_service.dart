@@ -63,12 +63,10 @@ class LevelProgressionService {
     final completedLevels = await getCompletedLevels();
     completedLevels.add(level);
     await prefs.setString(_completedLevelsKey, completedLevels.join(','));
-    print('Level $level marked as completed. Completed levels: $completedLevels');
     
     // Unlock next level if it exists
     if (level < GameConstants.maxLevel) {
       await unlockLevel(level + 1);
-      print('Level ${level + 1} unlocked');
     }
   }
   
@@ -83,8 +81,6 @@ class LevelProgressionService {
   Future<Map<int, LevelStatus>> getAllLevelStatuses() async {
     final highestUnlocked = await getHighestUnlockedLevel();
     final completedLevels = await getCompletedLevels();
-    
-    print('Debug - Highest unlocked: $highestUnlocked, Completed: $completedLevels');
     
     final Map<int, LevelStatus> statuses = {};
     
@@ -103,7 +99,6 @@ class LevelProgressionService {
       }
     }
     
-    print('Debug - Final statuses: $statuses');
     return statuses;
   }
 }
