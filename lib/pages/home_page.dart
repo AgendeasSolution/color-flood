@@ -8,6 +8,7 @@ import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
+import '../utils/responsive_utils.dart';
 import 'game_page.dart';
 
 
@@ -302,6 +303,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Get responsive spacing values
+    final horizontalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 24,
+    );
+    final verticalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 20,
+    );
+    final logoSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 4,
+      mediumPhone: 6,
+      largePhone: 8,
+      tablet: 12,
+    );
+    final buttonSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 8,
+      mediumPhone: 10,
+      largePhone: 12,
+      tablet: 16,
+    );
+    final bottomSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 16,
+      largePhone: 20,
+      tablet: 24,
+    );
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -313,16 +351,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GameConstants.mediumSpacing,
-                vertical: GameConstants.mediumSpacing,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
               ),
               child: Column(
                 children: [
                   // Color Flood Logo
                   const ColorFloodLogo(),
                   
-                  const SizedBox(height: GameConstants.smallSpacing),
+                  SizedBox(height: logoSpacing),
                   
                   // Level Section with Grid and How to Play Button
                   Expanded(
@@ -337,19 +375,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
                         
-                        const SizedBox(height: GameConstants.smallSpacing),
+                        SizedBox(height: buttonSpacing),
                         
                         // How to Play and Sound Toggle Buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildSmallHowToPlayButton(),
-                            const SizedBox(width: 12),
+                            SizedBox(width: buttonSpacing),
                             _buildSoundToggleButton(),
                           ],
                         ),
                         
-                        const SizedBox(height: GameConstants.mediumSpacing),
+                        SizedBox(height: bottomSpacing),
                       ],
                     ),
                   ),

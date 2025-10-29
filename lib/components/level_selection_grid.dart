@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/level_progression_service.dart';
+import '../utils/responsive_utils.dart';
 import 'hexagon_widget.dart';
 
 /// Level selection grid component showing levels 1-12
@@ -19,36 +20,66 @@ class LevelSelectionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get responsive grid configuration
+    final crossAxisCount = ResponsiveUtils.getResponsiveLevelGridCount(context);
+    final spacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 6.0,
+      mediumPhone: 8.0,
+      largePhone: 10.0,
+      tablet: 12.0,
+    );
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Custom Header or Default Title
-        customHeader ?? const Text(
+        customHeader ?? Text(
           'Select Level',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: ResponsiveUtils.getResponsiveFontSize(
+              context,
+              smallPhone: 20,
+              mediumPhone: 22,
+              largePhone: 24,
+              tablet: 28,
+            ),
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         
-        const SizedBox(height: GameConstants.mediumSpacing),
+        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+          context,
+          smallPhone: 8,
+          mediumPhone: 12,
+          largePhone: 16,
+          tablet: 20,
+        )),
         
         // Level Grid - Hexagonal Layout with Scrolling
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 16, // Increased gap between rows
+            padding: EdgeInsets.symmetric(
+              vertical: ResponsiveUtils.getResponsiveSpacing(
+                context,
+                smallPhone: 4,
+                mediumPhone: 6,
+                largePhone: 8,
+                tablet: 10,
+              ),
+            ),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing * 2, // Increased gap between rows
               childAspectRatio: 1.0, // Adjusted for better hexagonal proportions
             ),
             itemCount: GameConstants.maxLevel,
             itemBuilder: (context, index) {
               final level = index + 1;
               final status = levelStatuses[level] ?? LevelStatus.locked;
-              return _buildHexagonalLevelButton(level, status);
+              return _buildHexagonalLevelButton(context, level, status);
             },
           ),
         ),
@@ -56,15 +87,18 @@ class LevelSelectionGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildHexagonalLevelButton(int level, LevelStatus status) {
+  Widget _buildHexagonalLevelButton(BuildContext context, int level, LevelStatus status) {
     final isLocked = status == LevelStatus.locked;
     final isCompleted = status == LevelStatus.completed;
+    
+    // Get responsive hexagon size
+    final hexSize = ResponsiveUtils.getResponsiveLevelButtonSize(context);
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: HexagonWidget(
-        size: 60,
+        size: hexSize,
         colors: _getLevelButtonColors(status),
         borderColor: _getLevelButtonBorderColor(status),
         borderWidth: 1.5,
@@ -84,7 +118,7 @@ class LevelSelectionGrid extends StatelessWidget {
           ),
         ],
         onTap: isLocked ? null : () => onLevelSelected(level),
-        child: _buildHexagonalLevelContent(level, status),
+        child: _buildHexagonalLevelContent(context, level, status),
       ),
     );
   }
@@ -135,10 +169,33 @@ class LevelSelectionGrid extends StatelessWidget {
     }
   }
 
-  Widget _buildHexagonalLevelContent(int level, LevelStatus status) {
+  Widget _buildHexagonalLevelContent(BuildContext context, int level, LevelStatus status) {
+    // Get responsive sizes
+    final iconSize = ResponsiveUtils.getResponsiveIconSize(
+      context,
+      smallPhone: 16,
+      mediumPhone: 18,
+      largePhone: 20,
+      tablet: 24,
+    );
+    final textSize = ResponsiveUtils.getResponsiveFontSize(
+      context,
+      smallPhone: 14,
+      mediumPhone: 16,
+      largePhone: 18,
+      tablet: 22,
+    );
+    final padding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 6,
+      mediumPhone: 7,
+      largePhone: 8,
+      tablet: 10,
+    );
+    
     if (status == LevelStatus.locked) {
       return Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
@@ -163,10 +220,10 @@ class LevelSelectionGrid extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(
+        child: Icon(
           Icons.lock,
-          color: Color(0xFFE5E7EB), // Brighter lock icon
-          size: 20, // Slightly larger
+          color: const Color(0xFFE5E7EB), // Brighter lock icon
+          size: iconSize,
         ),
       );
     }
@@ -176,7 +233,7 @@ class LevelSelectionGrid extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(padding - 2),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
@@ -193,20 +250,26 @@ class LevelSelectionGrid extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle,
-              color: Color(0xFF22C55E),
-              size: 18,
+              color: const Color(0xFF22C55E),
+              size: iconSize - 2,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+            context,
+            smallPhone: 4,
+            mediumPhone: 6,
+            largePhone: 8,
+            tablet: 10,
+          )),
           Text(
             level.toString(),
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: textSize,
               fontWeight: FontWeight.bold,
-              shadows: [
+              shadows: const [
                 Shadow(
                   color: Colors.black54,
                   blurRadius: 4,
@@ -221,7 +284,7 @@ class LevelSelectionGrid extends StatelessWidget {
     
     // Unlocked but not completed
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
@@ -239,10 +302,10 @@ class LevelSelectionGrid extends StatelessWidget {
         level.toString(),
         style: TextStyle(
           color: Colors.white,
-          fontSize: 20,
+          fontSize: textSize + 2,
           fontWeight: FontWeight.bold,
-          shadows: [
-            const Shadow(
+          shadows: const [
+            Shadow(
               color: Colors.black54,
               blurRadius: 4,
               offset: Offset(0, 2),

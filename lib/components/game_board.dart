@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
+import '../utils/responsive_utils.dart';
 
 /// Game board component that displays the color grid
 class GameBoard extends StatelessWidget {
@@ -16,10 +17,18 @@ class GameBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final boardPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 8,
+      mediumPhone: 10,
+      largePhone: 12,
+      tablet: 14,
+    );
+    
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        padding: const EdgeInsets.all(GameConstants.gameBoardPadding),
+        padding: EdgeInsets.all(boardPadding),
         decoration: BoxDecoration(
           gradient: gameStarted
               ? LinearGradient(

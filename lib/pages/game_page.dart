@@ -15,6 +15,7 @@ import '../components/hud_card.dart';
 import '../components/glass_button.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
+import '../utils/responsive_utils.dart';
 
 /// Main game page where the Color Flood game is played
 class GamePage extends StatefulWidget {
@@ -279,39 +280,76 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       children: [
                         // Moves Display (Above Game Board - with background)
                         HudCard(
+                          padding: ResponsiveUtils.getResponsivePadding(
+                            context,
+                            smallPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            mediumPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            largePhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            tablet: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
+                              Text(
                                 AppConstants.movesLabel,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                    context,
+                                    smallPhone: 10,
+                                    mediumPhone: 11,
+                                    largePhone: 12,
+                                    tablet: 14,
+                                  ),
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white70,
                                   letterSpacing: 1.1,
                                 ),
                               ),
-                              const SizedBox(width: GameConstants.smallSpacing),
+                              SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                smallPhone: 4,
+                                mediumPhone: 5,
+                                largePhone: 6,
+                                tablet: 8,
+                              )),
                               Text(
                                 '$_moves',
-                                style: const TextStyle(
-                                  fontSize: 24,
+                                style: TextStyle(
+                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                    context,
+                                    smallPhone: 20,
+                                    mediumPhone: 22,
+                                    largePhone: 24,
+                                    tablet: 28,
+                                  ),
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 ' / ',
                                 style: TextStyle(
-                                  fontSize: 24,
+                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                    context,
+                                    smallPhone: 20,
+                                    mediumPhone: 22,
+                                    largePhone: 24,
+                                    tablet: 28,
+                                  ),
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white60,
                                 ),
                               ),
                               Text(
                                 '${_gameConfig.maxMoves}',
-                                style: const TextStyle(
-                                  fontSize: 24,
+                                style: TextStyle(
+                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                    context,
+                                    smallPhone: 20,
+                                    mediumPhone: 22,
+                                    largePhone: 24,
+                                    tablet: 28,
+                                  ),
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                 ),
@@ -320,7 +358,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                           ),
                         ),
 
-                        const SizedBox(height: 30), // Increased gap below moves
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 12,
+                          mediumPhone: 16,
+                          largePhone: 20,
+                          tablet: 30,
+                        )),
                         // Game Board - Moved down slightly
                         GameBoard(
                           grid: _gameConfig.grid,
@@ -328,7 +372,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                           gameStarted: true, // Always show the game board
                         ),
 
-                        const SizedBox(height: 40),
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 12,
+                          mediumPhone: 16,
+                          largePhone: 20,
+                          tablet: 40,
+                        )),
 
                         // Color Palette
                         ColorPalette(
@@ -377,14 +427,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 // Exit Button (Left)
                 GlassButton(
                   onTap: _handleExit,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  padding: ResponsiveUtils.getResponsivePadding(
+                    context,
+                    smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                    largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     color: Colors.white,
-                    size: 18,
+                    size: ResponsiveUtils.getResponsiveIconSize(context),
                   ),
                 ),
 
@@ -392,20 +445,38 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       AppConstants.levelLabel,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 20,
+                          mediumPhone: 22,
+                          largePhone: 24,
+                          tablet: 28,
+                        ),
                         fontWeight: FontWeight.w600,
                         color: Colors.white70,
                         letterSpacing: 1.1,
                       ),
                     ),
-                    const SizedBox(width: GameConstants.smallSpacing),
+                    SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 4,
+                      mediumPhone: 5,
+                      largePhone: 6,
+                      tablet: 8,
+                    )),
                     Text(
                       '${_gameConfig.level}',
-                      style: const TextStyle(
-                        fontSize: 24,
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 20,
+                          mediumPhone: 22,
+                          largePhone: 24,
+                          tablet: 28,
+                        ),
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -416,14 +487,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 // Reset Button (Right)
                 GlassButton(
                   onTap: _restartCurrentLevel,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                  padding: ResponsiveUtils.getResponsivePadding(
+                    context,
+                    smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                    largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.refresh,
                     color: Colors.white,
-                    size: 18,
+                    size: ResponsiveUtils.getResponsiveIconSize(context),
                   ),
                 ),
               ],
@@ -484,58 +558,107 @@ class _GameOverDialog extends StatelessWidget {
                   children: [
                     Text(
                       didWin ? "🎉" : "😔",
-                      style: const TextStyle(fontSize: 50),
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 40,
+                          mediumPhone: 45,
+                          largePhone: 50,
+                          tablet: 60,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: GameConstants.mediumSpacing),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 12,
+                      mediumPhone: 14,
+                      largePhone: 16,
+                      tablet: 20,
+                    )),
                     Text(
                       didWin
                           ? AppConstants.levelCompleteText
                           : AppConstants.gameOverText,
-                      style: const TextStyle(
-                        fontSize: 32,
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 24,
+                          mediumPhone: 26,
+                          largePhone: 28,
+                          tablet: 36,
+                        ),
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: GameConstants.smallSpacing),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 6,
+                      mediumPhone: 8,
+                      largePhone: 10,
+                      tablet: 12,
+                    )),
                     Text(
                       didWin
                           ? "Amazing work! You solved it in $moves moves!"
                           : "You used all $maxMoves moves. Try again!",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 14,
+                          mediumPhone: 15,
+                          largePhone: 16,
+                          tablet: 18,
+                        ),
                         height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: GameConstants.largeSpacing),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 16,
+                      mediumPhone: 20,
+                      largePhone: 24,
+                      tablet: 32,
+                    )),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _StatItem(
                           label: AppConstants.levelStatLabel,
                           value: "$level",
+                          context: context,
                         ),
                         _StatItem(
                           label: AppConstants.movesUsedStatLabel,
                           value: "$moves",
+                          context: context,
                         ),
                         _StatItem(
                           label: AppConstants.maxMovesStatLabel,
                           value: "$maxMoves",
+                          context: context,
                         ),
                       ],
                     ),
-                    const SizedBox(height: GameConstants.extraLargeSpacing),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 20,
+                      mediumPhone: 24,
+                      largePhone: 28,
+                      tablet: 36,
+                    )),
                     if (didWin)
                       _PopupButton(
+                        context: context,
                         onTap: onNextLevel,
                         text: AppConstants.nextLevelText,
                         isPrimary: true,
                       )
                     else
                       _PopupButton(
+                        context: context,
                         onTap: onRestart,
                         text: AppConstants.playAgainText,
                         isPrimary: false,
@@ -555,8 +678,9 @@ class _GameOverDialog extends StatelessWidget {
 class _StatItem extends StatelessWidget {
   final String label;
   final String value;
+  final BuildContext context;
 
-  const _StatItem({required this.label, required this.value});
+  const _StatItem({required this.label, required this.value, required this.context});
 
   @override
   Widget build(BuildContext context) {
@@ -564,19 +688,37 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white70,
-            fontSize: 12,
+            fontSize: ResponsiveUtils.getResponsiveFontSize(
+              this.context,
+              smallPhone: 10,
+              mediumPhone: 11,
+              largePhone: 12,
+              tablet: 14,
+            ),
             fontWeight: FontWeight.w600,
             letterSpacing: 1.1,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+          this.context,
+          smallPhone: 2,
+          mediumPhone: 3,
+          largePhone: 4,
+          tablet: 6,
+        )),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 28,
+            fontSize: ResponsiveUtils.getResponsiveFontSize(
+              this.context,
+              smallPhone: 20,
+              mediumPhone: 24,
+              largePhone: 28,
+              tablet: 36,
+            ),
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -602,8 +744,14 @@ class _GameCompletedDialog extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
             child: Container(
-              width: min(500, MediaQuery.of(context).size.width * 0.9),
-              padding: const EdgeInsets.all(GameConstants.largeSpacing),
+              width: ResponsiveUtils.getResponsiveDialogWidth(context),
+              padding: ResponsiveUtils.getResponsivePadding(
+                context,
+                smallPhone: const EdgeInsets.all(16),
+                mediumPhone: const EdgeInsets.all(18),
+                largePhone: const EdgeInsets.all(20),
+                tablet: const EdgeInsets.all(24),
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -621,36 +769,79 @@ class _GameCompletedDialog extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("🏆", style: TextStyle(fontSize: 50)),
-                    const SizedBox(height: GameConstants.mediumSpacing),
-                    const Text(
+                    Text(
+                      "🏆",
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 40,
+                          mediumPhone: 45,
+                          largePhone: 50,
+                          tablet: 60,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 12,
+                      mediumPhone: 14,
+                      largePhone: 16,
+                      tablet: 20,
+                    )),
+                    Text(
                       "Congratulations!",
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 24,
+                          mediumPhone: 26,
+                          largePhone: 28,
+                          tablet: 36,
+                        ),
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: GameConstants.smallSpacing),
-                    const Text(
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 6,
+                      mediumPhone: 8,
+                      largePhone: 10,
+                      tablet: 12,
+                    )),
+                    Text(
                       "You've completed all 14 levels!\nYou are a Color Flood master!",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 14,
+                          mediumPhone: 15,
+                          largePhone: 16,
+                          tablet: 18,
+                        ),
                         height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: GameConstants.largeSpacing),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 16,
+                      mediumPhone: 20,
+                      largePhone: 24,
+                      tablet: 32,
+                    )),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _PopupButton(
+                          context: context,
                           onTap: onPlayAgain,
                           text: "Play Again",
                           isPrimary: true,
                         ),
                         _PopupButton(
+                          context: context,
                           onTap: onExit,
                           text: "Exit",
                           isPrimary: false,
@@ -670,11 +861,13 @@ class _GameCompletedDialog extends StatelessWidget {
 
 /// Popup button widget
 class _PopupButton extends StatelessWidget {
+  final BuildContext context;
   final VoidCallback onTap;
   final String text;
   final bool isPrimary;
 
   const _PopupButton({
+    required this.context,
     required this.onTap,
     required this.text,
     this.isPrimary = true,
@@ -708,14 +901,34 @@ class _PopupButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-          constraints: const BoxConstraints(minWidth: 88.0),
+          padding: ResponsiveUtils.getResponsivePadding(
+            context,
+            smallPhone: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            mediumPhone: const EdgeInsets.symmetric(vertical: 14, horizontal: 26),
+            largePhone: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
+            tablet: const EdgeInsets.symmetric(vertical: 18, horizontal: 36),
+          ),
+          constraints: BoxConstraints(
+            minWidth: ResponsiveUtils.getResponsiveValue(
+              context: context,
+              smallPhone: 88.0,
+              mediumPhone: 100.0,
+              largePhone: 110.0,
+              tablet: 120.0,
+            ),
+          ),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                context,
+                smallPhone: 16,
+                mediumPhone: 17,
+                largePhone: 18,
+                tablet: 22,
+              ),
               fontWeight: FontWeight.bold,
             ),
           ),
