@@ -121,6 +121,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.2),
+                  Colors.white.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.0,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -132,20 +144,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.white.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -160,6 +158,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
@@ -250,6 +249,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             // Animated icon with rotation
                             TweenAnimationBuilder<double>(
@@ -341,11 +341,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         
                         // How to Play and Sound Toggle Buttons
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(child: _buildSmallHowToPlayButton()),
+                            _buildSmallHowToPlayButton(),
                             const SizedBox(width: 12),
-                            Expanded(child: _buildSoundToggleButton()),
+                            _buildSoundToggleButton(),
                           ],
                         ),
                         
