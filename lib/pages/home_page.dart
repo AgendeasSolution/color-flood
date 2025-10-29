@@ -144,38 +144,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Container(
                 child: Material(
                   color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _toggleSound,
-                    borderRadius: BorderRadius.circular(10),
-                    splashColor: Colors.white.withOpacity(0.2),
-                    highlightColor: Colors.white.withOpacity(0.1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _audioService.isEnabled ? 'Sound On' : 'Sound Off',
-                            style: const TextStyle(
+                    child: InkWell(
+                      onTap: _toggleSound,
+                      borderRadius: BorderRadius.circular(10),
+                      splashColor: Colors.white.withOpacity(0.2),
+                      highlightColor: Colors.white.withOpacity(0.1),
+                      child: Container(
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
                               color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
+                              size: 12,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            Text(
+                              _audioService.isEnabled ? 'Sound On' : 'Sound Off',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                                height: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                   ),
                 ),
               ),
@@ -235,19 +237,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   child: Material(
                     color: Colors.transparent,
-                    child: InkWell(
+                      child: InkWell(
                       onTap: _showHowToPlay,
                       borderRadius: BorderRadius.circular(10),
                       splashColor: Colors.white.withOpacity(0.2),
                       highlightColor: Colors.white.withOpacity(0.1),
                       child: Container(
+                        height: 36,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 8,
                           horizontal: 16,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             // Animated icon with rotation
                             TweenAnimationBuilder<double>(
@@ -256,9 +259,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               builder: (context, rotationValue, child) {
                                 return Transform.rotate(
                                   angle: rotationValue * 0.1,
-                                  child: const Text(
-                                    '✨',
-                                    style: TextStyle(fontSize: 12),
+                                  child: const SizedBox(
+                                    height: 12,
+                                    width: 12,
+                                    child: Center(
+                                      child: Text(
+                                        '✨',
+                                        style: TextStyle(fontSize: 12, height: 1.0),
+                                      ),
+                                    ),
                                   ),
                                 );
                               },
@@ -279,6 +288,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.3,
+                                  height: 1.0,
                                 ),
                               ),
                             ),

@@ -26,14 +26,33 @@ class HudCard extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.1),
+                const Color(0xFF3B82F6).withOpacity(0.9),
+                const Color(0xFF2563EB).withOpacity(0.8),
+                const Color(0xFF1D4ED8).withOpacity(0.9),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              stops: const [0.0, 0.5, 1.0],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B82F6).withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1D4ED8).withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: -5,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: child,
         ),

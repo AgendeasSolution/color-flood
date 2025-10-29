@@ -492,6 +492,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
+                  gradientColors: [
+                    const Color(0xFFEF4444).withOpacity(0.9),
+                    const Color(0xFFDC2626).withOpacity(0.8),
+                    const Color(0xFFB91C1C).withOpacity(0.9),
+                  ],
                   child: Icon(
                     Icons.refresh,
                     color: Colors.white,
