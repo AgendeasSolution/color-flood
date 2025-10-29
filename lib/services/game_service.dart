@@ -661,7 +661,7 @@ class GameService {
   int calculateOptimalSolution(List<List<Color>> grid) {
     List<List<Color>> tempGrid = cloneGrid(grid);
     int solutionMoves = 0;
-    final int bailout = grid.length * GameConstants.maxBailoutMoves;
+    final int bailout = grid.length * 8; // More generous bailout for complex puzzles
 
     while (!isGridSolved(tempGrid) && solutionMoves < bailout) {
       final bestMove = findBestMove(tempGrid);
@@ -702,7 +702,7 @@ class GameService {
   int _calculateGreedySolution(List<List<Color>> grid) {
     List<List<Color>> tempGrid = cloneGrid(grid);
     int solutionMoves = 0;
-    final int bailout = grid.length * GameConstants.maxBailoutMoves;
+    final int bailout = grid.length * 8; // More generous bailout for complex puzzles
 
     while (!isGridSolved(tempGrid) && solutionMoves < bailout) {
       final bestMove = findBestMove(tempGrid);
@@ -717,7 +717,7 @@ class GameService {
   int _calculateStrategicSolution(List<List<Color>> grid) {
     List<List<Color>> tempGrid = cloneGrid(grid);
     int solutionMoves = 0;
-    final int bailout = grid.length * GameConstants.maxBailoutMoves;
+    final int bailout = grid.length * 8; // More generous bailout for complex puzzles
 
     while (!isGridSolved(tempGrid) && solutionMoves < bailout) {
       final bestMove = _findStrategicMove(tempGrid);
@@ -999,33 +999,168 @@ class GameService {
     return edgeScore / (gridSize * 2);
   }
 
-  /// Calculate precise max moves using AI intelligence - VERY TIGHT CHALLENGE
+  /// Calculate precise max moves using AI intelligence - CHALLENGING BUT FAIR
   int _calculatePreciseMaxMoves(int level, int solutionMoves, List<List<Color>> grid) {
-    // VERY TIGHT calculation - minimal extra moves for maximum challenge
-    final levelMultiplier = 1.0 + (level - 1) * 0.03; // 1.0 to 1.39 (very tight)
-    final baseMoves = (solutionMoves * levelMultiplier).round();
+    // Analyze the actual puzzle difficulty based on color distribution and patterns
+    final puzzleDifficulty = _analyzePuzzleDifficulty(grid, solutionMoves);
     
-    // Minimal complexity adjustment
-    final gridComplexity = _calculateGridComplexity(grid);
-    final complexityAdjustment = (gridComplexity * 0.3).round(); // Very minimal adjustment
+    // Calculate extra moves based on actual puzzle complexity, not just level
+    int extraMoves = _calculateExtraMovesBasedOnPuzzle(puzzleDifficulty, level);
     
-    // Minimal difficulty scaling
-    final difficultyScaling = _calculateDifficultyScaling(level);
+    // Very tight bounds - maximum 3 extra moves for maximum challenge
+    final minMoves = solutionMoves + 1; // Minimum 1 extra move
+    final maxMovesCap = solutionMoves + 3; // Maximum 3 extra moves only!
     
-    // Calculate final max moves - VERY TIGHT
-    final maxMoves = baseMoves + complexityAdjustment + difficultyScaling;
+    final finalMoves = solutionMoves + extraMoves;
+    return finalMoves.clamp(minMoves, maxMovesCap);
+  }
+
+  /// Analyze the actual difficulty of a puzzle based on color distribution and patterns
+  double _analyzePuzzleDifficulty(List<List<Color>> grid, int solutionMoves) {
     
-    // VERY TIGHT bounds - minimal extra moves for maximum challenge
-    final minMoves = solutionMoves + 1; // Minimum 1 extra move only
-    final maxMovesCap = solutionMoves + 2; // Maximum 2 extra moves only!
+    // Analyze color distribution complexity
+    final colorDistributionScore = _analyzeColorDistributionComplexity(grid);
     
-    return maxMoves.clamp(minMoves, maxMovesCap);
+    // Analyze pattern complexity (isolated regions, clusters, etc.)
+    final patternComplexityScore = _analyzePatternComplexity(grid);
+    
+    // Analyze solution efficiency (how close to optimal the solution is)
+    final solutionEfficiencyScore = _analyzeSolutionEfficiency(grid, solutionMoves);
+    
+    // Analyze strategic difficulty (how many good vs bad moves exist)
+    final strategicDifficultyScore = _analyzeStrategicDifficulty(grid);
+    
+    // Weighted combination of all factors
+    return (colorDistributionScore * 0.3) + 
+           (patternComplexityScore * 0.3) + 
+           (solutionEfficiencyScore * 0.2) + 
+           (strategicDifficultyScore * 0.2);
+  }
+
+  /// Calculate extra moves based on actual puzzle difficulty, not just level
+  int _calculateExtraMovesBasedOnPuzzle(double puzzleDifficulty, int level) {
+    // Base extra moves based on puzzle difficulty (0-1 scale)
+    int baseExtraMoves = (puzzleDifficulty * 2).round(); // 0-2 extra moves based on difficulty
+    
+    // Small level adjustment (only 0-1 extra move based on level)
+    int levelAdjustment = 0;
+    if (level > 6) levelAdjustment = 1; // Only higher levels get 1 extra move
+    
+    return baseExtraMoves + levelAdjustment;
+  }
+
+  /// Analyze color distribution complexity
+  double _analyzeColorDistributionComplexity(List<List<Color>> grid) {
+    final colorCounts = <Color, int>{};
+    final gridSize = grid.length;
+    
+    // Count colors
+    for (int i = 0; i < gridSize; i++) {
+      for (int j = 0; j < gridSize; j++) {
+        final color = grid[i][j];
+        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+      }
+    }
+    
+    // Calculate distribution variance (higher variance = more complex)
+    final totalCells = gridSize * gridSize;
+    final expectedCount = totalCells / GameConstants.gameColors.length;
+    double variance = 0.0;
+    
+    for (final count in colorCounts.values) {
+      final diff = count - expectedCount;
+      variance += diff * diff;
+    }
+    
+    // Normalize variance to 0-1 scale
+    final maxVariance = totalCells * totalCells / GameConstants.gameColors.length;
+    return (variance / maxVariance).clamp(0.0, 1.0);
+  }
+
+  /// Analyze pattern complexity in the grid
+  double _analyzePatternComplexity(List<List<Color>> grid) {
+    final gridSize = grid.length;
+    
+    // Count isolated single cells (harder to solve)
+    int isolatedCells = 0;
+    for (int i = 0; i < gridSize; i++) {
+      for (int j = 0; j < gridSize; j++) {
+        final currentColor = grid[i][j];
+        int sameColorNeighbors = 0;
+        
+        // Count adjacent same colors
+        if (i > 0 && grid[i - 1][j] == currentColor) sameColorNeighbors++;
+        if (i < gridSize - 1 && grid[i + 1][j] == currentColor) sameColorNeighbors++;
+        if (j > 0 && grid[i][j - 1] == currentColor) sameColorNeighbors++;
+        if (j < gridSize - 1 && grid[i][j + 1] == currentColor) sameColorNeighbors++;
+        
+        if (sameColorNeighbors == 0) isolatedCells++;
+      }
+    }
+    
+    // Count color regions (more regions = more complex)
+    final regionCount = _countIsolatedRegions(grid);
+    
+    // Calculate complexity score
+    final totalCells = gridSize * gridSize;
+    final isolatedScore = isolatedCells / totalCells;
+    final regionScore = regionCount / GameConstants.gameColors.length;
+    
+    return (isolatedScore * 0.6 + regionScore * 0.4).clamp(0.0, 1.0);
+  }
+
+  /// Analyze how efficient the solution is compared to optimal
+  double _analyzeSolutionEfficiency(List<List<Color>> grid, int solutionMoves) {
+    // Calculate theoretical minimum moves needed
+    final colorCounts = <Color, int>{};
+    final gridSize = grid.length;
+    
+    for (int i = 0; i < gridSize; i++) {
+      for (int j = 0; j < gridSize; j++) {
+        final color = grid[i][j];
+        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+      }
+    }
+    
+    // Theoretical minimum is number of different colors - 1
+    final theoreticalMin = colorCounts.length - 1;
+    
+    // If solution is close to theoretical minimum, it's harder
+    if (theoreticalMin == 0) return 0.0;
+    final efficiency = theoreticalMin / solutionMoves;
+    
+    return efficiency.clamp(0.0, 1.0);
+  }
+
+  /// Analyze strategic difficulty (how many good vs bad moves exist)
+  double _analyzeStrategicDifficulty(List<List<Color>> grid) {
+    final startColor = grid[0][0];
+    int goodMoves = 0;
+    int totalMoves = 0;
+    
+    for (final color in GameConstants.gameColors) {
+      if (color == startColor) continue;
+      
+      totalMoves++;
+      final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
+      final areaGained = countCurrentArea(simulatedGrid) - countCurrentArea(grid);
+      
+      // A "good" move gains significant area
+      if (areaGained > grid.length) {
+        goodMoves++;
+      }
+    }
+    
+    if (totalMoves == 0) return 0.0;
+    
+    // More good moves = easier puzzle, fewer good moves = harder puzzle
+    final goodMoveRatio = goodMoves / totalMoves;
+    return (1.0 - goodMoveRatio).clamp(0.0, 1.0); // Invert so higher = harder
   }
 
   /// Calculate grid complexity
   double _calculateGridComplexity(List<List<Color>> grid) {
     final gridSize = grid.length;
-    final totalCells = gridSize * gridSize;
     
     // Color distribution complexity
     final colorDiversity = _calculateColorDiversity(grid);
@@ -1037,15 +1172,6 @@ class GameService {
     final sizeFactor = gridSize / 18.0; // Normalize to max level size
     
     return (colorDiversity * 0.4) + (patternComplexity * 0.4) + (sizeFactor * 0.2);
-  }
-
-  /// Calculate difficulty scaling based on level
-  int _calculateDifficultyScaling(int level) {
-    if (level <= 3) return 0;
-    if (level <= 6) return 1;
-    if (level <= 9) return 2;
-    if (level <= 12) return 3;
-    return 4;
   }
 
   /// Check if a move is valid

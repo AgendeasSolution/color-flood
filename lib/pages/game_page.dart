@@ -8,6 +8,7 @@ import '../types/game_types.dart';
 import '../services/game_service.dart';
 import '../services/level_progression_service.dart';
 import '../services/interstitial_ad_service.dart';
+import '../services/audio_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
 import '../components/hud_card.dart';
@@ -34,6 +35,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   final GameService _gameService = GameService();
   final LevelProgressionService _levelService =
       LevelProgressionService.instance;
+  final AudioService _audioService = AudioService();
 
   // Animation controllers
   late AnimationController _popupAnimationController;
@@ -53,6 +55,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleExit() async {
+    _audioService.playClickSound();
     // Show interstitial ad with 50% probability when exiting
     final adShown = await InterstitialAdService.instance
         .showAdWithProbability();
@@ -96,6 +99,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _restartCurrentLevel() async {
+    _audioService.playClickSound();
     // Show interstitial ad with 50% probability for restart (user-friendly)
     final adShown = await InterstitialAdService.instance
         .showAdWithProbability();
@@ -116,6 +120,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _nextLevel() async {
+    _audioService.playClickSound();
     // Show interstitial ad with 100% probability when advancing to next level
     // Since there are only a few levels, show ad every time
     final adShown = await InterstitialAdService.instance.showAdAlways();
@@ -144,6 +149,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     if (!_gameService.isValidMove(_gameConfig.grid, newColor)) return;
 
+    _audioService.playSwipeSound();
+
     setState(() {
       _moves++;
       _gameConfig = _gameConfig.copyWith(
@@ -156,9 +163,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   void _checkWinCondition() {
     if (_gameService.isGridSolved(_gameConfig.grid)) {
+      _audioService.playWinSound();
       _endGame(GameResult.win);
       _markLevelCompleted(); // Move this after _endGame to ensure it's called
     } else if (_moves >= _gameConfig.maxMoves) {
+      _audioService.playFailSound();
       _endGame(GameResult.lose);
     }
   }
@@ -224,10 +233,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       transitionDuration: const Duration(milliseconds: 500),
       pageBuilder: (context, anim1, anim2) => _GameCompletedDialog(
         onPlayAgain: () {
+          _audioService.playClickSound();
           Navigator.of(context).pop();
           _startNewGame();
         },
         onExit: () {
+          _audioService.playClickSound();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         },
