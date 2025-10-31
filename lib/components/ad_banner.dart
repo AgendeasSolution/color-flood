@@ -58,7 +58,6 @@ class _AdBannerState extends State<AdBanner> {
       await MobileAds.instance.initialize();
       _loadBannerAd();
     } catch (e) {
-      print('Failed to initialize Google Mobile Ads: $e');
       // If plugin is not available, show placeholder
       if (mounted) {
         setState(() {
@@ -102,18 +101,6 @@ class _AdBannerState extends State<AdBanner> {
           },
           onAdFailedToLoad: (ad, error) {
             if (mounted) {
-              print('Banner ad failed to load: $error');
-              print('Error code: ${error.code}, Message: ${error.message}');
-              
-              // Handle different error types
-              if (error.code == 3) {
-                print('No fill error - no ads available for this ad unit');
-              } else if (error.code == 0) {
-                print('Internal error - check ad unit ID and configuration');
-              } else if (error.code == 1) {
-                print('Invalid request - check ad unit ID format');
-              }
-              
               setState(() {
                 _isAdLoaded = false;
                 _isAdLoading = false;
@@ -128,7 +115,6 @@ class _AdBannerState extends State<AdBanner> {
 
       _bannerAd!.load();
     } catch (e) {
-      print('Error creating banner ad: $e');
       if (mounted) {
         setState(() {
           _isAdLoaded = false;

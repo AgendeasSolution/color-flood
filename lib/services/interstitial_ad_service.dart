@@ -44,7 +44,6 @@ class InterstitialAdService {
     if (_isLoading || _isAdReady) return;
 
     _isLoading = true;
-    print('Loading interstitial ad...');
 
     try {
       await InterstitialAd.load(
@@ -52,35 +51,28 @@ class InterstitialAdService {
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
-            print('Interstitial ad loaded successfully');
             _interstitialAd = ad;
             _isAdReady = true;
             _isLoading = false;
             
             // Set up ad callbacks
             _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-              onAdShowedFullScreenContent: (ad) {
-                print('Interstitial ad showed full screen content');
-              },
+              onAdShowedFullScreenContent: (ad) {},
               onAdDismissedFullScreenContent: (ad) {
-                print('Interstitial ad dismissed');
                 _disposeAd();
               },
               onAdFailedToShowFullScreenContent: (ad, error) {
-                print('Interstitial ad failed to show: $error');
                 _disposeAd();
               },
             );
           },
           onAdFailedToLoad: (error) {
-            print('Interstitial ad failed to load: $error');
             _isLoading = false;
             _isAdReady = false;
           },
         ),
       );
     } catch (e) {
-      print('Error loading interstitial ad: $e');
       _isLoading = false;
       _isAdReady = false;
     }
@@ -89,7 +81,6 @@ class InterstitialAdService {
   /// Show interstitial ad if ready
   Future<bool> showAd() async {
     if (!_isAdReady || _interstitialAd == null) {
-      print('Interstitial ad not ready, loading new ad...');
       await loadAd();
       return false;
     }
@@ -98,7 +89,6 @@ class InterstitialAdService {
       await _interstitialAd!.show();
       return true;
     } catch (e) {
-      print('Error showing interstitial ad: $e');
       _disposeAd();
       return false;
     }
@@ -116,8 +106,6 @@ class InterstitialAdService {
     // Generate random number between 0 and 1
     final random = Random();
     final shouldShowAd = random.nextDouble() < probability;
-    
-    print('Interstitial ad probability check: ${shouldShowAd ? "SHOW" : "SKIP"} (${(probability * 100).toInt()}% chance)');
     
     if (!shouldShowAd) {
       return false; // Skip showing ad

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
+import '../utils/responsive_utils.dart';
 
 /// Reusable color button component for the color palette
 class ColorButton extends StatefulWidget {
@@ -40,11 +41,8 @@ class _ColorButtonState extends State<ColorButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate responsive button size based on screen width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = screenWidth < 400 
-        ? GameConstants.colorButtonSizeSmall 
-        : GameConstants.colorButtonSize;
+    // Get responsive button size
+    final buttonSize = ResponsiveUtils.getResponsiveButtonSize(context);
     
     return GestureDetector(
       onTapDown: _onTapDown,

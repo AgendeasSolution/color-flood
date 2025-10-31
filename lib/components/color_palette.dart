@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
+import '../utils/responsive_utils.dart';
 import 'color_button.dart';
 
 /// Color palette component for selecting colors
@@ -17,15 +18,30 @@ class ColorPalette extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 20,
+    );
+    final spacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 6,
+      mediumPhone: 7,
+      largePhone: 8,
+      tablet: 10,
+    );
+    
     return AnimatedOpacity(
       duration: GameConstants.colorPaletteAnimationDuration,
       opacity: isDisabled ? 0.5 : 1.0,
       child: IgnorePointer(
         ignoring: isDisabled,
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GameConstants.mediumSpacing, 
-            vertical: GameConstants.mediumSpacing,
+          padding: EdgeInsets.symmetric(
+            horizontal: padding,
+            vertical: padding,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -48,8 +64,8 @@ class ColorPalette extends StatelessWidget {
           ),
           child: Wrap(
             alignment: WrapAlignment.center,
-            spacing: GameConstants.smallSpacing,
-            runSpacing: GameConstants.smallSpacing,
+            spacing: spacing,
+            runSpacing: spacing,
             children: colors.map((color) {
               return ColorButton(
                 color: color,

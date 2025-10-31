@@ -7,6 +7,8 @@ import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
 import '../services/level_progression_service.dart';
+import '../services/audio_service.dart';
+import '../utils/responsive_utils.dart';
 import 'game_page.dart';
 
 
@@ -23,6 +25,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
   final LevelProgressionService _levelService = LevelProgressionService.instance;
+  final AudioService _audioService = AudioService();
 
   @override
   void initState() {
@@ -69,21 +72,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
     // Refresh level statuses when returning from game
-    print('Returned from game, refreshing level statuses...');
     await _loadLevelStatuses();
   }
 
   void _onLevelSelected(int level) {
     // Navigate directly to game for unlocked levels
     if (_levelStatuses[level] != LevelStatus.locked) {
+      _audioService.playClickSound();
       _navigateToLevel(level);
     }
   }
 
   Future<void> _loadLevelStatuses() async {
-    print('Loading level statuses...');
     final statuses = await _levelService.getAllLevelStatuses();
-    print('Loaded level statuses: $statuses');
     if (mounted) {
       setState(() {
         _levelStatuses = statuses;
@@ -93,11 +94,98 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 
   void _showHowToPlay() {
+    _audioService.playClickSound();
     HowToPlayDialog.show(context);
   }
 
   Widget _buildLevelSectionHeader() {
     return const SizedBox.shrink(); // Remove the "Select Level" label
+  }
+
+  void _toggleSound() {
+    _audioService.playClickSound();
+    setState(() {
+      _audioService.setEnabled(!_audioService.isEnabled);
+    });
+  }
+
+  Widget _buildSoundToggleButton() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 2000),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.2),
+                  Colors.white.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                child: Material(
+                  color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _toggleSound,
+                      borderRadius: BorderRadius.circular(10),
+                      splashColor: Colors.white.withOpacity(0.2),
+                      highlightColor: Colors.white.withOpacity(0.1),
+                      child: Container(
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _audioService.isEnabled ? 'Sound On' : 'Sound Off',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                                height: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildSmallHowToPlayButton() {
@@ -149,18 +237,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   child: Material(
                     color: Colors.transparent,
-                    child: InkWell(
+                      child: InkWell(
                       onTap: _showHowToPlay,
                       borderRadius: BorderRadius.circular(10),
                       splashColor: Colors.white.withOpacity(0.2),
                       highlightColor: Colors.white.withOpacity(0.1),
                       child: Container(
+                        height: 36,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 8,
                           horizontal: 16,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             // Animated icon with rotation
                             TweenAnimationBuilder<double>(
@@ -169,9 +259,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               builder: (context, rotationValue, child) {
                                 return Transform.rotate(
                                   angle: rotationValue * 0.1,
-                                  child: const Text(
-                                    '✨',
-                                    style: TextStyle(fontSize: 12),
+                                  child: const SizedBox(
+                                    height: 12,
+                                    width: 12,
+                                    child: Center(
+                                      child: Text(
+                                        '✨',
+                                        style: TextStyle(fontSize: 12, height: 1.0),
+                                      ),
+                                    ),
                                   ),
                                 );
                               },
@@ -192,6 +288,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.3,
+                                  height: 1.0,
                                 ),
                               ),
                             ),
@@ -213,6 +310,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Get responsive spacing values
+    final horizontalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 24,
+    );
+    final verticalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 20,
+    );
+    final logoSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 4,
+      mediumPhone: 6,
+      largePhone: 8,
+      tablet: 12,
+    );
+    final buttonSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 8,
+      mediumPhone: 10,
+      largePhone: 12,
+      tablet: 16,
+    );
+    final bottomSpacing = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 16,
+      largePhone: 20,
+      tablet: 24,
+    );
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -224,16 +358,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GameConstants.mediumSpacing,
-                vertical: GameConstants.mediumSpacing,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
               ),
               child: Column(
                 children: [
                   // Color Flood Logo
                   const ColorFloodLogo(),
                   
-                  const SizedBox(height: GameConstants.smallSpacing),
+                  SizedBox(height: logoSpacing),
                   
                   // Level Section with Grid and How to Play Button
                   Expanded(
@@ -248,12 +382,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
                         
-                        const SizedBox(height: GameConstants.smallSpacing),
+                        SizedBox(height: buttonSpacing),
                         
-                        // How to Play Button
-                        _buildSmallHowToPlayButton(),
+                        // How to Play and Sound Toggle Buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildSmallHowToPlayButton(),
+                            SizedBox(width: buttonSpacing),
+                            _buildSoundToggleButton(),
+                          ],
+                        ),
                         
-                        const SizedBox(height: GameConstants.mediumSpacing),
+                        SizedBox(height: bottomSpacing),
                       ],
                     ),
                   ),
