@@ -42,11 +42,15 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3772142815301617~2098002843</string>
+	<string>ca-app-pub-3772142815301617~8462245306</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+    </array>
 </dict>
 </plist>

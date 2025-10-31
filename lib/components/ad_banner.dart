@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -26,11 +27,24 @@ class _AdBannerState extends State<AdBanner> {
   bool _isAdLoading = false;
   bool _hasAdError = false;
 
-  // Test ad unit ID for development
+  // Test ad unit ID for development (works on both platforms)
   static const String _testAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
   
-  // Production ad unit ID (use this when ready for production)
-  static const String _productionAdUnitId = 'ca-app-pub-3772142815301617/4936791314';
+  // Production ad unit IDs for each platform
+  static const String _productionAdUnitIdAndroid = 'ca-app-pub-3772142815301617/4936791314';
+  static const String _productionAdUnitIdIOS = 'ca-app-pub-3772142815301617/3268810139';
+  
+  /// Get the production ad unit ID based on the current platform
+  static String get _productionAdUnitId {
+    if (Platform.isAndroid) {
+      return _productionAdUnitIdAndroid;
+    } else if (Platform.isIOS) {
+      return _productionAdUnitIdIOS;
+    } else {
+      // Fallback to Android for other platforms
+      return _productionAdUnitIdAndroid;
+    }
+  }
 
   @override
   void initState() {
@@ -72,7 +86,7 @@ class _AdBannerState extends State<AdBanner> {
 
     try {
       _bannerAd = BannerAd(
-        adUnitId: widget.adUnitId ?? _productionAdUnitId ,
+        adUnitId: widget.adUnitId ?? _productionAdUnitId,
         size: AdSize.banner,
         request: const AdRequest(),
         listener: BannerAdListener(

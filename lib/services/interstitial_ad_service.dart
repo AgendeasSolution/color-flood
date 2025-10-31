@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -12,15 +13,28 @@ class InterstitialAdService {
   bool _isAdReady = false;
   bool _isLoading = false;
 
-  /// Test ad unit ID for development
+  /// Test ad unit ID for development (works on both platforms)
   static const String _testAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
   
-  /// Production ad unit ID (use this when ready for production)
-  static const String _productionAdUnitId = 'ca-app-pub-3772142815301617/7195288993';
+  /// Production ad unit IDs for each platform
+  static const String _productionAdUnitIdAndroid = 'ca-app-pub-3772142815301617/7195288993';
+  static const String _productionAdUnitIdIOS = 'ca-app-pub-3772142815301617/9586806477';
+  
+  /// Get the production ad unit ID based on the current platform
+  static String get _productionAdUnitId {
+    if (Platform.isAndroid) {
+      return _productionAdUnitIdAndroid;
+    } else if (Platform.isIOS) {
+      return _productionAdUnitIdIOS;
+    } else {
+      // Fallback to Android for other platforms
+      return _productionAdUnitIdAndroid;
+    }
+  }
 
-  /// Current ad unit ID (using test for development)
-  /// Change to _productionAdUnitId when ready for production
-  static const String _adUnitId = _productionAdUnitId;
+  /// Current ad unit ID (using production with platform detection)
+  /// Change to _testAdUnitId when ready for development
+  static String get _adUnitId => _productionAdUnitId;
 
   /// Check if ad is ready to show
   bool get isAdReady => _isAdReady;

@@ -45,6 +45,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _initializeAnimations();
     _startNewGame();
     _preloadInterstitialAd();
+    _showEntryAd();
   }
 
   void _preloadInterstitialAd() {
@@ -52,19 +53,44 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     InterstitialAdService.instance.preloadAd();
   }
 
-  Future<void> _handleExit() async {
-    // Show interstitial ad with 50% probability when exiting
-    final adShown = await InterstitialAdService.instance
-        .showAdWithProbability();
+  void _showEntryAd() {
+    // Show interstitial ad with 50% probability when entering game screen
+    // Wait for the frame to build first
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        try {
+          final adShown = await InterstitialAdService.instance.showAdWithProbability();
+          // Preload next ad for future use
+          if (adShown) {
+            InterstitialAdService.instance.preloadAd();
+          }
+        } catch (e) {
+          // Silently handle ad failures - don't interrupt user experience
+          print('Entry ad failed to show: $e');
+          // Still try to preload for next time
+          InterstitialAdService.instance.preloadAd();
+        }
+      }
+    });
+  }
 
-    // Navigate back to home page immediately after ad (or if no ad shown)
-    if (mounted) {
-      Navigator.of(context).pop();
+  Future<void> _handleExit() async {
+    // Show interstitial ad with 100% probability when exiting (always show)
+    try {
+      final adShown = await InterstitialAdService.instance.showAdAlways();
+      // Preload next ad for future use
+      if (adShown) {
+        InterstitialAdService.instance.preloadAd();
+      }
+    } catch (e) {
+      // Silently handle ad failures - still allow user to exit
+      print('Exit ad failed to show: $e');
+      InterstitialAdService.instance.preloadAd();
     }
 
-    // Preload next ad for future use
-    if (adShown) {
-      InterstitialAdService.instance.preloadAd();
+    // Navigate back to home page immediately after ad (or if ad failed)
+    if (mounted) {
+      Navigator.of(context).pop();
     }
   }
 
@@ -97,8 +123,18 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Future<void> _restartCurrentLevel() async {
     // Show interstitial ad with 50% probability for restart (user-friendly)
-    final adShown = await InterstitialAdService.instance
-        .showAdWithProbability();
+    try {
+      final adShown = await InterstitialAdService.instance
+          .showAdWithProbability();
+      // Preload next ad for future use
+      if (adShown) {
+        InterstitialAdService.instance.preloadAd();
+      }
+    } catch (e) {
+      // Silently handle ad failures - don't interrupt user experience
+      print('Restart ad failed to show: $e');
+      InterstitialAdService.instance.preloadAd();
+    }
 
     setState(() {
       _gameConfig = _gameConfig.copyWith(
@@ -108,17 +144,22 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       _isGameOver = false;
       _gameState = GameState.playing;
     });
-
-    // Preload next ad for future use
-    if (adShown) {
-      InterstitialAdService.instance.preloadAd();
-    }
   }
 
   Future<void> _nextLevel() async {
     // Show interstitial ad with 100% probability when advancing to next level
     // Since there are only a few levels, show ad every time
-    final adShown = await InterstitialAdService.instance.showAdAlways();
+    try {
+      final adShown = await InterstitialAdService.instance.showAdAlways();
+      // Preload next ad for future use
+      if (adShown) {
+        InterstitialAdService.instance.preloadAd();
+      }
+    } catch (e) {
+      // Silently handle ad failures - don't interrupt user experience
+      print('Next level ad failed to show: $e');
+      InterstitialAdService.instance.preloadAd();
+    }
 
     final nextLevel = _gameConfig.level + 1;
     if (nextLevel <= GameConstants.maxLevel) {
@@ -131,11 +172,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     } else {
       // Game completed - all levels finished
       _showGameCompletedDialog();
-    }
-
-    // Preload next ad for future use
-    if (adShown) {
-      InterstitialAdService.instance.preloadAd();
     }
   }
 
