@@ -31,8 +31,15 @@ class _GameBoardState extends State<GameBoard> {
   @override
   void didUpdateWidget(GameBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update previous grid to the OLD grid state before the change
-    _previousGrid = _cloneGrid(oldWidget.grid);
+    // If grid size changed (new level), update _previousGrid to match new grid
+    // Otherwise, keep the old grid for animation purposes
+    if (oldWidget.gridSize != widget.gridSize || 
+        oldWidget.grid.length != widget.grid.length) {
+      _previousGrid = _cloneGrid(widget.grid);
+    } else {
+      // Update previous grid to the OLD grid state before the change
+      _previousGrid = _cloneGrid(oldWidget.grid);
+    }
   }
 
   List<List<Color>> _cloneGrid(List<List<Color>> grid) {
