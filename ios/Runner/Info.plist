@@ -63,5 +63,24 @@
     <array>
         <integer>1</integer>
     </array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb2264237577412308</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>2264237577412308</string>
+	<key>FacebookDisplayName</key>
+	<string>Color Flood</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-api</string>
+		<string>fbauth2</string>
+	</array>
 </dict>
 </plist>
