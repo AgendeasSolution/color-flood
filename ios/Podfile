@@ -33,9 +33,9 @@ target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
   # Facebook SDK
-  pod 'FBSDKCoreKit', '~> 16.0'
-  pod 'FBSDKLoginKit',
-  pod 'FBSDKShareKit',
+  pod 'FBSDKCoreKit'
+  pod 'FBSDKLoginKit'
+  pod 'FBSDKShareKit'
   target 'RunnerTests' do
     inherit! :search_paths
   end
