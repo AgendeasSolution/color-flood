@@ -10,6 +10,13 @@ class AppConstants {
   static const String startPlayingText = 'Start Playing 🚀';
   static const String nextLevelText = 'Next Level ➡️';
   static const String playAgainText = 'Play Again 🔄';
+
+  // External navigation labels
+  static const String mobileGamesLabel = 'Mobile Games';
+  static const String webGamesLabel = 'Web Games';
+  static const String otherGamesTitle = 'More Games';
+  static const String otherGamesDescription = 'Discover more fun experiences!';
+  static const String exploreMoreGamesLabel = 'Explore More Games';
   
   // HUD labels
   static const String levelLabel = 'Level';

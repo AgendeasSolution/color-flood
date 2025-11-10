@@ -10,12 +10,14 @@ class LevelSelectionGrid extends StatelessWidget {
   final Function(int level) onLevelSelected;
   final Map<int, LevelStatus> levelStatuses;
   final Widget? customHeader;
+  final bool compactTopSpacing;
 
   const LevelSelectionGrid({
     super.key,
     required this.onLevelSelected,
     required this.levelStatuses,
     this.customHeader,
+    this.compactTopSpacing = false,
   });
 
   @override
@@ -32,6 +34,7 @@ class LevelSelectionGrid extends StatelessWidget {
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Custom Header or Default Title
         customHeader ?? Text(
@@ -49,39 +52,49 @@ class LevelSelectionGrid extends StatelessWidget {
           ),
         ),
         
-        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-          context,
-          smallPhone: 8,
-          mediumPhone: 12,
-          largePhone: 16,
-          tablet: 20,
-        )),
+        SizedBox(
+          height: compactTopSpacing
+              ? ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 2,
+                  mediumPhone: 3,
+                  largePhone: 4,
+                  tablet: 6,
+                )
+              : ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 8,
+                  mediumPhone: 12,
+                  largePhone: 16,
+                  tablet: 20,
+                ),
+        ),
         
-        // Level Grid - Hexagonal Layout with Scrolling
-        Expanded(
-          child: GridView.builder(
-            padding: EdgeInsets.symmetric(
-              vertical: ResponsiveUtils.getResponsiveSpacing(
-                context,
-                smallPhone: 4,
-                mediumPhone: 6,
-                largePhone: 8,
-                tablet: 10,
-              ),
+        // Level Grid - Hexagonal Layout with overall page scrolling
+        GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          padding: EdgeInsets.symmetric(
+            vertical: ResponsiveUtils.getResponsiveSpacing(
+              context,
+              smallPhone: 4,
+              mediumPhone: 6,
+              largePhone: 8,
+              tablet: 10,
             ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing * 2, // Increased gap between rows
-              childAspectRatio: 1.0, // Adjusted for better hexagonal proportions
-            ),
-            itemCount: GameConstants.maxLevel,
-            itemBuilder: (context, index) {
-              final level = index + 1;
-              final status = levelStatuses[level] ?? LevelStatus.locked;
-              return _buildHexagonalLevelButton(context, level, status);
-            },
           ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing * 2, // Increased gap between rows
+            childAspectRatio: 1.0, // Adjusted for better hexagonal proportions
+          ),
+          itemCount: GameConstants.maxLevel,
+          itemBuilder: (context, index) {
+            final level = index + 1;
+            final status = levelStatuses[level] ?? LevelStatus.locked;
+            return _buildHexagonalLevelButton(context, level, status);
+          },
         ),
       ],
     );
@@ -205,20 +218,10 @@ class LevelSelectionGrid extends StatelessWidget {
               const Color(0xFF4B5563).withOpacity(0.3),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF9CA3AF).withOpacity(0.4),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-            // Inner highlight
-            BoxShadow(
-              color: Colors.white.withOpacity(0.1),
-              blurRadius: 4,
-              spreadRadius: -1,
-              offset: const Offset(0, -1),
-            ),
-          ],
+          border: Border.all(
+            color: const Color(0xFFE5E7EB).withOpacity(0.8),
+            width: 2,
+          ),
         ),
         child: Icon(
           Icons.lock,
@@ -232,6 +235,28 @@ class LevelSelectionGrid extends StatelessWidget {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Text(
+            level.toString(),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: textSize + 4,
+              fontWeight: FontWeight.bold,
+              shadows: const [
+                Shadow(
+                  color: Colors.black54,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+            context,
+            smallPhone: 4,
+            mediumPhone: 6,
+            largePhone: 8,
+            tablet: 10,
+          )),
           Container(
             padding: EdgeInsets.all(padding - 2),
             decoration: BoxDecoration(
@@ -256,35 +281,13 @@ class LevelSelectionGrid extends StatelessWidget {
               size: iconSize - 2,
             ),
           ),
-          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-            context,
-            smallPhone: 4,
-            mediumPhone: 6,
-            largePhone: 8,
-            tablet: 10,
-          )),
-          Text(
-            level.toString(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: textSize,
-              fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black54,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-          ),
         ],
       );
     }
     
     // Unlocked but not completed
     return Container(
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.all(padding + 4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
@@ -302,7 +305,7 @@ class LevelSelectionGrid extends StatelessWidget {
         level.toString(),
         style: TextStyle(
           color: Colors.white,
-          fontSize: textSize + 2,
+          fontSize: textSize + 4,
           fontWeight: FontWeight.bold,
           shadows: const [
             Shadow(

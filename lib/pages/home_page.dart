@@ -1,15 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
 import '../components/color_flood_logo.dart';
 import '../components/level_selection_grid.dart';
 import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
+import '../components/glass_button.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
 import '../utils/responsive_utils.dart';
 import 'game_page.dart';
+import 'other_games_screen.dart';
 
 
 /// Home page of the Color Flood game
@@ -109,6 +114,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  void _navigateToOtherGames() {
+    _audioService.playClickSound();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const OtherGamesScreen(),
+      ),
+    );
+  }
+
+  Future<void> _openWebGames() async {
+    _audioService.playClickSound();
+    final Uri webUri = Uri.parse('https://www.freegametoplay.com');
+
+    try {
+      final launched = await launchUrl(
+        webUri,
+        mode: LaunchMode.platformDefault,
+        webOnlyWindowName: '_blank',
+      );
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to open freegametoplay.com'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open freegametoplay.com'),
+        ),
+      );
+    }
+  }
+
   Widget _buildSoundToggleButton() {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 2000),
@@ -151,31 +193,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       highlightColor: Colors.white.withOpacity(0.1),
                       child: Container(
                         height: 36,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _audioService.isEnabled ? 'Sound On' : 'Sound Off',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
-                                height: 1.0,
-                              ),
-                            ),
-                          ],
+                        width: 36,
+                        padding: const EdgeInsets.all(0),
+                        child: Center(
+                          child: Icon(
+                            _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                   ),
@@ -244,61 +269,79 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       highlightColor: Colors.white.withOpacity(0.1),
                       child: Container(
                         height: 36,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Animated icon with rotation
-                            TweenAnimationBuilder<double>(
-                              duration: const Duration(milliseconds: 1500),
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              builder: (context, rotationValue, child) {
-                                return Transform.rotate(
-                                  angle: rotationValue * 0.1,
-                                  child: const SizedBox(
-                                    height: 12,
-                                    width: 12,
-                                    child: Center(
-                                      child: Text(
-                                        '✨',
-                                        style: TextStyle(fontSize: 12, height: 1.0),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 6),
-                            
-                            // Beautiful text with gradient
-                            ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [Colors.white, Color(0xFFE5E7EB)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ).createShader(bounds),
-                              child: const Text(
-                                'How to Play',
-                                style: TextStyle(
+                        width: 36,
+                        padding: const EdgeInsets.all(0),
+                        child: Center(
+                          child: TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 1500),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            builder: (context, rotationValue, child) {
+                              return Transform.rotate(
+                                angle: rotationValue * 0.1,
+                                child: const Icon(
+                                  Icons.help_outline,
                                   color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
-                                  height: 1.0,
+                                  size: 20,
                                 ),
-                              ),
-                            ),
-                          ],
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExternalNavigationButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+    List<Color>? gradientColors,
+  }) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 2000),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: GlassButton(
+            onTap: onTap,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 12,
+            ),
+            gradientColors: gradientColors ?? [
+              Colors.white.withOpacity(0.18),
+              Colors.white.withOpacity(0.08),
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: iconColor ?? Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    height: 1.0,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -355,54 +398,106 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           
           // Main Content
           SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: verticalPadding,
-              ),
-              child: Column(
-                children: [
-                  // Color Flood Logo
-                  const ColorFloodLogo(),
-                  
-                  SizedBox(height: logoSpacing),
-                  
-                  // Level Section with Grid and How to Play Button
-                  Expanded(
-                    child: Column(
-                      children: [
-                        // Level Selection Grid
-                        Expanded(
-                          child: LevelSelectionGrid(
-                            onLevelSelected: _onLevelSelected,
-                            levelStatuses: _levelStatuses,
-                            customHeader: _buildLevelSectionHeader(),
-                          ),
-                        ),
-                        
-                        SizedBox(height: buttonSpacing),
-                        
-                        // How to Play and Sound Toggle Buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildSmallHowToPlayButton(),
-                            SizedBox(width: buttonSpacing),
-                            _buildSoundToggleButton(),
-                          ],
-                        ),
-                        
-                        SizedBox(height: bottomSpacing),
-                      ],
-                    ),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    0,
+                    horizontalPadding,
+                    verticalPadding,
                   ),
-                  
-                  // Add spacing to ensure content is above ad banner
-                  const SizedBox(height: 60),
-                ],
-              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Color Flood Logo
+                      const ColorFloodLogo(),
+                      
+                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                        context,
+                        smallPhone: 2,
+                        mediumPhone: 3,
+                        largePhone: 4,
+                        tablet: 6,
+                      )),
+                      
+                      // Level Selection Grid
+                      LevelSelectionGrid(
+                        onLevelSelected: _onLevelSelected,
+                        levelStatuses: _levelStatuses,
+                        customHeader: _buildLevelSectionHeader(),
+                        compactTopSpacing: true,
+                      ),
+                      
+                     SizedBox(height: buttonSpacing * 2),
+                      
+                      // How to Play and Sound Toggle Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildSmallHowToPlayButton(),
+                          SizedBox(width: buttonSpacing),
+                          _buildSoundToggleButton(),
+                        ],
+                      ),
+                      
+                      SizedBox(height: buttonSpacing * 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.white.withOpacity(0.85),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppConstants.exploreMoreGamesLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: buttonSpacing * 0.75),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildExternalNavigationButton(
+                            icon: Icons.phone_android,
+                            label: AppConstants.mobileGamesLabel,
+                            onTap: _navigateToOtherGames,
+                            iconColor: const Color(0xFF60A5FA), // Light blue for mobile
+                            gradientColors: [
+                              const Color(0xFF3B82F6).withOpacity(0.25), // Blue
+                              const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
+                            ],
+                          ),
+                          SizedBox(width: buttonSpacing),
+                          _buildExternalNavigationButton(
+                            icon: Icons.laptop,
+                            label: AppConstants.webGamesLabel,
+                            onTap: _openWebGames,
+                            iconColor: const Color(0xFF34D399), // Light green for laptop
+                            gradientColors: [
+                              const Color(0xFF10B981).withOpacity(0.25), // Green
+                              const Color(0xFF059669).withOpacity(0.15), // Darker green
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: bottomSpacing + 60),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
