@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -123,40 +125,62 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
   Future<void> _openStore(FgtpApp app) async {
     _audioService.playMouseClickSound();
 
-    final platform = Theme.of(context).platform;
-    final primaryUrl = app.primaryStoreUrl(platform);
-    final urls = [
-      if (primaryUrl != null) primaryUrl,
-      ...app.availableStoreUrls.where((url) => url != primaryUrl),
-    ].map(Uri.parse);
-
-    for (final uri in urls) {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
+    try {
+      // Use Platform directly for more reliable platform detection
+      final String? storeUrl;
+      if (Platform.isIOS) {
+        storeUrl = app.appstoreUrl;
+      } else if (Platform.isAndroid) {
+        storeUrl = app.playstoreUrl;
+      } else {
+        // Fallback to Play Store for other platforms
+        storeUrl = app.playstoreUrl;
       }
-    }
 
-    if (!mounted) {
-      return;
-    }
+      if (storeUrl == null || storeUrl.isEmpty) {
+        throw Exception('Store URL is not available');
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Store link is currently unavailable. Please try again.'),
-      ),
-    );
+      final uri = Uri.parse(storeUrl);
+
+      // For iOS, App Store URLs (https://apps.apple.com) should work directly
+      // For Android, Play Store URLs (https://play.google.com) should work directly
+      // Try to launch the URL - on iOS/Android, HTTPS store URLs will open in the store app
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        // If external launch failed, try with platform default
+        await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to open store. ${Platform.isIOS ? 'Please check your App Store connection.' : 'Please check your Play Store connection.'}',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            AnimatedBackground(controller: _bgController),
-            Column(  
+      body: Stack(
+        children: [
+          AnimatedBackground(controller: _bgController),
+          SafeArea(
+            child: Column(  
               children: [
                 _buildHeader(context),
                 if (_showingCachedData) _buildCachedBanner(),
@@ -168,18 +192,18 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
                 ),
               ],
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: BannerAdWidget(
-                onAdLoaded: null,
-                onAdFailedToLoad: null,
-                onAdClicked: null,
-              ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: BannerAdWidget(
+              onAdLoaded: null,
+              onAdFailedToLoad: null,
+              onAdClicked: null,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -195,7 +219,7 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       child: Row(
         children: [
           SizedBox(
@@ -243,7 +267,7 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
     final textColor = _isOffline ? AppColors.accent : AppColors.secondary;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.only(left: 16, right: 16),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: bannerColor,
@@ -358,11 +382,11 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
 
   Widget _buildErrorState() {
     return Center(
-      child: Padding(
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
+          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+            children: [
             Icon(
               _isOffline ? Icons.wifi_off : Icons.error_outline,
               size: 64,
@@ -376,7 +400,7 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
                 baseFontSize: 16,
                 color: AppColors.textSecondary,
               ),
-              textAlign: TextAlign.center,
+                textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -460,151 +484,163 @@ class _GameCard extends StatelessWidget {
     final spacing = ResponsiveUtils.getResponsiveSpacing(context, baseValue: 6);
     final buttonHeight = ResponsiveUtils.getResponsiveSpacing(context, baseValue: 36);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.9),
-        borderRadius: cardRadius,
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.6),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withOpacity(0.18),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+    return ClipRRect(
+      borderRadius: cardRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: cardRadius,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(cardPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  ResponsiveUtils.getResponsiveBorderRadius(
+          child: Padding(
+            padding: EdgeInsets.all(cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      ResponsiveUtils.getResponsiveBorderRadius(
+                        context,
+                        14,
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.1),
+                            Colors.white.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: app.imageUrl.isNotEmpty
+                          ? Image.network(
+                              app.imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _PlaceholderArtwork(name: app.name),
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) {
+                                  return child;
+                                }
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : _PlaceholderArtwork(name: app.name),
+                    ),
+                  ),
+                ),
+                SizedBox(height: spacing),
+                Text(
+                  app.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: ResponsiveUtils.getResponsiveTextStyle(
                     context,
-                    14,
+                    baseFontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: AppColors.surfaceGradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: app.imageUrl.isNotEmpty
-                      ? Image.network(
-                          app.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _PlaceholderArtwork(name: app.name),
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            }
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primary,
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : _PlaceholderArtwork(name: app.name),
-                ),
-              ),
-            ),
-            SizedBox(height: spacing),
-            Text(
-              app.name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: ResponsiveUtils.getResponsiveTextStyle(
-                context,
-                baseFontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: spacing),
-            SizedBox(
-              height: buttonHeight,
-              child: ElevatedButton(
-                onPressed: onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.transparent,
-                  shadowColor: AppColors.transparent,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      ResponsiveUtils.getResponsiveBorderRadius(context, 10),
-                    ),
-                  ),
-                ).copyWith(
-                  elevation: ButtonStyleButton.allOrNull(0.0),
-                  overlayColor: MaterialStateProperty.resolveWith(
-                    (states) => states.contains(MaterialState.pressed)
-                        ? AppColors.white.withOpacity(0.12)
-                        : null,
-                  ),
-                ),
-                child: Ink(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: AppColors.buttonGradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(
-                      ResponsiveUtils.getResponsiveBorderRadius(context, 10),
-                    ),
-                    boxShadow: ResponsiveUtils.getResponsiveBoxShadow(
-                      context,
-                      color: AppColors.accent.withOpacity(0.25),
-                      baseBlurRadius: 12,
-                      baseSpreadRadius: 0,
-                      baseOffset: const Offset(0, 6),
-                    ),
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.symmetric(
-                      horizontal:
-                          ResponsiveUtils.getResponsiveSpacing(context, baseValue: 12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.play_arrow, size: 20, color: AppColors.white),
-                        SizedBox(
-                          width: ResponsiveUtils.getResponsiveSpacing(context, baseValue: 6),
+                SizedBox(height: spacing),
+                SizedBox(
+                  height: buttonHeight,
+                  child: ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.transparent,
+                      shadowColor: AppColors.transparent,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveUtils.getResponsiveBorderRadius(context, 10),
                         ),
-                        Text(
-                          'Play Now',
-                          style: ResponsiveUtils.getResponsiveTextStyle(
-                            context,
-                            baseFontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.white,
-                            letterSpacing: 0.4,
+                      ),
+                    ).copyWith(
+                      elevation: ButtonStyleButton.allOrNull(0.0),
+                      overlayColor: MaterialStateProperty.resolveWith(
+                        (states) => states.contains(MaterialState.pressed)
+                            ? AppColors.white.withOpacity(0.12)
+                            : null,
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD700), // Vibrant yellow-gold
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveUtils.getResponsiveBorderRadius(context, 10),
+                        ),
+                        boxShadow: [
+                          // Subtle shadow for depth
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 6,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 3),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.symmetric(
+                        horizontal:
+                            ResponsiveUtils.getResponsiveSpacing(context, baseValue: 12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.play_arrow, size: 20, color: Colors.black),
+                          SizedBox(
+                            width: ResponsiveUtils.getResponsiveSpacing(context, baseValue: 6),
+                          ),
+                          Text(
+                            'Play Now',
+                            style: ResponsiveUtils.getResponsiveTextStyle(
+                              context,
+                              baseFontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -619,7 +655,16 @@ class _PlaceholderArtwork extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surfaceLight,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.1),
+            Colors.white.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
       child: Center(
         child: Text(
           name,
@@ -630,7 +675,7 @@ class _PlaceholderArtwork extends StatelessWidget {
             context,
             baseFontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.white.withOpacity(0.85),
+            color: AppColors.white.withOpacity(0.9),
           ),
         ),
       ),
