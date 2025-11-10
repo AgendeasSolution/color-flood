@@ -138,11 +138,13 @@ class CustomParticlePainter extends CustomPainter {
 class AnimatedBackground extends StatefulWidget {
   final bool enableAnimation;
   final Duration animationDuration;
+  final AnimationController? controller;
   
   const AnimatedBackground({
     super.key,
     this.enableAnimation = true,
     this.animationDuration = const Duration(seconds: 20),
+    this.controller,
   });
 
   @override
@@ -153,6 +155,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
+  bool _isExternalController = false;
 
   @override
   void initState() {
@@ -161,23 +164,37 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   }
 
   void _initializeAnimation() {
-    _animationController = AnimationController(
-      vsync: this,
-      duration: widget.animationDuration,
-    );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.linear,
-    );
+    if (widget.controller != null) {
+      // Use external controller
+      _animationController = widget.controller!;
+      _isExternalController = true;
+      _animation = CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.linear,
+      );
+    } else {
+      // Create internal controller
+      _animationController = AnimationController(
+        vsync: this,
+        duration: widget.animationDuration,
+      );
+      _animation = CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.linear,
+      );
 
-    if (widget.enableAnimation) {
-      _animationController.repeat(); // Continuous loop
+      if (widget.enableAnimation) {
+        _animationController.repeat(); // Continuous loop
+      }
     }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    // Only dispose if we created the controller internally
+    if (!_isExternalController) {
+      _animationController.dispose();
+    }
     super.dispose();
   }
 
@@ -197,26 +214,18 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
           stops: [0.0, 0.3, 0.7, 1.0],
         ),
       ),
-      child: widget.enableAnimation
-          ? AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: CustomParticlePainter(
-                    animationValue: _animation.value,
-                    screenSize: MediaQuery.of(context).size,
-                  ),
-                  size: MediaQuery.of(context).size,
-                );
-              },
-            )
-          : CustomPaint(
-              painter: CustomParticlePainter(
-                animationValue: 0.0, // Static particles
-                screenSize: MediaQuery.of(context).size,
-              ),
-              size: MediaQuery.of(context).size,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: CustomParticlePainter(
+              animationValue: _animation.value,
+              screenSize: MediaQuery.of(context).size,
             ),
+            size: MediaQuery.of(context).size,
+          );
+        },
+      ),
     );
   }
 }

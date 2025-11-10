@@ -6,6 +6,9 @@ class AudioService {
   factory AudioService() => _instance;
   AudioService._internal();
 
+  /// Get the singleton instance
+  static AudioService get instance => _instance;
+
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isEnabled = true;
 
@@ -59,6 +62,11 @@ class AudioService {
     } catch (e) {
       // Silently handle audio errors to prevent crashes
     }
+  }
+
+  /// Play mouse click sound (alias for playClickSound)
+  Future<void> playMouseClickSound() async {
+    await playClickSound();
   }
 
   /// Dispose the audio player

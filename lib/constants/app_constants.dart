@@ -26,4 +26,7 @@ class AppConstants {
   static const String levelStatLabel = 'Level';
   static const String movesUsedStatLabel = 'Moves Used';
   static const String maxMovesStatLabel = 'Max Moves';
+  
+  // Animation constants
+  static const int backgroundAnimationDuration = 20;
 }

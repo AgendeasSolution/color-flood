@@ -77,19 +77,35 @@ class ResponsiveUtils {
   }
 
   /// Get responsive spacing based on screen size
+  /// Supports two usage patterns:
+  /// 1. With baseValue only: scales the base value for different screen sizes
+  /// 2. With named parameters: uses the provided values for each screen size
   static double getResponsiveSpacing(
     BuildContext context, {
-    double smallPhone = 4.0,
-    double mediumPhone = 6.0,
-    double largePhone = 8.0,
-    double tablet = 10.0,
+    double? baseValue,
+    double? smallPhone,
+    double? mediumPhone,
+    double? largePhone,
+    double? tablet,
   }) {
+    // If baseValue is provided and no other values, scale it
+    if (baseValue != null && smallPhone == null && mediumPhone == null && largePhone == null && tablet == null) {
+      return getResponsiveValue(
+        context: context,
+        smallPhone: baseValue * 0.9,
+        mediumPhone: baseValue * 0.95,
+        largePhone: baseValue,
+        tablet: baseValue * 1.1,
+      );
+    }
+    
+    // Use provided named parameters (backward compatibility)
     return getResponsiveValue(
       context: context,
-      smallPhone: smallPhone,
-      mediumPhone: mediumPhone,
-      largePhone: largePhone,
-      tablet: tablet,
+      smallPhone: smallPhone ?? 4.0,
+      mediumPhone: mediumPhone ?? 6.0,
+      largePhone: largePhone ?? 8.0,
+      tablet: tablet ?? 10.0,
     );
   }
 
@@ -187,6 +203,72 @@ class ResponsiveUtils {
   /// Get safe area bottom padding
   static double getSafeAreaBottom(BuildContext context) {
     return MediaQuery.of(context).padding.bottom;
+  }
+
+  /// Get responsive text style
+  static TextStyle getResponsiveTextStyle(
+    BuildContext context, {
+    required double baseFontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+    double? height,
+  }) {
+    final fontSize = getResponsiveFontSize(
+      context,
+      smallPhone: baseFontSize * 0.9,
+      mediumPhone: baseFontSize * 0.95,
+      largePhone: baseFontSize,
+      tablet: baseFontSize * 1.1,
+    );
+
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
+  }
+
+  /// Get responsive border radius
+  static double getResponsiveBorderRadius(
+    BuildContext context,
+    double baseRadius,
+  ) {
+    return getResponsiveValue(
+      context: context,
+      smallPhone: baseRadius * 0.85,
+      mediumPhone: baseRadius * 0.9,
+      largePhone: baseRadius,
+      tablet: baseRadius * 1.1,
+    );
+  }
+
+  /// Get responsive box shadow
+  static List<BoxShadow> getResponsiveBoxShadow(
+    BuildContext context, {
+    required Color color,
+    required double baseBlurRadius,
+    required double baseSpreadRadius,
+    required Offset baseOffset,
+  }) {
+    final blurRadius = getResponsiveValue(
+      context: context,
+      smallPhone: baseBlurRadius * 0.9,
+      mediumPhone: baseBlurRadius * 0.95,
+      largePhone: baseBlurRadius,
+      tablet: baseBlurRadius * 1.1,
+    );
+
+    return [
+      BoxShadow(
+        color: color,
+        blurRadius: blurRadius,
+        spreadRadius: baseSpreadRadius,
+        offset: baseOffset,
+      ),
+    ];
   }
 }
 
