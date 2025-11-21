@@ -29,4 +29,7 @@ class AppConstants {
   
   // Animation constants
   static const int backgroundAnimationDuration = 20;
+  
+  // OneSignal App ID
+  static const String oneSignalAppId = '94f6d05c-7667-4d88-91a0-757f674fb71f';
 }

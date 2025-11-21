@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'constants/app_constants.dart';
 import 'pages/splash_page.dart';
 import 'assets/styles/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize OneSignal push notifications (non-blocking)
+  // App will work even if this fails or user denies permission
+  try {
+    OneSignal.initialize(AppConstants.oneSignalAppId);
+    // Request permission non-blocking (don't wait for user response)
+    // App continues to work regardless of permission status
+    OneSignal.Notifications.requestPermission(false);
+  } catch (e) {
+    // Silently fail - app must continue working
+    // OneSignal initialization failure should not affect gameplay
+  }
   
   runApp(const ColorFloodApp());
 }

@@ -13,6 +13,8 @@ import FBSDKCoreKit
       application,
       didFinishLaunchingWithOptions: launchOptions
     )
+    
+    // OneSignal initialization is handled by the Flutter plugin
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -28,4 +30,5 @@ import FBSDKCoreKit
     }
     return super.application(app, open: url, options: options)
   }
+  
 }
