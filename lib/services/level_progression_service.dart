@@ -22,15 +22,28 @@ class LevelProgressionService {
   
   /// Get all completed levels
   Future<Set<int>> getCompletedLevels() async {
-    final prefs = await SharedPreferences.getInstance();
-    final completedLevelsString = prefs.getString(_completedLevelsKey) ?? '';
-    if (completedLevelsString.isEmpty) return <int>{};
-    
-    return completedLevelsString
-        .split(',')
-        .where((s) => s.isNotEmpty)
-        .map((s) => int.parse(s))
-        .toSet();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final completedLevelsString = prefs.getString(_completedLevelsKey) ?? '';
+      if (completedLevelsString.isEmpty) return <int>{};
+      
+      return completedLevelsString
+          .split(',')
+          .where((s) => s.isNotEmpty)
+          .map((s) {
+            try {
+              return int.parse(s);
+            } catch (e) {
+              // Skip invalid integers
+              return -1;
+            }
+          })
+          .where((level) => level > 0 && level <= GameConstants.maxLevel)
+          .toSet();
+    } catch (e) {
+      // Return empty set on any error
+      return <int>{};
+    }
   }
   
   /// Check if a specific level is unlocked
@@ -57,16 +70,23 @@ class LevelProgressionService {
   
   /// Mark a level as completed and unlock the next level
   Future<void> completeLevel(int level) async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Add to completed levels
-    final completedLevels = await getCompletedLevels();
-    completedLevels.add(level);
-    await prefs.setString(_completedLevelsKey, completedLevels.join(','));
-    
-    // Unlock next level if it exists
-    if (level < GameConstants.maxLevel) {
-      await unlockLevel(level + 1);
+    try {
+      // Validate level
+      if (level < 1 || level > GameConstants.maxLevel) return;
+      
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Add to completed levels
+      final completedLevels = await getCompletedLevels();
+      completedLevels.add(level);
+      await prefs.setString(_completedLevelsKey, completedLevels.join(','));
+      
+      // Unlock next level if it exists
+      if (level < GameConstants.maxLevel) {
+        await unlockLevel(level + 1);
+      }
+    } catch (e) {
+      // Silently handle errors - don't crash
     }
   }
   

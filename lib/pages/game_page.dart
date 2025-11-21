@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
 import '../types/game_types.dart';
@@ -116,13 +117,60 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   void _startNewGame() {
-    setState(() {
-      final level = widget.initialLevel ?? 1;
-      _gameConfig = _gameService.createGameConfig(level);
-      _moves = 0;
-      _isGameOver = false;
-      _gameState = GameState.playing;
-    });
+    if (!mounted) return;
+    try {
+      // Validate initial level
+      final requestedLevel = widget.initialLevel ?? 1;
+      final validLevel = requestedLevel.clamp(1, GameConstants.maxLevel);
+      
+      // Create game config with error handling
+      GameConfig? config;
+      try {
+        config = _gameService.createGameConfig(validLevel);
+        // Validate config before using
+        if (config.grid.isEmpty || config.gridSize <= 0) {
+          throw Exception('Invalid game config');
+        }
+      } catch (e) {
+        debugPrint('Game config creation error: $e');
+        // Retry with level 1 as fallback
+        try {
+          config = _gameService.createGameConfig(1);
+          if (config.grid.isEmpty || config.gridSize <= 0) {
+            throw Exception('Fallback config also invalid');
+          }
+        } catch (e2) {
+          debugPrint('Fallback game config error: $e2');
+          // Create minimal valid config as last resort
+          config = _gameService.createGameConfig(1);
+        }
+      }
+      
+      if (mounted && config != null) {
+        setState(() {
+          _gameConfig = config!;
+          _moves = 0;
+          _isGameOver = false;
+          _gameState = GameState.playing;
+        });
+      }
+    } catch (e) {
+      debugPrint('Start new game error: $e');
+      // If everything fails, try to create a basic game
+      if (mounted) {
+        try {
+          setState(() {
+            _gameConfig = _gameService.createGameConfig(1);
+            _moves = 0;
+            _isGameOver = false;
+            _gameState = GameState.playing;
+          });
+        } catch (e2) {
+          debugPrint('Final fallback error: $e2');
+          // App should continue even if game can't start
+        }
+      }
+    }
   }
 
   Future<void> _restartCurrentLevel() async {
@@ -182,30 +230,83 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   void _handleColorSelection(Color newColor) {
+    if (!mounted) return;
     if (_isGameOver || _gameState != GameState.playing) return;
+    
+    // Validate game config exists and is valid
+    if (_gameConfig.grid.isEmpty || _gameConfig.gridSize <= 0) {
+      debugPrint('Invalid game config in color selection');
+      return;
+    }
 
-    if (!_gameService.isValidMove(_gameConfig.grid, newColor)) return;
+    try {
+      // Validate move before applying
+      if (!_gameService.isValidMove(_gameConfig.grid, newColor)) {
+        return;
+      }
 
-    _audioService.playSwipeSound();
+      // Play sound with error handling
+      try {
+        _audioService.playSwipeSound();
+      } catch (e) {
+        debugPrint('Audio play error: $e');
+        // Continue even if audio fails
+      }
 
-    setState(() {
-      _moves++;
-      _gameConfig = _gameConfig.copyWith(
-        grid: _gameService.applyMove(_gameConfig.grid, newColor),
-      );
-    });
+      // Apply move with validation
+      final newGrid = _gameService.applyMove(_gameConfig.grid, newColor);
+      
+      // Validate new grid before updating state
+      if (newGrid.isEmpty || newGrid.length != _gameConfig.gridSize) {
+        debugPrint('Invalid grid after move');
+        return;
+      }
+      
+      if (mounted) {
+        setState(() {
+          _moves++;
+          _gameConfig = _gameConfig.copyWith(grid: newGrid);
+        });
+      }
 
-    _checkWinCondition();
+      _checkWinCondition();
+    } catch (e) {
+      debugPrint('Color selection error: $e');
+      // Silently handle errors - don't interrupt gameplay
+    }
   }
 
   void _checkWinCondition() {
-    if (_gameService.isGridSolved(_gameConfig.grid)) {
-      _audioService.playWinSound();
-      _endGame(GameResult.win);
-      _markLevelCompleted(); // Move this after _endGame to ensure it's called
-    } else if (_moves >= _gameConfig.maxMoves) {
-      _audioService.playFailSound();
-      _endGame(GameResult.lose);
+    if (!mounted) return;
+    
+    // Validate game config before checking win condition
+    if (_gameConfig.grid.isEmpty || _gameConfig.gridSize <= 0) {
+      return;
+    }
+    
+    try {
+      // Check if grid is solved
+      final isSolved = _gameService.isGridSolved(_gameConfig.grid);
+      
+      if (isSolved) {
+        try {
+          _audioService.playWinSound();
+        } catch (e) {
+          debugPrint('Win sound error: $e');
+        }
+        _endGame(GameResult.win);
+        _markLevelCompleted(); // Move this after _endGame to ensure it's called
+      } else if (_moves >= _gameConfig.maxMoves) {
+        try {
+          _audioService.playFailSound();
+        } catch (e) {
+          debugPrint('Fail sound error: $e');
+        }
+        _endGame(GameResult.lose);
+      }
+    } catch (e) {
+      debugPrint('Win condition check error: $e');
+      // Silently handle errors - game should continue
     }
   }
 
@@ -231,61 +332,117 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   void _showGameOverDialog(GameResult result) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierLabel: '',
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, anim1, anim2) => _GameOverDialog(
-        didWin: result == GameResult.win,
-        level: _gameConfig.level,
-        moves: _moves,
-        maxMoves: _gameConfig.maxMoves,
-        onNextLevel: () async {
-          Navigator.of(context).pop();
-          await _nextLevel();
+    if (!mounted || !context.mounted) return;
+    
+    try {
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: '',
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (context, anim1, anim2) => _GameOverDialog(
+          didWin: result == GameResult.win,
+          level: _gameConfig.level,
+          moves: _moves,
+          maxMoves: _gameConfig.maxMoves,
+          onNextLevel: () async {
+            if (context.mounted) {
+              try {
+                Navigator.of(context).pop();
+              } catch (e) {
+                debugPrint('Dialog pop error: $e');
+              }
+            }
+            await _nextLevel();
+          },
+          onRestart: () async {
+            if (context.mounted) {
+              try {
+                Navigator.of(context).pop();
+              } catch (e) {
+                debugPrint('Dialog pop error: $e');
+              }
+            }
+            await _restartCurrentLevel();
+          },
+        ),
+        transitionBuilder: (context, anim1, anim2, child) {
+          try {
+            _popupAnimationController.forward(from: 0.0);
+          } catch (e) {
+            debugPrint('Animation error: $e');
+          }
+          return ScaleTransition(
+            scale: _popupScaleAnimation,
+            child: FadeTransition(opacity: anim1, child: child),
+          );
         },
-        onRestart: () async {
-          Navigator.of(context).pop();
-          await _restartCurrentLevel();
-        },
-      ),
-      transitionBuilder: (context, anim1, anim2, child) {
-        _popupAnimationController.forward(from: 0.0);
-        return ScaleTransition(
-          scale: _popupScaleAnimation,
-          child: FadeTransition(opacity: anim1, child: child),
-        );
-      },
-    );
+      );
+    } catch (e) {
+      debugPrint('Show game over dialog error: $e');
+      // App should continue even if dialog fails to show
+    }
   }
 
   void _showGameCompletedDialog() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierLabel: '',
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, anim1, anim2) => _GameCompletedDialog(
-        onPlayAgain: () {
-          _audioService.playClickSound();
-          Navigator.of(context).pop();
-          _startNewGame();
+    if (!mounted || !context.mounted) return;
+    
+    try {
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: '',
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (context, anim1, anim2) => _GameCompletedDialog(
+          onPlayAgain: () {
+            try {
+              _audioService.playClickSound();
+            } catch (e) {
+              debugPrint('Audio error: $e');
+            }
+            if (context.mounted) {
+              try {
+                Navigator.of(context).pop();
+              } catch (e) {
+                debugPrint('Navigation error: $e');
+              }
+            }
+            _startNewGame();
+          },
+          onExit: () {
+            try {
+              _audioService.playClickSound();
+            } catch (e) {
+              debugPrint('Audio error: $e');
+            }
+            if (context.mounted) {
+              try {
+                Navigator.of(context).pop();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                debugPrint('Navigation error: $e');
+              }
+            }
+          },
+        ),
+        transitionBuilder: (context, anim1, anim2, child) {
+          try {
+            _popupAnimationController.forward(from: 0.0);
+          } catch (e) {
+            debugPrint('Animation error: $e');
+          }
+          return ScaleTransition(
+            scale: _popupScaleAnimation,
+            child: FadeTransition(opacity: anim1, child: child),
+          );
         },
-        onExit: () {
-          _audioService.playClickSound();
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-        },
-      ),
-      transitionBuilder: (context, anim1, anim2, child) {
-        _popupAnimationController.forward(from: 0.0);
-        return ScaleTransition(
-          scale: _popupScaleAnimation,
-          child: FadeTransition(opacity: anim1, child: child),
-        );
-      },
-    );
+      );
+    } catch (e) {
+      debugPrint('Show game completed dialog error: $e');
+      // App should continue even if dialog fails
+    }
   }
 
   @override

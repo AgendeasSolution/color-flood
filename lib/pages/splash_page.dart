@@ -60,21 +60,75 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   void _startSplashSequence() async {
-    // Start animations
-    _fadeController.forward();
-    _scaleController.forward();
-    _logoController.repeat(reverse: true);
+    try {
+      // Start animations with error handling
+      try {
+        _fadeController.forward();
+      } catch (e) {
+        debugPrint('Fade animation error: $e');
+      }
+      
+      try {
+        _scaleController.forward();
+      } catch (e) {
+        debugPrint('Scale animation error: $e');
+      }
+      
+      try {
+        _logoController.repeat(reverse: true);
+      } catch (e) {
+        debugPrint('Logo animation error: $e');
+      }
 
-    // Wait for splash duration (3 seconds)
-    await Future.delayed(const Duration(seconds: 3));
+      // Wait for splash duration (3 seconds)
+      await Future.delayed(const Duration(seconds: 3));
 
-    // Navigate to home page
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomePage(),
-        ),
-      );
+      // Navigate to home page with error handling
+      if (mounted && context.mounted) {
+        try {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const HomePage(),
+            ),
+          );
+        } catch (e) {
+          debugPrint('Navigation error: $e');
+          // If navigation fails, try again after a short delay
+          if (mounted && context.mounted) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted && context.mounted) {
+                try {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const HomePage(),
+                    ),
+                  );
+                } catch (e2) {
+                  debugPrint('Retry navigation error: $e2');
+                }
+              }
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Splash sequence error: $e');
+      // Even if everything fails, try to navigate to home page
+      if (mounted && context.mounted) {
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (mounted && context.mounted) {
+            try {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const HomePage(),
+                ),
+              );
+            } catch (e2) {
+              debugPrint('Final navigation attempt error: $e2');
+            }
+          }
+        });
+      }
     }
   }
 

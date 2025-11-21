@@ -19,13 +19,20 @@ class GameService {
   /// Check if the grid is solved (all cells have the same color)
   bool isGridSolved(List<List<Color>> gridToCheck) {
     if (gridToCheck.isEmpty) return false;
-    final firstColor = gridToCheck[0][0];
-    for (var row in gridToCheck) {
-      for (var cellColor in row) {
-        if (cellColor != firstColor) return false;
+    if (gridToCheck[0].isEmpty) return false;
+    try {
+      final firstColor = gridToCheck[0][0];
+      for (var row in gridToCheck) {
+        if (row.isEmpty) return false;
+        for (var cellColor in row) {
+          if (cellColor != firstColor) return false;
+        }
       }
+      return true;
+    } catch (e) {
+      // If any error occurs, consider grid as not solved
+      return false;
     }
-    return true;
   }
 
   /// Perform flood fill on the grid
@@ -35,98 +42,148 @@ class GameService {
     int startY,
     Color replacementColor,
   ) {
+    // Validate bounds
+    if (gridData.isEmpty) return gridData;
+    if (startX < 0 || startX >= gridData.length) return gridData;
+    if (gridData[startX].isEmpty) return gridData;
+    if (startY < 0 || startY >= gridData[startX].length) return gridData;
+    
     final targetColor = gridData[startX][startY];
     if (targetColor == replacementColor) return gridData;
 
-    final filledGrid = cloneGrid(gridData);
-    final queue = Queue<Point<int>>();
-    queue.add(Point(startX, startY));
+    try {
+      final filledGrid = cloneGrid(gridData);
+      final queue = Queue<Point<int>>();
+      queue.add(Point(startX, startY));
 
-    final visited = <Point<int>>{Point(startX, startY)};
+      final visited = <Point<int>>{Point(startX, startY)};
 
-    while (queue.isNotEmpty) {
-      final point = queue.removeFirst();
-      final x = point.x;
-      final y = point.y;
+      while (queue.isNotEmpty) {
+        final point = queue.removeFirst();
+        final x = point.x;
+        final y = point.y;
 
-      if (filledGrid[x][y] == targetColor) {
-        filledGrid[x][y] = replacementColor;
+        // Validate bounds before accessing
+        if (x < 0 || x >= filledGrid.length) continue;
+        if (y < 0 || y >= filledGrid[x].length) continue;
+        
+        if (filledGrid[x][y] == targetColor) {
+          filledGrid[x][y] = replacementColor;
 
+          final neighbors = [
+            Point(x + 1, y),
+            Point(x - 1, y),
+            Point(x, y + 1),
+            Point(x, y - 1),
+          ];
+
+          for (final neighbor in neighbors) {
+            final nx = neighbor.x;
+            final ny = neighbor.y;
+            if (nx >= 0 &&
+                nx < filledGrid.length &&
+                ny >= 0 &&
+                ny < filledGrid[nx].length &&
+                !visited.contains(neighbor) &&
+                filledGrid[nx][ny] == targetColor) {
+              visited.add(neighbor);
+              queue.add(neighbor);
+            }
+          }
+        }
+      }
+      return filledGrid;
+    } catch (e) {
+      // If any error occurs, return original grid
+      return gridData;
+    }
+  }
+
+  /// Count the current area size starting from top-left corner
+  int countCurrentArea(List<List<Color>> gridData) {
+    if (gridData.isEmpty) return 0;
+    if (gridData[0].isEmpty) return 0;
+    
+    try {
+      final targetColor = gridData[0][0];
+      final queue = Queue<Point<int>>();
+      queue.add(const Point(0, 0));
+      final visited = <Point<int>>{const Point(0, 0)};
+      int count = 0;
+
+      while (queue.isNotEmpty) {
+        final point = queue.removeFirst();
+        count++;
         final neighbors = [
-          Point(x + 1, y),
-          Point(x - 1, y),
-          Point(x, y + 1),
-          Point(x, y - 1),
+          Point(point.x + 1, point.y),
+          Point(point.x - 1, point.y),
+          Point(point.x, point.y + 1),
+          Point(point.x, point.y - 1),
         ];
-
         for (final neighbor in neighbors) {
-          final nx = neighbor.x;
-          final ny = neighbor.y;
-          if (nx >= 0 &&
-              nx < gridData.length &&
-              ny >= 0 &&
-              ny < gridData.length &&
+          if (neighbor.x >= 0 &&
+              neighbor.x < gridData.length &&
+              neighbor.y >= 0 &&
+              neighbor.y < gridData.length &&
+              neighbor.y < gridData[neighbor.x].length &&
               !visited.contains(neighbor) &&
-              filledGrid[nx][ny] == targetColor) {
+              gridData[neighbor.x][neighbor.y] == targetColor) {
             visited.add(neighbor);
             queue.add(neighbor);
           }
         }
       }
+      return count;
+    } catch (e) {
+      // If any error occurs, return safe default
+      return 0;
     }
-    return filledGrid;
-  }
-
-  /// Count the current area size starting from top-left corner
-  int countCurrentArea(List<List<Color>> gridData) {
-    final targetColor = gridData[0][0];
-    final queue = Queue<Point<int>>();
-    queue.add(const Point(0, 0));
-    final visited = <Point<int>>{const Point(0, 0)};
-    int count = 0;
-
-    while (queue.isNotEmpty) {
-      final point = queue.removeFirst();
-      count++;
-      final neighbors = [
-        Point(point.x + 1, point.y),
-        Point(point.x - 1, point.y),
-        Point(point.x, point.y + 1),
-        Point(point.x, point.y - 1),
-      ];
-      for (final neighbor in neighbors) {
-        if (neighbor.x >= 0 &&
-            neighbor.x < gridData.length &&
-            neighbor.y >= 0 &&
-            neighbor.y < gridData.length &&
-            !visited.contains(neighbor) &&
-            gridData[neighbor.x][neighbor.y] == targetColor) {
-          visited.add(neighbor);
-          queue.add(neighbor);
-        }
-      }
-    }
-    return count;
   }
 
   /// Find the best move for the current grid state using advanced AI strategies
   Color findBestMove(List<List<Color>> gridToAnalyze) {
-    Color? bestColor;
-    double bestScore = -1.0;
-    final startColor = gridToAnalyze[0][0];
-
-    for (final color in GameConstants.gameColors) {
-      if (color == startColor) continue;
-      
-      final simulatedGrid = floodFillOnGrid(gridToAnalyze, 0, 0, color);
-      final score = _calculateMoveScore(gridToAnalyze, simulatedGrid, color);
-      
-      if (score > bestScore) {
-        bestScore = score;
-        bestColor = color;
-      }
+    if (gridToAnalyze.isEmpty || 
+        gridToAnalyze[0].isEmpty || 
+        GameConstants.gameColors.isEmpty) {
+      // Return first available color as fallback
+      return GameConstants.gameColors.isNotEmpty 
+          ? GameConstants.gameColors[0] 
+          : Colors.blue;
     }
-    return bestColor!;
+    
+    try {
+      Color? bestColor;
+      double bestScore = -1.0;
+      final startColor = gridToAnalyze[0][0];
+
+      for (final color in GameConstants.gameColors) {
+        if (color == startColor) continue;
+        
+        try {
+          final simulatedGrid = floodFillOnGrid(gridToAnalyze, 0, 0, color);
+          final score = _calculateMoveScore(gridToAnalyze, simulatedGrid, color);
+          
+          if (score > bestScore) {
+            bestScore = score;
+            bestColor = color;
+          }
+        } catch (e) {
+          // Skip this color if it causes an error
+          continue;
+        }
+      }
+      
+      // Return best color or fallback to first available color
+      return bestColor ?? 
+             (GameConstants.gameColors.where((c) => c != startColor).isNotEmpty
+                 ? GameConstants.gameColors.where((c) => c != startColor).first
+                 : GameConstants.gameColors[0]);
+    } catch (e) {
+      // Fallback to first available color
+      return GameConstants.gameColors.isNotEmpty 
+          ? GameConstants.gameColors[0] 
+          : Colors.blue;
+    }
   }
 
   /// Calculate a sophisticated score for a potential move
@@ -838,22 +895,42 @@ class GameService {
 
   /// Find a strategic move considering multiple factors
   Color _findStrategicMove(List<List<Color>> grid) {
-    Color? bestColor;
-    double bestScore = -1.0;
-    final startColor = grid[0][0];
-
-    for (final color in GameConstants.gameColors) {
-      if (color == startColor) continue;
-      
-      final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
-      final score = _calculateStrategicScore(grid, simulatedGrid, color);
-      
-      if (score > bestScore) {
-        bestScore = score;
-        bestColor = color;
-      }
+    if (grid.isEmpty || grid[0].isEmpty || GameConstants.gameColors.isEmpty) {
+      return GameConstants.gameColors.isNotEmpty 
+          ? GameConstants.gameColors[0] 
+          : Colors.blue;
     }
-    return bestColor!;
+    
+    try {
+      Color? bestColor;
+      double bestScore = -1.0;
+      final startColor = grid[0][0];
+
+      for (final color in GameConstants.gameColors) {
+        if (color == startColor) continue;
+        
+        try {
+          final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
+          final score = _calculateStrategicScore(grid, simulatedGrid, color);
+          
+          if (score > bestScore) {
+            bestScore = score;
+            bestColor = color;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      return bestColor ?? 
+             (GameConstants.gameColors.where((c) => c != startColor).isNotEmpty
+                 ? GameConstants.gameColors.where((c) => c != startColor).first
+                 : GameConstants.gameColors[0]);
+    } catch (e) {
+      return GameConstants.gameColors.isNotEmpty 
+          ? GameConstants.gameColors[0] 
+          : Colors.blue;
+    }
   }
 
   /// Calculate strategic score for a move
@@ -948,49 +1025,129 @@ class GameService {
 
   /// Create a new game configuration for the given level with AI-precise difficulty
   GameConfig createGameConfig(int level) {
-    // Ensure level is within valid range (1-14)
-    final validLevel = level.clamp(1, GameConstants.maxLevel);
-    final gridSize = GameConstants.levelGridSizes[validLevel] ?? GameConstants.baseGridSize;
-    
-    // Generate multiple grids and pick the most challenging one
-    List<List<Color>> bestGrid = generateRandomGrid(validLevel);
-    int bestSolutionMoves = -1;
-    int bestDifficulty = -1;
-    
-    // Try multiple grids to find the most challenging one
-    for (int attempt = 0; attempt < 5; attempt++) {
-      final testGrid = generateRandomGrid(validLevel);
-      final solutionMoves = calculateAIOptimalSolution(testGrid);
+    try {
+      // Ensure level is within valid range (1-14)
+      final validLevel = level.clamp(1, GameConstants.maxLevel);
+      final gridSize = GameConstants.levelGridSizes[validLevel] ?? GameConstants.baseGridSize;
       
-      if (solutionMoves != -1) {
-        final difficulty = _calculateGridDifficulty(testGrid, solutionMoves);
-        
-        if (difficulty > bestDifficulty) {
-          bestDifficulty = difficulty;
-          bestSolutionMoves = solutionMoves;
-          bestGrid = testGrid;
+      // Validate grid size
+      if (gridSize <= 0) {
+        throw Exception('Invalid grid size: $gridSize');
+      }
+      
+      // Generate multiple grids and pick the most challenging one
+      List<List<Color>> bestGrid;
+      int bestSolutionMoves = -1;
+      int bestDifficulty = -1;
+      int attempts = 0;
+      const maxAttempts = 10; // Limit attempts to prevent infinite loops
+      
+      // Generate initial grid
+      try {
+        bestGrid = generateRandomGrid(validLevel);
+        if (bestGrid.isEmpty || bestGrid[0].isEmpty) {
+          throw Exception('Generated empty grid');
+        }
+      } catch (e) {
+        // If generation fails, create a simple grid as fallback
+        bestGrid = List.generate(
+          gridSize,
+          (_) => List.generate(
+            gridSize,
+            (_) => GameConstants.gameColors.isNotEmpty
+                ? GameConstants.gameColors[0]
+                : Colors.blue,
+          ),
+        );
+      }
+      
+      // Try multiple grids to find the most challenging one
+      for (int attempt = 0; attempt < 5 && attempts < maxAttempts; attempt++) {
+        attempts++;
+        try {
+          final testGrid = generateRandomGrid(validLevel);
+          if (testGrid.isEmpty || testGrid[0].isEmpty) continue;
+          
+          final solutionMoves = calculateAIOptimalSolution(testGrid);
+          
+          if (solutionMoves != -1 && solutionMoves > 0) {
+            final difficulty = _calculateGridDifficulty(testGrid, solutionMoves);
+            
+            if (difficulty > bestDifficulty) {
+              bestDifficulty = difficulty;
+              bestSolutionMoves = solutionMoves;
+              bestGrid = testGrid;
+            }
+          }
+        } catch (e) {
+          // Continue to next attempt if this one fails
+          continue;
         }
       }
-    }
-    
-    // If no good grid found, use the last generated one
-    if (bestSolutionMoves == -1) {
-      bestSolutionMoves = calculateOptimalSolution(bestGrid);
-      if (bestSolutionMoves == -1) {
-      return createGameConfig(validLevel);
+      
+      // If no good grid found, use the last generated one
+      if (bestSolutionMoves == -1 || bestSolutionMoves <= 0) {
+        try {
+          bestSolutionMoves = calculateOptimalSolution(bestGrid);
+          if (bestSolutionMoves == -1 || bestSolutionMoves <= 0) {
+            // Use a simple fallback solution
+            bestSolutionMoves = gridSize + 2; // Simple fallback
+          }
+        } catch (e) {
+          bestSolutionMoves = gridSize + 2; // Simple fallback
+        }
       }
+
+      // Validate bestGrid before calculating max moves
+      if (bestGrid.isEmpty || bestGrid[0].isEmpty) {
+        // Create minimal valid grid
+        bestGrid = List.generate(
+          gridSize,
+          (_) => List.generate(
+            gridSize,
+            (_) => GameConstants.gameColors.isNotEmpty
+                ? GameConstants.gameColors[0]
+                : Colors.blue,
+          ),
+        );
+        bestSolutionMoves = gridSize + 2;
+      }
+
+      // Calculate precise max moves using AI intelligence
+      final maxMoves = _calculatePreciseMaxMoves(validLevel, bestSolutionMoves, bestGrid);
+      
+      // Validate maxMoves
+      final validMaxMoves = maxMoves.clamp(bestSolutionMoves + 1, bestSolutionMoves + 10);
+
+      return GameConfig(
+        level: validLevel,
+        gridSize: gridSize,
+        maxMoves: validMaxMoves,
+        grid: bestGrid,
+        originalGrid: cloneGrid(bestGrid),
+      );
+    } catch (e) {
+      // Last resort: create a minimal valid game config
+      final fallbackLevel = level.clamp(1, GameConstants.maxLevel);
+      final fallbackGridSize = GameConstants.levelGridSizes[fallbackLevel] ?? GameConstants.baseGridSize;
+      final fallbackGrid = List.generate(
+        fallbackGridSize,
+        (_) => List.generate(
+          fallbackGridSize,
+          (_) => GameConstants.gameColors.isNotEmpty
+              ? GameConstants.gameColors[0]
+              : Colors.blue,
+        ),
+      );
+      
+      return GameConfig(
+        level: fallbackLevel,
+        gridSize: fallbackGridSize,
+        maxMoves: fallbackGridSize + 5,
+        grid: fallbackGrid,
+        originalGrid: cloneGrid(fallbackGrid),
+      );
     }
-
-    // Calculate precise max moves using AI intelligence
-    final maxMoves = _calculatePreciseMaxMoves(validLevel, bestSolutionMoves, bestGrid);
-
-    return GameConfig(
-      level: validLevel,
-      gridSize: gridSize,
-      maxMoves: maxMoves,
-      grid: bestGrid,
-      originalGrid: cloneGrid(bestGrid),
-    );
   }
 
   /// Calculate grid difficulty based on multiple factors
@@ -1284,13 +1441,31 @@ class GameService {
 
   /// Check if a move is valid
   bool isValidMove(List<List<Color>> grid, Color newColor) {
-    final startColor = grid[0][0];
-    return startColor != newColor;
+    try {
+      // Validate grid before accessing
+      if (grid.isEmpty || grid[0].isEmpty) {
+        return false;
+      }
+      final startColor = grid[0][0];
+      return startColor != newColor;
+    } catch (e) {
+      // If any error occurs, consider move invalid
+      return false;
+    }
   }
 
   /// Apply a move to the grid
   List<List<Color>> applyMove(List<List<Color>> grid, Color newColor) {
-    return floodFillOnGrid(grid, 0, 0, newColor);
+    try {
+      // Validate grid before applying move
+      if (grid.isEmpty || grid[0].isEmpty) {
+        return grid; // Return original grid if invalid
+      }
+      return floodFillOnGrid(grid, 0, 0, newColor);
+    } catch (e) {
+      // If any error occurs, return original grid
+      return grid;
+    }
   }
 
   /// Get AI hint for the current grid state

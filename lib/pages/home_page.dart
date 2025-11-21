@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
@@ -73,13 +74,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 
   void _navigateToLevel(int level) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GamePage(initialLevel: level),
-      ),
-    );
-    // Refresh level statuses when returning from game
-    await _loadLevelStatuses();
+    try {
+      // Validate level before navigation
+      if (level < 1 || level > GameConstants.maxLevel) {
+        debugPrint('Invalid level: $level');
+        return;
+      }
+      
+      if (!mounted || !context.mounted) return;
+      
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => GamePage(initialLevel: level),
+        ),
+      );
+      // Refresh level statuses when returning from game
+      if (mounted) {
+        await _loadLevelStatuses();
+      }
+    } catch (e) {
+      debugPrint('Navigation error: $e');
+      // App should continue working even if navigation fails
+    }
   }
 
   void _onLevelSelected(int level) {
@@ -91,11 +107,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadLevelStatuses() async {
-    final statuses = await _levelService.getAllLevelStatuses();
-    if (mounted) {
-      setState(() {
-        _levelStatuses = statuses;
-      });
+    try {
+      final statuses = await _levelService.getAllLevelStatuses();
+      if (mounted) {
+        setState(() {
+          // Validate statuses map before setting
+          _levelStatuses = statuses.isNotEmpty ? statuses : <int, LevelStatus>{};
+        });
+      }
+    } catch (e) {
+      // Silently handle errors - app should continue working
+      debugPrint('Error loading level statuses: $e');
+      if (mounted) {
+        setState(() {
+          // Set empty statuses as fallback
+          _levelStatuses = <int, LevelStatus>{};
+        });
+      }
     }
   }
 
