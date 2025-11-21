@@ -32,4 +32,10 @@ class AppConstants {
   
   // OneSignal App ID
   static const String oneSignalAppId = '94f6d05c-7667-4d88-91a0-757f674fb71f';
+  
+  // Update pop-up messages
+  static const String updateAvailableTitle = 'Update Available!';
+  static const String updateAvailableMessage = 'Get the latest version to enjoy new features, improved performance, and bug fixes.';
+  static const String updateButtonText = 'Update Now';
+  static const String laterButtonText = 'Later';
 }
