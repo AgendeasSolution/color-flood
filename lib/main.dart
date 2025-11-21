@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'constants/app_constants.dart';
 import 'pages/splash_page.dart';
@@ -6,6 +7,15 @@ import 'assets/styles/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase (must be done before any Firebase services)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Log error but allow app to continue
+    // Firebase initialization failure should not prevent app from working
+    debugPrint('Firebase initialization error: $e');
+  }
   
   // Initialize OneSignal push notifications (non-blocking)
   // App will work even if this fails or user denies permission

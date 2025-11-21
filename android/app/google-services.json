@@ -1,0 +1,170 @@
+{
+  "project_info": {
+    "project_number": "471253988186",
+    "project_id": "color-flood-d2722",
+    "storage_bucket": "color-flood-d2722.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:ad943ff34a980ed1ff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.color_flood"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~2098002843"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:851e08c954e495ceff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.color_slide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~7601912281"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:913fec289705c17eff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.color_sudoku"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~5427584207"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:dcb73482a6a917eaff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.nummix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~2824466313"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:3c9bf3b7e53c608cff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.sliding_tile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~1212490108"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:c707a5aa33ce9458ff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.tic_tac_toe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~4078418483"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:a5e6316adb0e0d0dff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.trappex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~9496899146"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471253988186:android:7b0b848b59993418ff7963",
+        "android_client_info": {
+          "package_name": "com.fgtp.wimbo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpQSr6xfBbwZoWu4E12vsz17m3pEHrIqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-3772142815301617~4757084412"
+    }
+  ],
+  "configuration_version": "1"
+}
