@@ -2,6 +2,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // IronSource Maven repository
+        maven { url = uri("https://android-sdk.is.com/") }
+        // AppLovin Maven repository
+        maven { url = uri("https://artifacts.applovin.com/android") }
     }
 }
 

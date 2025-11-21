@@ -48,6 +48,10 @@ flutter {
 repositories {
     google()
     mavenCentral()
+    // IronSource Maven repository
+    maven { url = uri("https://android-sdk.is.com/") }
+    // AppLovin Maven repository
+    maven { url = uri("https://artifacts.applovin.com/android") }
 }
 
 dependencies {
@@ -62,4 +66,20 @@ dependencies {
     
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
+    
+    // Unity Ads + Google mediation adapter
+    implementation("com.unity3d.ads:unity-ads:4.9.1")
+    implementation("com.google.ads.mediation:unity:4.9.1.0")
+    
+    // ironSource + Google mediation adapter
+    implementation("com.ironsource.sdk:mediationsdk:8.4.0")
+    implementation("com.google.ads.mediation:ironsource:8.4.0.0")
+    
+    // AppLovin (MAX) + Google mediation adapter
+    implementation("com.applovin:applovin-sdk:13.0.0")
+    implementation("com.google.ads.mediation:applovin:13.0.0.0")
+    
+    // Meta / Facebook Audience Network + Google mediation adapter
+    implementation("com.facebook.android:audience-network-sdk:6.16.0")
+    implementation("com.google.ads.mediation:facebook:6.16.0.0")
 }
