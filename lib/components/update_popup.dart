@@ -6,19 +6,10 @@ import '../services/update_service.dart';
 import '../services/audio_service.dart';
 import '../utils/responsive_utils.dart';
 
-/// Controller for UpdatePopup to trigger it manually
-class UpdatePopupController extends ChangeNotifier {
-  void showTestPopup() {
-    notifyListeners();
-  }
-}
-
 /// Update pop-up widget that appears at the bottom of the screen
 /// Only shows when an update is available
 class UpdatePopup extends StatefulWidget {
-  final UpdatePopupController? controller;
-  
-  const UpdatePopup({super.key, this.controller});
+  const UpdatePopup({super.key});
 
   @override
   State<UpdatePopup> createState() => _UpdatePopupState();
@@ -36,18 +27,11 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Listen to controller for test triggers
-    widget.controller?.addListener(_onControllerTriggered);
     _checkForUpdate();
-  }
-  
-  void _onControllerTriggered() {
-    showTestPopup();
   }
   
   @override
   void dispose() {
-    widget.controller?.removeListener(_onControllerTriggered);
     _slideController.dispose();
     super.dispose();
   }
@@ -142,17 +126,6 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
     }
   }
 
-  /// Show the popup for testing (can be called externally)
-  void showTestPopup() {
-    if (mounted) {
-      setState(() {
-        _isChecking = false;
-        _isVisible = true;
-      });
-      _slideController.forward();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Don't render anything if not visible or still checking
@@ -160,14 +133,29 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
       return const SizedBox.shrink();
     }
 
-    // Position at the very bottom (0) to appear on top of ad banner
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: _buildPopupContent(),
+    // Full screen backdrop with popup content
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Semi-transparent backdrop that closes on tap outside
+          GestureDetector(
+            onTap: _onLaterPressed,
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
+            ),
+          ),
+          // Popup content that slides in from bottom
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: GestureDetector(
+                onTap: () {}, // Absorb taps on popup content
+                child: _buildPopupContent(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

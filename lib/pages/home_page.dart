@@ -33,7 +33,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
   final LevelProgressionService _levelService = LevelProgressionService.instance;
   final AudioService _audioService = AudioService();
-  final UpdatePopupController _updatePopupController = UpdatePopupController();
 
   @override
   void initState() {
@@ -142,11 +141,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     setState(() {
       _audioService.setEnabled(!_audioService.isEnabled);
     });
-  }
-
-  void _testUpdatePopup() {
-    _audioService.playClickSound();
-    _updatePopupController.showTestPopup();
   }
 
   void _navigateToOtherGames() {
@@ -334,83 +328,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTestUpdateButton() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 2000),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.95 + (0.05 * value),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF3B82F6).withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: -5,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF3B82F6).withOpacity(0.9),
-                        const Color(0xFF2563EB).withOpacity(0.8),
-                        const Color(0xFF1D4ED8).withOpacity(0.9),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _testUpdatePopup,
-                      borderRadius: BorderRadius.circular(10),
-                      splashColor: Colors.white.withOpacity(0.2),
-                      highlightColor: Colors.white.withOpacity(0.1),
-                      child: Container(
-                        height: 36,
-                        width: 36,
-                        padding: const EdgeInsets.all(0),
-                        child: const Center(
-                          child: Icon(
-                            Icons.system_update,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildExternalNavigationButton({
     required IconData icon,
     required String label,
@@ -552,8 +469,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           _buildSmallHowToPlayButton(),
                           SizedBox(width: buttonSpacing),
                           _buildSoundToggleButton(),
-                          SizedBox(width: buttonSpacing),
-                          _buildTestUpdateButton(),
                         ],
                       ),
                       
@@ -627,7 +542,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           
           // Update Pop-up (appears on top of ad banner when update is available)
-          UpdatePopup(controller: _updatePopupController),
+          const UpdatePopup(),
         ],
       ),
     );
