@@ -192,3 +192,118 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
+# Additional R8 fixes
+-dontwarn javax.annotation.**
+-dontwarn javax.inject.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+
+# Keep all Flutter plugin classes
+-keep class io.flutter.plugins.** { *; }
+-keep class dev.flutter.plugins.** { *; }
+
+# Keep all package classes that might be accessed via reflection
+-keep class androidx.** { *; }
+-dontwarn androidx.**
+
+# Keep WebView classes
+-keepclassmembers class * extends android.webkit.WebViewClient {
+    public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
+    public boolean *(android.webkit.WebView, java.lang.String);
+}
+-keepclassmembers class * extends android.webkit.WebChromeClient {
+    public void *(android.webkit.WebView, java.lang.String);
+}
+
+# Keep URL launcher classes
+-keep class io.flutter.plugins.urllauncher.** { *; }
+
+# Keep connectivity classes
+-keep class dev.fluttercommunity.plus.connectivity.** { *; }
+
+# Keep shared preferences classes
+-keep class io.flutter.plugins.sharedpreferences.** { *; }
+
+# Keep package info classes
+-keep class dev.fluttercommunity.plus.packageinfo.** { *; }
+
+# Keep audio players classes
+-keep class xyz.luan.audioplayers.** { *; }
+
+# Keep Google Fonts classes
+-keep class io.flutter.plugins.googlefonts.** { *; }
+
+# Keep HTTP classes
+-keep class io.flutter.plugins.urllauncher.** { *; }
+
+# Keep Firebase Messaging (if used)
+-keep class com.google.firebase.messaging.** { *; }
+-dontwarn com.google.firebase.messaging.**
+
+# Keep all model classes with @Keep annotation
+-keep @androidx.annotation.Keep class * { *; }
+
+# Keep classes that are referenced in AndroidManifest.xml
+-keep class * extends android.app.Activity
+-keep class * extends android.app.Service
+-keep class * extends android.content.BroadcastReceiver
+-keep class * extends android.content.ContentProvider
+
+# Additional Kotlin rules
+-keepclassmembers class kotlin.** {
+    public <methods>;
+}
+-keep class kotlin.Metadata { *; }
+-keepclassmembers class **$WhenMappings {
+    <fields>;
+}
+-keepclassmembers class **$WhenMappings$When {
+    <methods>;
+}
+
+# Keep data classes
+-keepclassmembers class * {
+    @kotlin.jvm.JvmField <fields>;
+}
+
+# Keep companion objects
+-keepclassmembers class * {
+    public static ** Companion;
+}
+
+# Keep object instances
+-keepclassmembers class * {
+    public static ** INSTANCE;
+}
+
+# Suppress warnings for missing classes
+-dontwarn kotlinx.coroutines.**
+-dontwarn kotlin.reflect.**
+-dontwarn kotlin.Unit
+-dontwarn kotlin.collections.**
+-dontwarn kotlin.jvm.internal.**
+-dontwarn kotlin.coroutines.**
+
+# Google Play Core (optional dependency for deferred components)
+# These rules are generated automatically by R8 to suppress warnings about missing classes
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallException
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallManager
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallManagerFactory
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallRequest$Builder
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallRequest
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallSessionState
+-dontwarn com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
+-dontwarn com.google.android.play.core.tasks.OnFailureListener
+-dontwarn com.google.android.play.core.tasks.OnSuccessListener
+-dontwarn com.google.android.play.core.tasks.Task
+
+# Flutter deferred components (Play Store split install)
+-keep class io.flutter.embedding.engine.deferredcomponents.** { *; }
+-keep class io.flutter.embedding.android.FlutterPlayStoreSplitApplication { *; }
+
+# R8 full mode compatibility
+-allowaccessmodification
+-repackageclasses ''
+
