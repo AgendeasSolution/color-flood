@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../utils/responsive_utils.dart';
 
-/// Reusable color button component for the color palette
+/// Reusable 3D gem-style color button component for the color palette
 class ColorButton extends StatefulWidget {
   final Color color;
   final VoidCallback onTap;
@@ -19,8 +19,25 @@ class ColorButton extends StatefulWidget {
   State<ColorButton> createState() => _ColorButtonState();
 }
 
-class _ColorButtonState extends State<ColorButton> {
+class _ColorButtonState extends State<ColorButton> 
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  late AnimationController _shineController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shineController.dispose();
+    super.dispose();
+  }
 
   void _onTapDown(TapDownDetails details) {
     if (!widget.isDisabled) {
@@ -43,38 +60,163 @@ class _ColorButtonState extends State<ColorButton> {
   Widget build(BuildContext context) {
     // Get responsive button size
     final buttonSize = ResponsiveUtils.getResponsiveButtonSize(context);
+    final baseColor = widget.isDisabled 
+        ? widget.color.withOpacity(0.5) 
+        : widget.color;
     
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: AnimatedScale(
-        scale: _isPressed ? 1.1 : 1.0,
+        scale: _isPressed ? 0.95 : 1.0,
         duration: GameConstants.colorButtonAnimationDuration,
         curve: Curves.fastOutSlowIn,
         child: Container(
           width: buttonSize,
           height: buttonSize,
           decoration: BoxDecoration(
-            color: widget.isDisabled 
-                ? widget.color.withOpacity(0.5) 
-                : widget.color,
             shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withOpacity(0.9), 
-              width: GameConstants.colorButtonBorderWidth,
-            ),
             boxShadow: [
+              // Outer shadow for depth
               BoxShadow(
-                color: Colors.black.withOpacity(0.25),
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 12,
+                spreadRadius: -2,
+                offset: const Offset(0, 6),
+              ),
+              // Inner glow
+              BoxShadow(
+                color: baseColor.withOpacity(0.3),
                 blurRadius: 8,
                 spreadRadius: 1,
-                offset: const Offset(0, 4),
+                offset: const Offset(0, 2),
               ),
             ],
+          ),
+          child: ClipOval(
+            child: Stack(
+              children: [
+                // Base gem layer with radial gradient for 3D ball effect
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      center: Alignment.topLeft,
+                      radius: 1.2,
+                      colors: [
+                        _lightenColor(baseColor, 0.2),
+                        baseColor,
+                        _darkenColor(baseColor, 0.25),
+                      ],
+                      stops: const [0.0, 0.6, 1.0],
+                    ),
+                  ),
+                ),
+                
+                // Top-left bright highlight (main light source)
+                Positioned(
+                  top: buttonSize * 0.15,
+                  left: buttonSize * 0.15,
+                  width: buttonSize * 0.4,
+                  height: buttonSize * 0.4,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        center: Alignment.topLeft,
+                        radius: 0.8,
+                        colors: [
+                          Colors.white.withOpacity(0.6),
+                          Colors.white.withOpacity(0.2),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.4, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Secondary highlight spot (top-right)
+                Positioned(
+                  top: buttonSize * 0.1,
+                  right: buttonSize * 0.2,
+                  width: buttonSize * 0.25,
+                  height: buttonSize * 0.25,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.6,
+                        colors: [
+                          Colors.white.withOpacity(0.5),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Animated shine effect (sweeping across)
+                AnimatedBuilder(
+                  animation: _shineController,
+                  builder: (context, child) {
+                    return Positioned(
+                      top: -buttonSize * 0.5,
+                      left: -buttonSize * 0.5 + 
+                          (_shineController.value * buttonSize * 1.5),
+                      child: Transform.rotate(
+                        angle: -0.785, // -45 degrees
+                        child: Container(
+                          width: buttonSize * 0.3,
+                          height: buttonSize * 1.5,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withOpacity(0.4),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                
+                // Subtle border
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Color _lightenColor(Color color, double amount) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(color);
+    final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
+    return hsl.withLightness(lightness).toColor();
+  }
+
+  Color _darkenColor(Color color, double amount) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(color);
+    final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
+    return hsl.withLightness(lightness).toColor();
   }
 }

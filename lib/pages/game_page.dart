@@ -35,6 +35,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   int _moves = 0;
   bool _isGameOver = false;
   GameState _gameState = GameState.notStarted;
+  bool _isLoadingExtraMoves = false; // Loading state for extra moves button
   final GameService _gameService = GameService();
   final LevelProgressionService _levelService =
       LevelProgressionService.instance;
@@ -292,37 +293,95 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   /// Handle extra moves button tap - show rewarded ad
   Future<void> _handleExtraMovesButton() async {
-    if (!_shouldShowExtraMovesButton()) return;
+    if (!_shouldShowExtraMovesButton() || _isLoadingExtraMoves) {
+      debugPrint('[GamePage] Extra moves button: shouldShow=${_shouldShowExtraMovesButton()}, isLoading=$_isLoadingExtraMoves');
+      return;
+    }
     
-    _audioService.playClickSound();
+    debugPrint('[GamePage] Extra moves button tapped');
+    
+    if (mounted) {
+      setState(() {
+        _isLoadingExtraMoves = true;
+      });
+    }
     
     try {
+      _audioService.playClickSound();
+      
+      debugPrint('[GamePage] Attempting to show rewarded ad...');
       final rewardEarned = await RewardedAdService.instance.showAd(
         onRewarded: (reward) {
+          debugPrint('[GamePage] Reward earned: ${reward.amount} ${reward.type}');
           // Add 5 extra moves when ad is watched
           if (mounted) {
             setState(() {
               _gameConfig = _gameConfig.copyWith(
                 maxMoves: _gameConfig.maxMoves + 5,
               );
+              _isLoadingExtraMoves = false;
             });
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('+5 Extra Moves Added!'),
+                duration: Duration(seconds: 2),
+                backgroundColor: Colors.green,
+              ),
+            );
             // Preload next ad for future use
             RewardedAdService.instance.preloadAd();
           }
         },
         onAdFailedToShow: () {
-          // Ad failed to show - preload for next time
-          RewardedAdService.instance.preloadAd();
+          debugPrint('[GamePage] Ad failed to show');
+          if (mounted) {
+            setState(() {
+              _isLoadingExtraMoves = false;
+            });
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ad not available. Please try again later.'),
+                duration: Duration(seconds: 2),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            // Preload next ad for next time
+            RewardedAdService.instance.preloadAd();
+          }
         },
       );
       
+      debugPrint('[GamePage] showAd returned: rewardEarned=$rewardEarned');
+      
       // If ad wasn't shown, try to preload for next time
       if (!rewardEarned) {
+        debugPrint('[GamePage] Ad was not shown, preloading for next time');
+        if (mounted) {
+          setState(() {
+            _isLoadingExtraMoves = false;
+          });
+        }
         RewardedAdService.instance.preloadAd();
       }
-    } catch (e) {
-      debugPrint('Rewarded ad error: $e');
-      // Silently handle errors - preload for next time
+    } catch (e, stackTrace) {
+      debugPrint('[GamePage] Rewarded ad error: $e');
+      debugPrint('[GamePage] Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _isLoadingExtraMoves = false;
+        });
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      // Preload for next time
       RewardedAdService.instance.preloadAd();
     }
   }
@@ -520,24 +579,62 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Moves Display with Extra Moves Button inside (Above Game Board)
-                        HudCard(
-                          padding: ResponsiveUtils.getResponsivePadding(
-                            context,
-                            smallPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            mediumPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                            largePhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            tablet: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                          ),
+                        // Moves Display with Extra Moves Button (Above Game Board)
+                        IntrinsicHeight(
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Moves section: label and count grouped together
-                              Column(
+                              // Moves Counter - Game-like design
+                              Container(
+                              padding: ResponsiveUtils.getResponsivePadding(
+                                context,
+                                smallPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                mediumPhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                                largePhone: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                tablet: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                              constraints: BoxConstraints(
+                                minHeight: ResponsiveUtils.getResponsiveValue(
+                                  context: context,
+                                  smallPhone: 56.0, // Same as button
+                                  mediumPhone: 60.0,
+                                  largePhone: 64.0,
+                                  tablet: 72.0,
+                                ),
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.black.withOpacity(0.4),
+                                    Colors.black.withOpacity(0.2),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.15),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 20,
+                                    spreadRadius: -5,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    spreadRadius: -2,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
                                 mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     AppConstants.movesLabel,
@@ -547,11 +644,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                         smallPhone: 10,
                                         mediumPhone: 11,
                                         largePhone: 12,
-                                        tablet: 14,
+                                        tablet: 13,
                                       ),
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white70,
-                                      letterSpacing: 1.1,
+                                      color: Colors.white.withOpacity(0.9),
+                                      letterSpacing: 1.0,
                                     ),
                                   ),
                                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
@@ -559,23 +656,33 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                     smallPhone: 2,
                                     mediumPhone: 3,
                                     largePhone: 4,
-                                    tablet: 5,
+                                    tablet: 4,
                                   )),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
                                     children: [
                                       Text(
                                         '$_moves',
                                         style: TextStyle(
                                           fontSize: ResponsiveUtils.getResponsiveFontSize(
                                             context,
-                                            smallPhone: 20,
-                                            mediumPhone: 22,
-                                            largePhone: 24,
-                                            tablet: 28,
+                                            smallPhone: 24,
+                                            mediumPhone: 26,
+                                            largePhone: 28,
+                                            tablet: 32,
                                           ),
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w900,
                                           color: Colors.white,
+                                          letterSpacing: -1,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withOpacity(0.6),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       Text(
@@ -589,7 +696,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                             tablet: 28,
                                           ),
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.white60,
+                                          color: Colors.white.withOpacity(0.7),
                                         ),
                                       ),
                                       Text(
@@ -597,80 +704,230 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                           fontSize: ResponsiveUtils.getResponsiveFontSize(
                                             context,
-                                            smallPhone: 20,
-                                            mediumPhone: 22,
-                                            largePhone: 24,
-                                            tablet: 28,
+                                            smallPhone: 24,
+                                            mediumPhone: 26,
+                                            largePhone: 28,
+                                            tablet: 32,
                                           ),
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white.withOpacity(0.95),
+                                          letterSpacing: -1,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withOpacity(0.6),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                              // Extra Moves Button (appears when 2 moves remaining)
-                              if (_shouldShowExtraMovesButton())
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    left: ResponsiveUtils.getResponsiveSpacing(
-                                      context,
-                                      smallPhone: 8,
-                                      mediumPhone: 10,
-                                      largePhone: 12,
-                                      tablet: 16,
-                                    ),
+                            ),
+                            
+                            // Extra Moves Button (appears when 2 moves remaining)
+                            if (_shouldShowExtraMovesButton())
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  left: ResponsiveUtils.getResponsiveSpacing(
+                                    context,
+                                    smallPhone: 12,
+                                    mediumPhone: 14,
+                                    largePhone: 16,
+                                    tablet: 20,
                                   ),
-                                  child: GlassButton(
-                                    onTap: _handleExtraMovesButton,
-                                    padding: ResponsiveUtils.getResponsivePadding(
-                                      context,
-                                      smallPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      mediumPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                                      largePhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                      tablet: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                                    ),
-                                    gradientColors: [
-                                      const Color(0xFF22C55E).withOpacity(0.9),
-                                      const Color(0xFF16A34A).withOpacity(0.8),
-                                      const Color(0xFF15803D).withOpacity(0.9),
-                                    ],
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '+5 Moves',
-                                          style: TextStyle(
-                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                              context,
-                                              smallPhone: 12,
-                                              mediumPhone: 13,
-                                              largePhone: 14,
-                                              tablet: 16,
-                                            ),
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
+                                ),
+                                child: Opacity(
+                                  opacity: _isLoadingExtraMoves ? 0.7 : 1.0,
+                                  child: GestureDetector(
+                                    onTap: _isLoadingExtraMoves ? () {} : _handleExtraMovesButton,
+                                    child: Container(
+                                      padding: ResponsiveUtils.getResponsivePadding(
+                                        context,
+                                        smallPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                        mediumPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                                        largePhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                        tablet: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minHeight: ResponsiveUtils.getResponsiveValue(
+                                          context: context,
+                                          smallPhone: 56.0, // 8*2 + 40 (content height)
+                                          mediumPhone: 60.0,
+                                          largePhone: 64.0,
+                                          tablet: 72.0,
                                         ),
-                                        Text(
-                                          '(watch ads)',
-                                          style: TextStyle(
-                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                              context,
-                                              smallPhone: 9,
-                                              mediumPhone: 10,
-                                              largePhone: 11,
-                                              tablet: 12,
-                                            ),
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.white70,
-                                          ),
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF10B981), // Emerald
+                                            Color(0xFF059669), // Emerald dark
+                                            Color(0xFF047857), // Emerald darker
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                      ],
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.4),
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF10B981).withOpacity(0.6),
+                                            blurRadius: 20,
+                                            spreadRadius: 0,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            blurRadius: 15,
+                                            spreadRadius: -3,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: _isLoadingExtraMoves
+                                          ? SizedBox(
+                                              width: ResponsiveUtils.getResponsiveFontSize(
+                                                context,
+                                                smallPhone: 16,
+                                                mediumPhone: 18,
+                                                largePhone: 20,
+                                                tablet: 22,
+                                              ),
+                                              height: ResponsiveUtils.getResponsiveFontSize(
+                                                context,
+                                                smallPhone: 16,
+                                                mediumPhone: 18,
+                                                largePhone: 20,
+                                                tablet: 22,
+                                              ),
+                                              child: const CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            )
+                                          : Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          '+5',
+                                                          style: TextStyle(
+                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                                              context,
+                                                              smallPhone: 18,
+                                                              mediumPhone: 20,
+                                                              largePhone: 22,
+                                                              tablet: 24,
+                                                            ),
+                                                            fontWeight: FontWeight.w900,
+                                                            color: Colors.white,
+                                                            letterSpacing: -0.5,
+                                                            shadows: [
+                                                              Shadow(
+                                                                color: Colors.black.withOpacity(0.5),
+                                                                blurRadius: 4,
+                                                                offset: const Offset(0, 2),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                                                          context,
+                                                          smallPhone: 4,
+                                                          mediumPhone: 5,
+                                                          largePhone: 6,
+                                                          tablet: 6,
+                                                        )),
+                                                        Text(
+                                                          'Moves',
+                                                          style: TextStyle(
+                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                                              context,
+                                                              smallPhone: 14,
+                                                              mediumPhone: 15,
+                                                              largePhone: 16,
+                                                              tablet: 18,
+                                                            ),
+                                                            fontWeight: FontWeight.w700,
+                                                            color: Colors.white,
+                                                            shadows: [
+                                                              Shadow(
+                                                                color: Colors.black.withOpacity(0.4),
+                                                                blurRadius: 3,
+                                                                offset: const Offset(0, 1),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                                                      context,
+                                                      smallPhone: 2,
+                                                      mediumPhone: 3,
+                                                      largePhone: 3,
+                                                      tablet: 4,
+                                                    )),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.play_circle_outline,
+                                                          color: Colors.white.withOpacity(0.9),
+                                                          size: ResponsiveUtils.getResponsiveFontSize(
+                                                            context,
+                                                            smallPhone: 12,
+                                                            mediumPhone: 13,
+                                                            largePhone: 14,
+                                                            tablet: 15,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                                                          context,
+                                                          smallPhone: 3,
+                                                          mediumPhone: 4,
+                                                          largePhone: 4,
+                                                          tablet: 5,
+                                                        )),
+                                                        Text(
+                                                          'Watch Ad',
+                                                          style: TextStyle(
+                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                                              context,
+                                                              smallPhone: 11,
+                                                              mediumPhone: 12,
+                                                              largePhone: 13,
+                                                              tablet: 14,
+                                                            ),
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Colors.white.withOpacity(0.95),
+                                                            letterSpacing: 0.5,
+                                                            shadows: [
+                                                              Shadow(
+                                                                color: Colors.black.withOpacity(0.4),
+                                                                blurRadius: 3,
+                                                                offset: const Offset(0, 1),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                     ),
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -816,10 +1073,37 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     const Color(0xFFDC2626).withOpacity(0.8),
                     const Color(0xFFB91C1C).withOpacity(0.9),
                   ],
-                  child: Icon(
-                    Icons.refresh,
-                    color: Colors.white,
-                    size: ResponsiveUtils.getResponsiveIconSize(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: ResponsiveUtils.getResponsiveIconSize(context),
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                        context,
+                        smallPhone: 4,
+                        mediumPhone: 5,
+                        largePhone: 6,
+                        tablet: 8,
+                      )),
+                      Text(
+                        'Reset',
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            smallPhone: 12,
+                            mediumPhone: 13,
+                            largePhone: 14,
+                            tablet: 16,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
