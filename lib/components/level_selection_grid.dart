@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/level_progression_service.dart';
 import '../utils/responsive_utils.dart';
-import 'hexagon_widget.dart';
+import 'gem_level_button.dart';
 
 /// Level selection grid component showing levels 1-12
 class LevelSelectionGrid extends StatelessWidget {
@@ -70,7 +70,7 @@ class LevelSelectionGrid extends StatelessWidget {
                 ),
         ),
         
-        // Level Grid - Hexagonal Layout with overall page scrolling
+        // Level Grid - 3D Gem Layout with overall page scrolling
         GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
@@ -86,8 +86,8 @@ class LevelSelectionGrid extends StatelessWidget {
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: spacing,
-            mainAxisSpacing: spacing * 2, // Increased gap between rows
-            childAspectRatio: 1.0, // Adjusted for better hexagonal proportions
+            mainAxisSpacing: spacing * 1.5, // Spacing for 3D gems
+            childAspectRatio: 1.0, // Square gems
           ),
           itemCount: GameConstants.maxLevel,
           itemBuilder: (context, index) {
@@ -102,87 +102,126 @@ class LevelSelectionGrid extends StatelessWidget {
 
   Widget _buildHexagonalLevelButton(BuildContext context, int level, LevelStatus status) {
     final isLocked = status == LevelStatus.locked;
-    final isCompleted = status == LevelStatus.completed;
     
-    // Get responsive hexagon size
-    final hexSize = ResponsiveUtils.getResponsiveLevelButtonSize(context);
+    // Get base color based on status
+    final baseColor = _getLevelButtonBaseColor(status);
+    
+    // Custom shadows for different statuses
+    final customShadows = _getLevelButtonShadows(status, baseColor);
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      child: HexagonWidget(
-        size: hexSize,
-        colors: _getLevelButtonColors(status),
-        borderColor: _getLevelButtonBorderColor(status),
-        borderWidth: 1.5,
-        shadows: [
-          BoxShadow(
-            color: _getLevelButtonShadowColor(status),
-            blurRadius: 15,
-            spreadRadius: 1,
-            offset: const Offset(0, 8),
-          ),
-          // Inner glow effect
-          BoxShadow(
-            color: Colors.white.withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: -2,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        onTap: isLocked ? null : () => onLevelSelected(level),
-        child: _buildHexagonalLevelContent(context, level, status),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use the smaller dimension to ensure square gems, with padding for shadows
+          final availableSize = constraints.maxWidth < constraints.maxHeight 
+              ? constraints.maxWidth 
+              : constraints.maxHeight;
+          
+          // Leave some space for shadows (about 10% on each side)
+          final gemSize = availableSize * 0.9;
+          
+          return Center(
+            child: GemLevelButton(
+              size: gemSize,
+              baseColor: baseColor,
+              customShadows: customShadows,
+              onTap: isLocked ? null : () => onLevelSelected(level),
+              child: _buildGemLevelContent(context, level, status),
+            ),
+          );
+        },
       ),
     );
   }
 
 
-  List<Color> _getLevelButtonColors(LevelStatus status) {
+  Color _getLevelButtonBaseColor(LevelStatus status) {
+    switch (status) {
+      case LevelStatus.completed:
+        // Green gem for completed levels (matching game board green)
+        return const Color(0xFF22C55E);
+      case LevelStatus.unlocked:
+        // Blue gem for unlocked levels (matching game board blue)
+        return const Color(0xFF3B82F6);
+      case LevelStatus.locked:
+        // Grey gem for locked levels
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  List<BoxShadow> _getLevelButtonShadows(LevelStatus status, Color baseColor) {
     switch (status) {
       case LevelStatus.completed:
         return [
-          const Color(0xFF22C55E).withOpacity(0.9),
-          const Color(0xFF10B981).withOpacity(0.7),
-          const Color(0xFF059669).withOpacity(0.8),
+          // Deep shadow
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 10,
+            spreadRadius: -3,
+            offset: const Offset(0, 5),
+          ),
+          // Medium shadow
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            spreadRadius: -1,
+            offset: const Offset(0, 2),
+          ),
+          // Green glow
+          BoxShadow(
+            color: baseColor.withOpacity(0.5),
+            blurRadius: 8,
+            spreadRadius: 2,
+            offset: const Offset(0, 1),
+          ),
         ];
       case LevelStatus.unlocked:
         return [
-          const Color(0xFF6366F1).withOpacity(0.3),
-          const Color(0xFF8B5CF6).withOpacity(0.2),
-          const Color(0xFFEC4899).withOpacity(0.2),
+          // Deep shadow
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 10,
+            spreadRadius: -3,
+            offset: const Offset(0, 5),
+          ),
+          // Medium shadow
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            spreadRadius: -1,
+            offset: const Offset(0, 2),
+          ),
+          // Blue glow
+          BoxShadow(
+            color: baseColor.withOpacity(0.4),
+            blurRadius: 6,
+            spreadRadius: 1.5,
+            offset: const Offset(0, 1),
+          ),
         ];
       case LevelStatus.locked:
         return [
-          const Color(0xFF4B5563).withOpacity(0.6), // Slightly brighter
-          const Color(0xFF374151).withOpacity(0.5),
-          const Color(0xFF1F2937).withOpacity(0.4),
+          // Reduced shadow for locked levels
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8,
+            spreadRadius: -2,
+            offset: const Offset(0, 4),
+          ),
+          // Subtle grey glow
+          BoxShadow(
+            color: baseColor.withOpacity(0.2),
+            blurRadius: 4,
+            spreadRadius: 0.5,
+            offset: const Offset(0, 1),
+          ),
         ];
     }
   }
 
-  Color _getLevelButtonBorderColor(LevelStatus status) {
-    switch (status) {
-      case LevelStatus.completed:
-        return const Color(0xFF22C55E).withOpacity(0.9);
-      case LevelStatus.unlocked:
-        return const Color(0xFF6366F1).withOpacity(0.5);
-      case LevelStatus.locked:
-        return const Color(0xFF6B7280).withOpacity(0.8); // Brighter border
-    }
-  }
-
-  Color _getLevelButtonShadowColor(LevelStatus status) {
-    switch (status) {
-      case LevelStatus.completed:
-        return const Color(0xFF22C55E).withOpacity(0.4);
-      case LevelStatus.unlocked:
-        return const Color(0xFF6366F1).withOpacity(0.2);
-      case LevelStatus.locked:
-        return const Color(0xFF6B7280).withOpacity(0.3); // Subtle glow for locked levels
-    }
-  }
-
-  Widget _buildHexagonalLevelContent(BuildContext context, int level, LevelStatus status) {
+  Widget _buildGemLevelContent(BuildContext context, int level, LevelStatus status) {
     // Get responsive sizes
     final iconSize = ResponsiveUtils.getResponsiveIconSize(
       context,
@@ -213,19 +252,22 @@ class LevelSelectionGrid extends StatelessWidget {
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              const Color(0xFF9CA3AF).withOpacity(0.6), // Brighter grey
-              const Color(0xFF6B7280).withOpacity(0.4),
-              const Color(0xFF4B5563).withOpacity(0.3),
+              Colors.white.withOpacity(0.15),
+              Colors.white.withOpacity(0.05),
+              Colors.transparent,
             ],
           ),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB).withOpacity(0.8),
-            width: 2,
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Icon(
           Icons.lock,
-          color: const Color(0xFFE5E7EB), // Brighter lock icon
+          color: Colors.white.withOpacity(0.7),
           size: iconSize,
         ),
       );
@@ -239,46 +281,58 @@ class LevelSelectionGrid extends StatelessWidget {
             level.toString(),
             style: TextStyle(
               color: Colors.white,
-              fontSize: textSize + 4,
-              fontWeight: FontWeight.bold,
-              shadows: const [
+              fontSize: textSize + 2,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              shadows: [
                 Shadow(
-                  color: Colors.black54,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
+                  color: Colors.black.withOpacity(0.8),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+                Shadow(
+                  color: const Color(0xFF22C55E).withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
           ),
           SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
             context,
-            smallPhone: 4,
-            mediumPhone: 6,
-            largePhone: 8,
-            tablet: 10,
+            smallPhone: 3,
+            mediumPhone: 4,
+            largePhone: 5,
+            tablet: 6,
           )),
           Container(
-            padding: EdgeInsets.all(padding - 2),
+            padding: EdgeInsets.all(padding - 3),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  Colors.white.withOpacity(0.9),
-                  Colors.white.withOpacity(0.6),
+                  Colors.white.withOpacity(0.95),
+                  Colors.white.withOpacity(0.7),
+                  const Color(0xFF22C55E).withOpacity(0.3),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white.withOpacity(0.3),
-                  blurRadius: 8,
+                  color: const Color(0xFF22C55E).withOpacity(0.6),
+                  blurRadius: 6,
                   spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.4),
+                  blurRadius: 4,
+                  spreadRadius: 0,
                 ),
               ],
             ),
             child: Icon(
               Icons.check_circle,
               color: const Color(0xFF22C55E),
-              size: iconSize - 2,
+              size: iconSize - 3,
             ),
           ),
         ],
@@ -287,31 +341,41 @@ class LevelSelectionGrid extends StatelessWidget {
     
     // Unlocked but not completed
     return Container(
-      padding: EdgeInsets.all(padding + 4),
+      padding: EdgeInsets.all(padding + 2),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            Colors.white.withOpacity(0.2),
-            Colors.white.withOpacity(0.05),
+            Colors.white.withOpacity(0.25),
+            Colors.white.withOpacity(0.1),
+            Colors.transparent,
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.2),
+            blurRadius: 4,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Text(
         level.toString(),
         style: TextStyle(
           color: Colors.white,
-          fontSize: textSize + 4,
-          fontWeight: FontWeight.bold,
-          shadows: const [
+          fontSize: textSize + 2,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          shadows: [
             Shadow(
-              color: Colors.black54,
-              blurRadius: 4,
-              offset: Offset(0, 2),
+              color: Colors.black.withOpacity(0.8),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+            Shadow(
+              color: const Color(0xFF3B82F6).withOpacity(0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 0),
             ),
           ],
         ),

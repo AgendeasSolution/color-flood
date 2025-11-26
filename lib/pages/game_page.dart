@@ -13,7 +13,6 @@ import '../services/rewarded_ad_service.dart';
 import '../services/audio_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
-import '../components/hud_card.dart';
 import '../components/glass_button.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
@@ -78,7 +77,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           }
         } catch (e) {
           // Silently handle ad failures - don't interrupt user experience
-          print('Entry ad failed to show: $e');
+          debugPrint('Entry ad failed to show: $e');
           // Still try to preload for next time
           InterstitialAdService.instance.preloadAd();
         }
@@ -97,7 +96,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - still allow user to exit
-      print('Exit ad failed to show: $e');
+      debugPrint('Exit ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -193,7 +192,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - don't interrupt user experience
-      print('Restart ad failed to show: $e');
+      debugPrint('Restart ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -219,7 +218,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - don't interrupt user experience
-      print('Next level ad failed to show: $e');
+      debugPrint('Next level ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -986,124 +985,123 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Widget _buildHud() {
     return Stack(
       children: [
-        // Top Row Container (Exit, Level, Reset)
+        // Exit Button (Left)
+        Positioned(
+          top: 0,
+          left: GameConstants.mediumSpacing,
+          child: GlassButton(
+            onTap: _handleExit,
+            padding: ResponsiveUtils.getResponsivePadding(
+              context,
+              smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            child: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: ResponsiveUtils.getResponsiveIconSize(context),
+            ),
+          ),
+        ),
+
+        // Level Display (Centered on Screen)
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: GameConstants.mediumSpacing,
-            ),
+          child: Center(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Exit Button (Left)
-                GlassButton(
-                  onTap: _handleExit,
-                  padding: ResponsiveUtils.getResponsivePadding(
-                    context,
-                    smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                    largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: ResponsiveUtils.getResponsiveIconSize(context),
-                  ),
-                ),
-
-                // Level Display (Center)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppConstants.levelLabel,
-                      style: TextStyle(
-                        fontSize: ResponsiveUtils.getResponsiveFontSize(
-                          context,
-                          smallPhone: 20,
-                          mediumPhone: 22,
-                          largePhone: 24,
-                          tablet: 28,
-                        ),
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white70,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                Text(
+                  AppConstants.levelLabel,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.getResponsiveFontSize(
                       context,
-                      smallPhone: 4,
-                      mediumPhone: 5,
-                      largePhone: 6,
-                      tablet: 8,
-                    )),
-                    Text(
-                      '${_gameConfig.level}',
-                      style: TextStyle(
-                        fontSize: ResponsiveUtils.getResponsiveFontSize(
-                          context,
-                          smallPhone: 20,
-                          mediumPhone: 22,
-                          largePhone: 24,
-                          tablet: 28,
-                        ),
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
+                      smallPhone: 20,
+                      mediumPhone: 22,
+                      largePhone: 24,
+                      tablet: 28,
                     ),
-                  ],
-                ),
-
-                // Reset Button (Right)
-                GlassButton(
-                  onTap: _restartCurrentLevel,
-                  padding: ResponsiveUtils.getResponsivePadding(
-                    context,
-                    smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                    largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                    letterSpacing: 1.1,
                   ),
-                  gradientColors: [
-                    const Color(0xFFEF4444).withOpacity(0.9),
-                    const Color(0xFFDC2626).withOpacity(0.8),
-                    const Color(0xFFB91C1C).withOpacity(0.9),
-                  ],
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.refresh,
-                        color: Colors.white,
-                        size: ResponsiveUtils.getResponsiveIconSize(context),
-                      ),
-                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                        context,
-                        smallPhone: 4,
-                        mediumPhone: 5,
-                        largePhone: 6,
-                        tablet: 8,
-                      )),
-                      Text(
-                        'Reset',
-                        style: TextStyle(
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            smallPhone: 12,
-                            mediumPhone: 13,
-                            largePhone: 14,
-                            tablet: 16,
-                          ),
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                ),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 4,
+                  mediumPhone: 5,
+                  largePhone: 6,
+                  tablet: 8,
+                )),
+                Text(
+                  '${_gameConfig.level}',
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      smallPhone: 20,
+                      mediumPhone: 22,
+                      largePhone: 24,
+                      tablet: 28,
+                    ),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Reset Button (Right)
+        Positioned(
+          top: 0,
+          right: GameConstants.mediumSpacing,
+          child: GlassButton(
+            onTap: _restartCurrentLevel,
+            padding: ResponsiveUtils.getResponsivePadding(
+              context,
+              smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            gradientColors: [
+              const Color(0xFFEF4444).withOpacity(0.9),
+              const Color(0xFFDC2626).withOpacity(0.8),
+              const Color(0xFFB91C1C).withOpacity(0.9),
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                  size: ResponsiveUtils.getResponsiveIconSize(context),
+                ),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 4,
+                  mediumPhone: 5,
+                  largePhone: 6,
+                  tablet: 8,
+                )),
+                Text(
+                  'Reset',
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      smallPhone: 12,
+                      mediumPhone: 13,
+                      largePhone: 14,
+                      tablet: 16,
+                    ),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
