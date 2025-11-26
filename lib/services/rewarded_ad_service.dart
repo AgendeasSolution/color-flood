@@ -32,8 +32,9 @@ class RewardedAdService {
     }
   }
 
-  /// Current ad unit ID (using test for now - update with production IDs when ready)
-  static String get _adUnitId => _testAdUnitId;
+  /// Current ad unit ID (using production with platform detection)
+  /// Change to _testAdUnitId when ready for development
+  static String get _adUnitId => _productionAdUnitId;
 
   /// Check if ad is ready to show
   bool get isAdReady => _isAdReady;
