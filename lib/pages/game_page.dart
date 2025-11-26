@@ -9,6 +9,7 @@ import '../types/game_types.dart';
 import '../services/game_service.dart';
 import '../services/level_progression_service.dart';
 import '../services/interstitial_ad_service.dart';
+import '../services/rewarded_ad_service.dart';
 import '../services/audio_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
@@ -49,12 +50,18 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _initializeAnimations();
     _startNewGame();
     _preloadInterstitialAd();
+    _preloadRewardedAd();
     _showEntryAd();
   }
 
   void _preloadInterstitialAd() {
     // Preload interstitial ad for better user experience
     InterstitialAdService.instance.preloadAd();
+  }
+
+  void _preloadRewardedAd() {
+    // Preload rewarded ad for better user experience
+    RewardedAdService.instance.preloadAd();
   }
 
   void _showEntryAd() {
@@ -276,6 +283,50 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     }
   }
 
+  /// Check if extra moves button should be shown (when 2 moves remaining)
+  bool _shouldShowExtraMovesButton() {
+    if (_isGameOver || _gameState != GameState.playing) return false;
+    final movesRemaining = _gameConfig.maxMoves - _moves;
+    return movesRemaining <= 2 && movesRemaining > 0;
+  }
+
+  /// Handle extra moves button tap - show rewarded ad
+  Future<void> _handleExtraMovesButton() async {
+    if (!_shouldShowExtraMovesButton()) return;
+    
+    _audioService.playClickSound();
+    
+    try {
+      final rewardEarned = await RewardedAdService.instance.showAd(
+        onRewarded: (reward) {
+          // Add 5 extra moves when ad is watched
+          if (mounted) {
+            setState(() {
+              _gameConfig = _gameConfig.copyWith(
+                maxMoves: _gameConfig.maxMoves + 5,
+              );
+            });
+            // Preload next ad for future use
+            RewardedAdService.instance.preloadAd();
+          }
+        },
+        onAdFailedToShow: () {
+          // Ad failed to show - preload for next time
+          RewardedAdService.instance.preloadAd();
+        },
+      );
+      
+      // If ad wasn't shown, try to preload for next time
+      if (!rewardEarned) {
+        RewardedAdService.instance.preloadAd();
+      }
+    } catch (e) {
+      debugPrint('Rewarded ad error: $e');
+      // Silently handle errors - preload for next time
+      RewardedAdService.instance.preloadAd();
+    }
+  }
+
   void _checkWinCondition() {
     if (!mounted) return;
     
@@ -469,7 +520,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Moves Display (Above Game Board - with background)
+                        // Moves Display with Extra Moves Button inside (Above Game Board)
                         HudCard(
                           padding: ResponsiveUtils.getResponsivePadding(
                             context,
@@ -480,71 +531,146 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                AppConstants.movesLabel,
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                    context,
-                                    smallPhone: 10,
-                                    mediumPhone: 11,
-                                    largePhone: 12,
-                                    tablet: 14,
+                              // Moves section: label and count grouped together
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    AppConstants.movesLabel,
+                                    style: TextStyle(
+                                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                        context,
+                                        smallPhone: 10,
+                                        mediumPhone: 11,
+                                        largePhone: 12,
+                                        tablet: 14,
+                                      ),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white70,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white70,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                              SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                                context,
-                                smallPhone: 4,
-                                mediumPhone: 5,
-                                largePhone: 6,
-                                tablet: 8,
-                              )),
-                              Text(
-                                '$_moves',
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                                     context,
-                                    smallPhone: 20,
-                                    mediumPhone: 22,
-                                    largePhone: 24,
-                                    tablet: 28,
+                                    smallPhone: 2,
+                                    mediumPhone: 3,
+                                    largePhone: 4,
+                                    tablet: 5,
+                                  )),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$_moves',
+                                        style: TextStyle(
+                                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                            context,
+                                            smallPhone: 20,
+                                            mediumPhone: 22,
+                                            largePhone: 24,
+                                            tablet: 28,
+                                          ),
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' / ',
+                                        style: TextStyle(
+                                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                            context,
+                                            smallPhone: 20,
+                                            mediumPhone: 22,
+                                            largePhone: 24,
+                                            tablet: 28,
+                                          ),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white60,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${_gameConfig.maxMoves}',
+                                        style: TextStyle(
+                                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                            context,
+                                            smallPhone: 20,
+                                            mediumPhone: 22,
+                                            largePhone: 24,
+                                            tablet: 28,
+                                          ),
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
+                                ],
                               ),
-                              Text(
-                                ' / ',
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                    context,
-                                    smallPhone: 20,
-                                    mediumPhone: 22,
-                                    largePhone: 24,
-                                    tablet: 28,
+                              // Extra Moves Button (appears when 2 moves remaining)
+                              if (_shouldShowExtraMovesButton())
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    left: ResponsiveUtils.getResponsiveSpacing(
+                                      context,
+                                      smallPhone: 8,
+                                      mediumPhone: 10,
+                                      largePhone: 12,
+                                      tablet: 16,
+                                    ),
                                   ),
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white60,
-                                ),
-                              ),
-                              Text(
-                                '${_gameConfig.maxMoves}',
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                    context,
-                                    smallPhone: 20,
-                                    mediumPhone: 22,
-                                    largePhone: 24,
-                                    tablet: 28,
+                                  child: GlassButton(
+                                    onTap: _handleExtraMovesButton,
+                                    padding: ResponsiveUtils.getResponsivePadding(
+                                      context,
+                                      smallPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      mediumPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                      largePhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      tablet: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                    ),
+                                    gradientColors: [
+                                      const Color(0xFF22C55E).withOpacity(0.9),
+                                      const Color(0xFF16A34A).withOpacity(0.8),
+                                      const Color(0xFF15803D).withOpacity(0.9),
+                                    ],
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '+5 Moves',
+                                          style: TextStyle(
+                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                              context,
+                                              smallPhone: 12,
+                                              mediumPhone: 13,
+                                              largePhone: 14,
+                                              tablet: 16,
+                                            ),
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          '(watch ads)',
+                                          style: TextStyle(
+                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                              context,
+                                              smallPhone: 9,
+                                              mediumPhone: 10,
+                                              largePhone: 11,
+                                              tablet: 12,
+                                            ),
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
                                 ),
-                              ),
                             ],
                           ),
                         ),

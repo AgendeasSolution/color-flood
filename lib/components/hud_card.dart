@@ -15,7 +15,7 @@ class HudCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(10),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
@@ -34,7 +34,7 @@ class HudCard extends StatelessWidget {
               end: Alignment.bottomRight,
               stops: const [0.0, 0.5, 1.0],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: Colors.white.withOpacity(0.3),
               width: 1.5,
