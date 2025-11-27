@@ -1379,7 +1379,7 @@ class _GameCompletedDialog extends StatelessWidget {
                       tablet: 12,
                     )),
                     Text(
-                      "You've completed all 30 levels!\nYou are a Color Flood master!",
+                      "You've completed all 24 levels!\nYou are a Color Flood master!",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,

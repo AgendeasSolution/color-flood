@@ -159,8 +159,8 @@ class _GameBoardState extends State<GameBoard> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: widget.gridWidth,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 3,
+                    mainAxisSpacing: 3,
                   ),
                   itemCount: widget.gridWidth * widget.gridHeight,
                   itemBuilder: (context, index) {

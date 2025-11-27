@@ -1152,7 +1152,7 @@ class GameService {
   /// Create a new game configuration for the given level with AI-precise difficulty
   GameConfig createGameConfig(int level) {
     try {
-      // Ensure level is within valid range (1-30)
+      // Ensure level is within valid range (1-24)
       final validLevel = level.clamp(1, GameConstants.maxLevel);
       final gridWidth = GameConstants.getGridWidth(validLevel);
       final gridHeight = GameConstants.getGridHeight(validLevel);

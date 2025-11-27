@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
 import '../components/color_flood_logo.dart';
-import '../components/level_selection_grid.dart';
+import '../components/level_selection_carousel.dart';
 import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
@@ -38,8 +38,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Unlock all levels for testing purposes
-    _levelService.unlockAllLevels();
     _loadLevelStatuses();
   }
 
@@ -431,50 +429,68 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  0,
-                  horizontalPadding,
-                  verticalPadding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Top spacing for logo
+                  SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                    context,
+                    smallPhone: 50,
+                    mediumPhone: 60,
+                    largePhone: 70,
+                    tablet: 80,
+                  )),
+                  
+                  // Color Flood Logo
+                  const ColorFloodLogo(),
+                  
+                  // Level Selection Carousel
+                  LevelSelectionCarousel(
+                    onLevelSelected: _onLevelSelected,
+                    levelStatuses: _levelStatuses,
+                    customHeader: _buildLevelSectionHeader(),
+                    compactTopSpacing: true,
+                  ),
+
+
+                ],
+              ),
+            ),
+          ),
+          
+          // How to Play Button - Top Left
+          Positioned(
+            top: 0,
+            left: GameConstants.mediumSpacing,
+            child: SafeArea(
+              child: _buildSmallHowToPlayButton(),
+            ),
+          ),
+          
+          // Sound Toggle Button - Top Right
+          Positioned(
+            top: 0,
+            right: GameConstants.mediumSpacing,
+            child: SafeArea(
+              child: _buildSoundToggleButton(),
+            ),
+          ),
+          
+          // Explore More Games Section - Above Ad Banner
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 90, // Height of ad banner
+            child: SafeArea(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Color Flood Logo
-                    const ColorFloodLogo(),
-                    
-                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                      context,
-                      smallPhone: 2,
-                      mediumPhone: 3,
-                      largePhone: 4,
-                      tablet: 6,
-                    )),
-                    
-                    // Level Selection Grid - Scrollable area only
-                    Expanded(
-                      child: LevelSelectionGrid(
-                        onLevelSelected: _onLevelSelected,
-                        levelStatuses: _levelStatuses,
-                        customHeader: _buildLevelSectionHeader(),
-                        compactTopSpacing: true,
-                      ),
-                    ),
-                    
-                    SizedBox(height: buttonSpacing * 2),
-                    
-                    // How to Play, Sound Toggle, and Test Update Buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildSmallHowToPlayButton(),
-                        SizedBox(width: buttonSpacing),
-                        _buildSoundToggleButton(),
-                      ],
-                    ),
-                    
-                    SizedBox(height: buttonSpacing * 3),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -495,9 +511,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-
                     SizedBox(height: buttonSpacing * 0.75),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -524,9 +538,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-
-                    // Add bottom padding to account for ad banner (90px height)
-                    SizedBox(height: 30 + bottomSpacing),
                   ],
                 ),
               ),

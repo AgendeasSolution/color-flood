@@ -34,7 +34,7 @@ class LevelSelectionGrid extends StatelessWidget {
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Custom Header or Default Title
         customHeader ?? Text(
@@ -70,32 +70,31 @@ class LevelSelectionGrid extends StatelessWidget {
                 ),
         ),
         
-        // Level Grid - 3D Gem Layout with scrollable grid area only
-        Expanded(
-          child: GridView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.symmetric(
-              vertical: ResponsiveUtils.getResponsiveSpacing(
-                context,
-                smallPhone: 4,
-                mediumPhone: 6,
-                largePhone: 8,
-                tablet: 10,
-              ),
+        // Level Grid - 3D Gem Layout with overall page scrolling
+        GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          padding: EdgeInsets.symmetric(
+            vertical: ResponsiveUtils.getResponsiveSpacing(
+              context,
+              smallPhone: 4,
+              mediumPhone: 6,
+              largePhone: 8,
+              tablet: 10,
             ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing * 1.5, // Spacing for 3D gems
-              childAspectRatio: 1.0, // Square gems
-            ),
-            itemCount: GameConstants.maxLevel,
-            itemBuilder: (context, index) {
-              final level = index + 1;
-              final status = levelStatuses[level] ?? LevelStatus.locked;
-              return _buildHexagonalLevelButton(context, level, status);
-            },
           ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing * 1.5, // Spacing for 3D gems
+            childAspectRatio: 1.0, // Square gems
+          ),
+          itemCount: GameConstants.maxLevel,
+          itemBuilder: (context, index) {
+            final level = index + 1;
+            final status = levelStatuses[level] ?? LevelStatus.locked;
+            return _buildHexagonalLevelButton(context, level, status);
+          },
         ),
       ],
     );

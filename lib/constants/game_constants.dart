@@ -33,7 +33,7 @@ class GameConstants {
   static const int maxPatternComplexity = 7;
   static const double maxColorDominance = 0.6; // Max 60% of any single color
   
-  // Level progression configuration (30 levels with rectangular grids)
+  // Level progression configuration (24 levels with rectangular grids)
   // Get grid width for a given level
   static int getGridWidth(int level) {
     if (level < 1 || level > maxLevel) return baseGridSize;
@@ -59,7 +59,7 @@ class GameConstants {
     return getGridWidth(level);
   }
   
-  static const int maxLevel = 30;
+  static const int maxLevel = 24;
 
   // UI configuration
   static const double gameBoardPadding = 12.0;
