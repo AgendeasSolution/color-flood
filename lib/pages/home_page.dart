@@ -431,103 +431,103 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    0,
-                    horizontalPadding,
-                    verticalPadding,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Color Flood Logo
-                      const ColorFloodLogo(),
-                      
-                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                        context,
-                        smallPhone: 2,
-                        mediumPhone: 3,
-                        largePhone: 4,
-                        tablet: 6,
-                      )),
-                      
-                      // Level Selection Grid
-                      LevelSelectionGrid(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  0,
+                  horizontalPadding,
+                  verticalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Color Flood Logo
+                    const ColorFloodLogo(),
+                    
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 2,
+                      mediumPhone: 3,
+                      largePhone: 4,
+                      tablet: 6,
+                    )),
+                    
+                    // Level Selection Grid - Scrollable area only
+                    Expanded(
+                      child: LevelSelectionGrid(
                         onLevelSelected: _onLevelSelected,
                         levelStatuses: _levelStatuses,
                         customHeader: _buildLevelSectionHeader(),
                         compactTopSpacing: true,
                       ),
-                      
-                     SizedBox(height: buttonSpacing * 2),
-                      
-                      // How to Play, Sound Toggle, and Test Update Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildSmallHowToPlayButton(),
-                          SizedBox(width: buttonSpacing),
-                          _buildSoundToggleButton(),
-                        ],
-                      ),
-                      
-                      SizedBox(height: buttonSpacing * 3),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Colors.white.withOpacity(0.85),
-                            size: 18,
+                    ),
+                    
+                    SizedBox(height: buttonSpacing * 2),
+                    
+                    // How to Play, Sound Toggle, and Test Update Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSmallHowToPlayButton(),
+                        SizedBox(width: buttonSpacing),
+                        _buildSoundToggleButton(),
+                      ],
+                    ),
+                    
+                    SizedBox(height: buttonSpacing * 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.white.withOpacity(0.85),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppConstants.exploreMoreGamesLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            AppConstants.exploreMoreGamesLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
 
-                      SizedBox(height: buttonSpacing * 0.75),
+                    SizedBox(height: buttonSpacing * 0.75),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildExternalNavigationButton(
-                            icon: Icons.phone_android,
-                            label: AppConstants.mobileGamesLabel,
-                            onTap: _navigateToOtherGames,
-                            iconColor: const Color(0xFF60A5FA), // Light blue for mobile
-                            gradientColors: [
-                              const Color(0xFF3B82F6).withOpacity(0.25), // Blue
-                              const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
-                            ],
-                          ),
-                          SizedBox(width: buttonSpacing),
-                          _buildExternalNavigationButton(
-                            icon: Icons.laptop,
-                            label: AppConstants.webGamesLabel,
-                            onTap: _openWebGames,
-                            iconColor: const Color(0xFF34D399), // Light green for laptop
-                            gradientColors: [
-                              const Color(0xFF10B981).withOpacity(0.25), // Green
-                              const Color(0xFF059669).withOpacity(0.15), // Darker green
-                            ],
-                          ),
-                        ],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildExternalNavigationButton(
+                          icon: Icons.phone_android,
+                          label: AppConstants.mobileGamesLabel,
+                          onTap: _navigateToOtherGames,
+                          iconColor: const Color(0xFF60A5FA), // Light blue for mobile
+                          gradientColors: [
+                            const Color(0xFF3B82F6).withOpacity(0.25), // Blue
+                            const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
+                          ],
+                        ),
+                        SizedBox(width: buttonSpacing),
+                        _buildExternalNavigationButton(
+                          icon: Icons.laptop,
+                          label: AppConstants.webGamesLabel,
+                          onTap: _openWebGames,
+                          iconColor: const Color(0xFF34D399), // Light green for laptop
+                          gradientColors: [
+                            const Color(0xFF10B981).withOpacity(0.25), // Green
+                            const Color(0xFF059669).withOpacity(0.15), // Darker green
+                          ],
+                        ),
+                      ],
+                    ),
 
-                      SizedBox(height: bottomSpacing + 60),
-                    ],
-                  ),
+                    // Add bottom padding to account for ad banner (90px height)
+                    SizedBox(height: 30 + bottomSpacing),
+                  ],
                 ),
               ),
             ),
