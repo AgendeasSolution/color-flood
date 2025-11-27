@@ -348,7 +348,7 @@ class GameService {
     return grid;
   }
 
-  /// Generate an intelligent grid with challenging patterns - MUCH HARDER
+  /// Generate an intelligent grid with challenging patterns
   List<List<Color>> _generateIntelligentGrid(int gridWidth, int gridHeight, int level, Random random) {
     // Start with a completely random grid for proper shuffling
     final grid = List.generate(
@@ -362,7 +362,7 @@ class GameService {
     // Shuffle the grid multiple times to ensure proper randomization
     _shuffleGrid(grid, gridWidth, gridHeight, random);
     
-    // Calculate difficulty parameters based on level - MUCH HARDER
+    // Calculate difficulty parameters based on level
     final difficultyMultiplier = (level - 1) / (GameConstants.maxLevel - 1);
     final patternComplexity = (5 + (difficultyMultiplier * 6)).round(); // 5-11 patterns (more complex)
     final colorDistributionBias = 0.1 + (difficultyMultiplier * 0.2); // 0.1-0.3 bias (more scattered)
@@ -382,7 +382,7 @@ class GameService {
     // Final shuffle to ensure randomness
     _shuffleGrid(grid, gridWidth, gridHeight, random);
     
-    // CRITICAL: Final equal distribution pass - must be the last step
+    // Final equal distribution pass
     _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
     
     // Final pattern prevention to ensure no adjacent same colors
@@ -425,7 +425,7 @@ class GameService {
     }
   }
 
-  /// Add extra difficulty to make the game much harder
+  /// Add extra difficulty to the grid
   void _addExtraDifficulty(List<List<Color>> grid, int gridWidth, int gridHeight, int level, Random random) {
     // Create more isolated single cells
     for (int i = 0; i < gridHeight; i++) {
@@ -628,7 +628,7 @@ class GameService {
     }
   }
 
-  /// Add strategic noise to make patterns less predictable - MUCH MORE AGGRESSIVE
+  /// Add strategic noise to make patterns less predictable
   void _addStrategicNoise(List<List<Color>> grid, int gridWidth, int gridHeight, int level, Random random) {
     final noiseLevel = (level * 0.15).clamp(0.2, 0.5); // Increased from 0.1-0.3 to 0.2-0.5
     
@@ -674,7 +674,7 @@ class GameService {
     // First ensure equal color distribution
     _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
     
-    // CRITICAL: Ensure no adjacent cells have the same color
+    // Ensure no adjacent cells have the same color
     _preventFourAdjacentCells(grid, gridWidth, gridHeight);
     
     // Final pass: ensure equal distribution again after pattern prevention
@@ -1099,37 +1099,14 @@ class GameService {
     return availableColors[random.nextInt(availableColors.length)];
   }
 
-  /// Redistribute excess color cells
-  void _redistributeColor(List<List<Color>> grid, int gridWidth, int gridHeight, Color color, int excessCount) {
-    final random = Random();
-    final cellsToChange = <Point<int>>[];
-    
-    // Find all cells with the excess color
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        if (grid[i][j] == color) {
-          cellsToChange.add(Point(i, j));
-        }
-      }
-    }
-    
-    // Randomly change excess cells to other colors
-    cellsToChange.shuffle(random);
-    for (int i = 0; i < math.min(excessCount, cellsToChange.length); i++) {
-      final point = cellsToChange[i];
-      final newColor = GameConstants.gameColors[random.nextInt(GameConstants.gameColors.length)];
-      grid[point.x][point.y] = newColor;
-    }
-  }
-
-  /// Calculate the optimal solution for a grid - ACTUALLY SOLVES THE PUZZLE STEP BY STEP
+  /// Calculate the optimal solution for a grid
   int calculateOptimalSolution(List<List<Color>> grid) {
     if (grid.isEmpty || grid[0].isEmpty) return -1;
     
     // Check if already solved
     if (isGridSolved(grid)) return 0;
     
-    // Actually solve the puzzle step by step using greedy approach
+    // Solve the puzzle step by step using greedy approach
     var currentGrid = cloneGrid(grid);
     int moves = 0;
     
@@ -1184,7 +1161,7 @@ class GameService {
       }
     }
 
-    // Verify we actually solved it
+    // Verify solution
     if (isGridSolved(currentGrid)) {
       return moves;
     }
@@ -1192,9 +1169,9 @@ class GameService {
     return -1; // Failed to solve
   }
 
-  /// Calculate the AI-optimal solution - ACTUALLY SOLVES THE PUZZLE
+  /// Calculate the AI-optimal solution
   int calculateAIOptimalSolution(List<List<Color>> grid) {
-    // Just use the basic optimal solution which actually solves the puzzle
+    // Use the basic optimal solution
     final solution = calculateOptimalSolution(grid);
     
     // If that fails, try greedy approach
@@ -1274,8 +1251,7 @@ class GameService {
         );
       }
       
-      // ACTUALLY SOLVE THE PUZZLE AND COUNT MOVES
-      // Calculate solution for the generated grid - this actually solves it
+      // Calculate solution for the generated grid
       bestSolutionMoves = calculateOptimalSolution(bestGrid);
       
       // If solution calculation failed, try again with AI solution
@@ -1368,117 +1344,6 @@ class GameService {
         originalGrid: cloneGrid(fallbackGrid),
       );
     }
-  }
-
-  /// Calculate grid difficulty based on multiple factors
-  int _calculateGridDifficulty(List<List<Color>> grid, int solutionMoves) {
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    
-    // Base difficulty from solution moves
-    int difficulty = solutionMoves * 10;
-    
-    // Add difficulty for grid size (use average of width and height)
-    difficulty += ((gridWidth + gridHeight) ~/ 2) * 2;
-    
-    // Add difficulty for pattern complexity
-    final patternComplexity = _calculatePatternComplexity(grid);
-    difficulty += (patternComplexity * 15).round();
-    
-    return difficulty;
-  }
-
-  /// Calculate pattern complexity in the grid
-  double _calculatePatternComplexity(List<List<Color>> grid) {
-    final gridSize = grid.length;
-    double complexity = 0.0;
-    
-    // Check for isolated regions
-    final isolatedRegions = _countIsolatedRegions(grid);
-    complexity += isolatedRegions * 0.3;
-    
-    // Check for color clustering
-    final clusteringScore = _calculateClusteringScore(grid);
-    complexity += clusteringScore * 0.4;
-    
-    // Check for edge patterns
-    final edgePatternScore = _calculateEdgePatternScore(grid);
-    complexity += edgePatternScore * 0.3;
-    
-    return complexity.clamp(0.0, 1.0);
-  }
-
-  /// Count isolated regions in the grid
-  int _countIsolatedRegions(List<List<Color>> grid) {
-    final gridSize = grid.length;
-    final visited = List.generate(gridSize, (_) => List.generate(gridSize, (_) => false));
-    int regionCount = 0;
-    
-    for (int i = 0; i < gridSize; i++) {
-      for (int j = 0; j < gridSize; j++) {
-        if (!visited[i][j]) {
-          _markConnectedRegion(grid, visited, i, j, grid[i][j]);
-          regionCount++;
-        }
-      }
-    }
-    
-    return regionCount;
-  }
-
-  /// Mark all connected cells of the same color
-  void _markConnectedRegion(List<List<Color>> grid, List<List<bool>> visited, int x, int y, Color color) {
-    if (x < 0 || x >= grid.length || y < 0 || y >= grid.length || 
-        visited[x][y] || grid[x][y] != color) {
-      return;
-    }
-    
-    visited[x][y] = true;
-    
-    _markConnectedRegion(grid, visited, x + 1, y, color);
-    _markConnectedRegion(grid, visited, x - 1, y, color);
-    _markConnectedRegion(grid, visited, x, y + 1, color);
-    _markConnectedRegion(grid, visited, x, y - 1, color);
-  }
-
-  /// Calculate clustering score
-  double _calculateClusteringScore(List<List<Color>> grid) {
-    final gridSize = grid.length;
-    double clusteringScore = 0.0;
-    
-    for (int i = 0; i < gridSize - 1; i++) {
-      for (int j = 0; j < gridSize - 1; j++) {
-        final currentColor = grid[i][j];
-        
-        // Check if adjacent cells have the same color
-        if (grid[i + 1][j] == currentColor) clusteringScore += 0.25;
-        if (grid[i][j + 1] == currentColor) clusteringScore += 0.25;
-        if (i > 0 && grid[i - 1][j] == currentColor) clusteringScore += 0.25;
-        if (j > 0 && grid[i][j - 1] == currentColor) clusteringScore += 0.25;
-      }
-    }
-    
-    final totalPossible = (gridSize - 1) * (gridSize - 1) * 4;
-    return clusteringScore / totalPossible;
-  }
-
-  /// Calculate edge pattern score
-  double _calculateEdgePatternScore(List<List<Color>> grid) {
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    double edgeScore = 0.0;
-    
-    // Check top and bottom edges
-    for (int j = 0; j < gridWidth; j++) {
-      if (grid[0][j] == grid[gridHeight - 1][j]) edgeScore += 0.5;
-    }
-    
-    // Check left and right edges
-    for (int i = 0; i < gridHeight; i++) {
-      if (grid[i][0] == grid[i][gridWidth - 1]) edgeScore += 0.5;
-    }
-    
-    return edgeScore / (gridWidth + gridHeight);
   }
 
   /// Check if a move is valid
