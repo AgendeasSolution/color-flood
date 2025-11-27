@@ -293,11 +293,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   /// Handle extra moves button tap - show rewarded ad
   Future<void> _handleExtraMovesButton() async {
     if (!_shouldShowExtraMovesButton() || _isLoadingExtraMoves) {
-      debugPrint('[GamePage] Extra moves button: shouldShow=${_shouldShowExtraMovesButton()}, isLoading=$_isLoadingExtraMoves');
       return;
     }
-    
-    debugPrint('[GamePage] Extra moves button tapped');
     
     if (mounted) {
       setState(() {
@@ -308,13 +305,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     try {
       _audioService.playClickSound();
       
-      debugPrint('[GamePage] Attempting to show rewarded ad...');
       final rewardEarned = await RewardedAdService.instance.showAd(
         onRewarded: (reward) {
-          debugPrint('[GamePage] Reward earned: ${reward.amount} ${reward.type}');
           // Get reward amount from ad, default to 3 if not found
           final rewardAmount = reward.amount > 0 ? reward.amount.toInt() : 3;
-          debugPrint('[GamePage] Adding $rewardAmount extra moves');
           
           // Add extra moves based on reward amount
           if (mounted) {
@@ -337,7 +331,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           }
         },
         onAdFailedToShow: () {
-          debugPrint('[GamePage] Ad failed to show');
           if (mounted) {
             setState(() {
               _isLoadingExtraMoves = false;
@@ -356,11 +349,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         },
       );
       
-      debugPrint('[GamePage] showAd returned: rewardEarned=$rewardEarned');
-      
       // If ad wasn't shown, try to preload for next time
       if (!rewardEarned) {
-        debugPrint('[GamePage] Ad was not shown, preloading for next time');
         if (mounted) {
           setState(() {
             _isLoadingExtraMoves = false;
@@ -369,8 +359,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         RewardedAdService.instance.preloadAd();
       }
     } catch (e, stackTrace) {
-      debugPrint('[GamePage] Rewarded ad error: $e');
-      debugPrint('[GamePage] Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isLoadingExtraMoves = false;
@@ -816,117 +804,87 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                             )
                                           : Column(
                                               mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
                                               children: [
-                                                    Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                          '+5',
-                                                          style: TextStyle(
-                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                                              context,
-                                                              smallPhone: 18,
-                                                              mediumPhone: 20,
-                                                              largePhone: 22,
-                                                              tablet: 24,
-                                                            ),
-                                                            fontWeight: FontWeight.w900,
-                                                            color: Colors.white,
-                                                            letterSpacing: -0.5,
-                                                            shadows: [
-                                                              Shadow(
-                                                                color: Colors.black.withOpacity(0.5),
-                                                                blurRadius: 4,
-                                                                offset: const Offset(0, 2),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                                                          context,
-                                                          smallPhone: 4,
-                                                          mediumPhone: 5,
-                                                          largePhone: 6,
-                                                          tablet: 6,
-                                                        )),
-                                                        Text(
-                                                          'Moves',
-                                                          style: TextStyle(
-                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                                              context,
-                                                              smallPhone: 14,
-                                                              mediumPhone: 15,
-                                                              largePhone: 16,
-                                                              tablet: 18,
-                                                            ),
-                                                            fontWeight: FontWeight.w700,
-                                                            color: Colors.white,
-                                                            shadows: [
-                                                              Shadow(
-                                                                color: Colors.black.withOpacity(0.4),
-                                                                blurRadius: 3,
-                                                                offset: const Offset(0, 1),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                                                Text(
+                                                  '+ Extra Moves',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize: ResponsiveUtils.getResponsiveFontSize(
                                                       context,
-                                                      smallPhone: 2,
-                                                      mediumPhone: 3,
-                                                      largePhone: 3,
-                                                      tablet: 4,
+                                                      smallPhone: 16,
+                                                      mediumPhone: 17,
+                                                      largePhone: 18,
+                                                      tablet: 20,
+                                                    ),
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Colors.white,
+                                                    letterSpacing: 0.5,
+                                                    shadows: [
+                                                      Shadow(
+                                                        color: Colors.black.withOpacity(0.5),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                                                  context,
+                                                  smallPhone: 4,
+                                                  mediumPhone: 5,
+                                                  largePhone: 6,
+                                                  tablet: 6,
+                                                )),
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.play_circle_outline,
+                                                      color: Colors.white.withOpacity(0.95),
+                                                      size: ResponsiveUtils.getResponsiveFontSize(
+                                                        context,
+                                                        smallPhone: 13,
+                                                        mediumPhone: 14,
+                                                        largePhone: 15,
+                                                        tablet: 16,
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                                                      context,
+                                                      smallPhone: 4,
+                                                      mediumPhone: 5,
+                                                      largePhone: 5,
+                                                      tablet: 6,
                                                     )),
-                                                    Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          Icons.play_circle_outline,
-                                                          color: Colors.white.withOpacity(0.9),
-                                                          size: ResponsiveUtils.getResponsiveFontSize(
-                                                            context,
-                                                            smallPhone: 12,
-                                                            mediumPhone: 13,
-                                                            largePhone: 14,
-                                                            tablet: 15,
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                                                    Text(
+                                                      'Watch Ad',
+                                                      style: TextStyle(
+                                                        fontSize: ResponsiveUtils.getResponsiveFontSize(
                                                           context,
-                                                          smallPhone: 3,
-                                                          mediumPhone: 4,
-                                                          largePhone: 4,
-                                                          tablet: 5,
-                                                        )),
-                                                        Text(
-                                                          'Watch Ad',
-                                                          style: TextStyle(
-                                                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                                                              context,
-                                                              smallPhone: 11,
-                                                              mediumPhone: 12,
-                                                              largePhone: 13,
-                                                              tablet: 14,
-                                                            ),
-                                                            fontWeight: FontWeight.w600,
-                                                            color: Colors.white.withOpacity(0.95),
-                                                            letterSpacing: 0.5,
-                                                            shadows: [
-                                                              Shadow(
-                                                                color: Colors.black.withOpacity(0.4),
-                                                                blurRadius: 3,
-                                                                offset: const Offset(0, 1),
-                                                              ),
-                                                            ],
-                                                          ),
+                                                          smallPhone: 12,
+                                                          mediumPhone: 13,
+                                                          largePhone: 14,
+                                                          tablet: 15,
                                                         ),
-                                                      ],
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.white.withOpacity(0.95),
+                                                        letterSpacing: 0.3,
+                                                        shadows: [
+                                                          Shadow(
+                                                            color: Colors.black.withOpacity(0.4),
+                                                            blurRadius: 3,
+                                                            offset: const Offset(0, 1),
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
+                                              ],
+                                            ),
                                     ),
                                   ),
                                 ),
