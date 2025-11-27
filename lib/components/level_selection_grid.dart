@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/level_progression_service.dart';

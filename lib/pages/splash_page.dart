@@ -65,19 +65,19 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       try {
         _fadeController.forward();
       } catch (e) {
-        debugPrint('Fade animation error: $e');
+        // Continue even if animation fails
       }
       
       try {
         _scaleController.forward();
       } catch (e) {
-        debugPrint('Scale animation error: $e');
+        // Continue even if animation fails
       }
       
       try {
         _logoController.repeat(reverse: true);
       } catch (e) {
-        debugPrint('Logo animation error: $e');
+        // Continue even if animation fails
       }
 
       // Wait for splash duration (3 seconds)
@@ -92,7 +92,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             ),
           );
         } catch (e) {
-          debugPrint('Navigation error: $e');
           // If navigation fails, try again after a short delay
           if (mounted && context.mounted) {
             Future.delayed(const Duration(milliseconds: 500), () {
@@ -104,7 +103,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     ),
                   );
                 } catch (e2) {
-                  debugPrint('Retry navigation error: $e2');
+                  // Continue even if retry fails
                 }
               }
             });
@@ -112,7 +111,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         }
       }
     } catch (e) {
-      debugPrint('Splash sequence error: $e');
       // Even if everything fails, try to navigate to home page
       if (mounted && context.mounted) {
         Future.delayed(const Duration(milliseconds: 1000), () {
@@ -124,7 +122,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 ),
               );
             } catch (e2) {
-              debugPrint('Final navigation attempt error: $e2');
+              // Continue even if final attempt fails
             }
           }
         });

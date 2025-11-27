@@ -77,7 +77,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           }
         } catch (e) {
           // Silently handle ad failures - don't interrupt user experience
-          debugPrint('Entry ad failed to show: $e');
           // Still try to preload for next time
           InterstitialAdService.instance.preloadAd();
         }
@@ -96,7 +95,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - still allow user to exit
-      debugPrint('Exit ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -139,7 +137,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           throw Exception('Invalid game config');
         }
       } catch (e) {
-        debugPrint('Game config creation error: $e');
         // Retry with level 1 as fallback
         try {
           config = _gameService.createGameConfig(1);
@@ -147,7 +144,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             throw Exception('Fallback config also invalid');
           }
         } catch (e2) {
-          debugPrint('Fallback game config error: $e2');
           // Create minimal valid config as last resort
           config = _gameService.createGameConfig(1);
         }
@@ -162,7 +158,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         });
       }
     } catch (e) {
-      debugPrint('Start new game error: $e');
       // If everything fails, try to create a basic game
       if (mounted) {
         try {
@@ -173,7 +168,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             _gameState = GameState.playing;
           });
         } catch (e2) {
-          debugPrint('Final fallback error: $e2');
           // App should continue even if game can't start
         }
       }
@@ -192,7 +186,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - don't interrupt user experience
-      debugPrint('Restart ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -218,7 +211,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle ad failures - don't interrupt user experience
-      debugPrint('Next level ad failed to show: $e');
       InterstitialAdService.instance.preloadAd();
     }
 
@@ -242,7 +234,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     
     // Validate game config exists and is valid
     if (_gameConfig.grid.isEmpty || _gameConfig.gridWidth <= 0 || _gameConfig.gridHeight <= 0) {
-      debugPrint('Invalid game config in color selection');
       return;
     }
 
@@ -256,7 +247,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       try {
         _audioService.playSwipeSound();
       } catch (e) {
-        debugPrint('Audio play error: $e');
         // Continue even if audio fails
       }
 
@@ -267,7 +257,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       if (newGrid.isEmpty || 
           newGrid.length != _gameConfig.gridHeight ||
           (newGrid.isNotEmpty && newGrid[0].length != _gameConfig.gridWidth)) {
-        debugPrint('Invalid grid after move: expected ${_gameConfig.gridWidth}x${_gameConfig.gridHeight}, got ${newGrid.isNotEmpty ? newGrid[0].length : 0}x${newGrid.length}');
         return;
       }
       
@@ -280,7 +269,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
       _checkWinCondition();
     } catch (e) {
-      debugPrint('Color selection error: $e');
       // Silently handle errors - don't interrupt gameplay
     }
   }
@@ -395,7 +383,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         try {
           _audioService.playWinSound();
         } catch (e) {
-          debugPrint('Win sound error: $e');
+          // Continue even if audio fails
         }
         _endGame(GameResult.win);
         _markLevelCompleted(); // Move this after _endGame to ensure it's called
@@ -403,12 +391,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         try {
           _audioService.playFailSound();
         } catch (e) {
-          debugPrint('Fail sound error: $e');
+          // Continue even if audio fails
         }
         _endGame(GameResult.lose);
       }
     } catch (e) {
-      debugPrint('Win condition check error: $e');
       // Silently handle errors - game should continue
     }
   }
@@ -453,7 +440,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               try {
                 Navigator.of(context).pop();
               } catch (e) {
-                debugPrint('Dialog pop error: $e');
+                // Continue even if navigation fails
               }
             }
             await _nextLevel();
@@ -463,7 +450,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               try {
                 Navigator.of(context).pop();
               } catch (e) {
-                debugPrint('Dialog pop error: $e');
+                // Continue even if navigation fails
               }
             }
             await _restartCurrentLevel();
@@ -473,7 +460,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           try {
             _popupAnimationController.forward(from: 0.0);
           } catch (e) {
-            debugPrint('Animation error: $e');
+            // Continue even if animation fails
           }
           return ScaleTransition(
             scale: _popupScaleAnimation,
@@ -482,7 +469,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         },
       );
     } catch (e) {
-      debugPrint('Show game over dialog error: $e');
       // App should continue even if dialog fails to show
     }
   }
@@ -501,13 +487,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             try {
               _audioService.playClickSound();
             } catch (e) {
-              debugPrint('Audio error: $e');
+              // Continue even if audio fails
             }
             if (context.mounted) {
               try {
                 Navigator.of(context).pop();
               } catch (e) {
-                debugPrint('Navigation error: $e');
+                // Continue even if navigation fails
               }
             }
             _startNewGame();
@@ -516,7 +502,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             try {
               _audioService.playClickSound();
             } catch (e) {
-              debugPrint('Audio error: $e');
+              // Continue even if audio fails
             }
             if (context.mounted) {
               try {
@@ -525,7 +511,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                   Navigator.of(context).pop();
                 }
               } catch (e) {
-                debugPrint('Navigation error: $e');
+                // Continue even if navigation fails
               }
             }
           },
@@ -534,7 +520,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           try {
             _popupAnimationController.forward(from: 0.0);
           } catch (e) {
-            debugPrint('Animation error: $e');
+            // Continue even if animation fails
           }
           return ScaleTransition(
             scale: _popupScaleAnimation,
@@ -543,7 +529,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         },
       );
     } catch (e) {
-      debugPrint('Show game completed dialog error: $e');
       // App should continue even if dialog fails
     }
   }

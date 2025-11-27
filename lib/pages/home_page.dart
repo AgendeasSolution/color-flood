@@ -76,7 +76,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     try {
       // Validate level before navigation
       if (level < 1 || level > GameConstants.maxLevel) {
-        debugPrint('Invalid level: $level');
         return;
       }
       
@@ -92,7 +91,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await _loadLevelStatuses();
       }
     } catch (e) {
-      debugPrint('Navigation error: $e');
       // App should continue working even if navigation fails
     }
   }
@@ -116,7 +114,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       // Silently handle errors - app should continue working
-      debugPrint('Error loading level statuses: $e');
       if (mounted) {
         setState(() {
           // Set empty statuses as fallback

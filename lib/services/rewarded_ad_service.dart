@@ -42,11 +42,9 @@ class RewardedAdService {
   /// Load rewarded ad
   Future<void> loadAd() async {
     if (_isLoading || _isAdReady) {
-      debugPrint('[RewardedAdService] loadAd skipped - isLoading: $_isLoading, isAdReady: $_isAdReady');
       return;
     }
 
-    debugPrint('[RewardedAdService] Loading ad with unit ID: $_adUnitId');
     _isLoading = true;
 
     try {
@@ -55,35 +53,28 @@ class RewardedAdService {
         request: const AdRequest(),
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (ad) {
-            debugPrint('[RewardedAdService] Ad loaded successfully');
             _rewardedAd = ad;
             _isAdReady = true;
             _isLoading = false;
             
             // Set up ad callbacks
             _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-              onAdShowedFullScreenContent: (ad) {
-                debugPrint('[RewardedAdService] Ad showed full screen content (initial callback)');
-              },
+              onAdShowedFullScreenContent: (ad) {},
               onAdDismissedFullScreenContent: (ad) {
-                debugPrint('[RewardedAdService] Ad dismissed (initial callback)');
                 _disposeAd();
               },
               onAdFailedToShowFullScreenContent: (ad, error) {
-                debugPrint('[RewardedAdService] Ad failed to show (initial callback): $error');
                 _disposeAd();
               },
             );
           },
           onAdFailedToLoad: (error) {
-            debugPrint('[RewardedAdService] Ad failed to load: $error');
             _isLoading = false;
             _isAdReady = false;
           },
         ),
       );
     } catch (e) {
-      debugPrint('[RewardedAdService] Exception loading ad: $e');
       _isLoading = false;
       _isAdReady = false;
     }
@@ -96,49 +87,36 @@ class RewardedAdService {
     required Function(RewardItem) onRewarded,
     Function()? onAdFailedToShow,
   }) async {
-      debugPrint('[RewardedAdService] showAd called - isAdReady: $_isAdReady, _rewardedAd: ${_rewardedAd != null}');
-    
     if (!_isAdReady || _rewardedAd == null) {
-      debugPrint('[RewardedAdService] Ad not ready, loading...');
       await loadAd();
       if (!_isAdReady || _rewardedAd == null) {
-        debugPrint('[RewardedAdService] Failed to load ad');
         onAdFailedToShow?.call();
         return false;
       }
-      debugPrint('[RewardedAdService] Ad loaded successfully');
     }
 
     try {
       // Update the full screen content callback to handle failure
       _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdShowedFullScreenContent: (ad) {
-          debugPrint('[RewardedAdService] Ad showed full screen content');
-        },
+        onAdShowedFullScreenContent: (ad) {},
         onAdDismissedFullScreenContent: (ad) {
-          debugPrint('[RewardedAdService] Ad dismissed');
           _disposeAd();
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
-          debugPrint('[RewardedAdService] Ad failed to show: $error');
           _disposeAd();
           onAdFailedToShow?.call();
         },
       );
       
-      debugPrint('[RewardedAdService] Attempting to show ad...');
       _rewardedAd!.show(
         onUserEarnedReward: (ad, reward) {
-          debugPrint('[RewardedAdService] User earned reward: ${reward.amount} ${reward.type}');
           onRewarded(reward);
           // Note: ad will be disposed by fullScreenContentCallback
         },
       );
       
-      debugPrint('[RewardedAdService] Ad show called successfully');
       return true;
     } catch (e) {
-      debugPrint('[RewardedAdService] Exception showing ad: $e');
       _disposeAd();
       onAdFailedToShow?.call();
       return false;

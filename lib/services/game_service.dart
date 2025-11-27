@@ -333,6 +333,18 @@ class GameService {
     // Shuffle to ensure proper randomization
     _shuffleGrid(grid, gridWidth, gridHeight, random);
     
+    // Ensure equal color distribution
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // Ensure no adjacent same colors
+    _preventFourAdjacentCells(grid, gridWidth, gridHeight);
+    
+    // Final equal distribution pass after pattern prevention
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // Final aggressive pass to guarantee equal distribution
+    _forceEqualColorDistribution(grid, gridWidth, gridHeight);
+    
     return grid;
   }
 
@@ -369,6 +381,18 @@ class GameService {
     
     // Final shuffle to ensure randomness
     _shuffleGrid(grid, gridWidth, gridHeight, random);
+    
+    // CRITICAL: Final equal distribution pass - must be the last step
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // Final pattern prevention to ensure no adjacent same colors
+    _preventFourAdjacentCells(grid, gridWidth, gridHeight);
+    
+    // One more equal distribution pass after final pattern prevention
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // Final aggressive pass to guarantee equal distribution
+    _forceEqualColorDistribution(grid, gridWidth, gridHeight);
     
     return grid;
   }
@@ -418,24 +442,85 @@ class GameService {
     _ensureMaximumColorDiversity(grid, gridWidth, gridHeight);
   }
 
-  /// Ensure maximum color diversity in the grid
+  /// Ensure maximum color diversity in the grid - each color appears almost equally
   void _ensureMaximumColorDiversity(List<List<Color>> grid, int gridWidth, int gridHeight) {
-    final colorCounts = <Color, int>{};
     final totalCells = gridWidth * gridHeight;
-    final maxColorCount = (totalCells / GameConstants.gameColors.length * 1.5).round();
+    final numColors = GameConstants.gameColors.length;
+    final targetCount = totalCells / numColors;
+    final minCount = targetCount.floor();
+    final maxCount = targetCount.ceil();
     
-    // Count colors
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final color = grid[i][j];
-        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+    // Keep redistributing until all colors are within 1 count of target
+    bool needsRedistribution = true;
+    int attempts = 0;
+    final maxAttempts = 100;
+    
+    while (needsRedistribution && attempts < maxAttempts) {
+      attempts++;
+      needsRedistribution = false;
+      
+      final colorCounts = <Color, int>{};
+      
+      // Count colors
+      for (int i = 0; i < gridHeight; i++) {
+        for (int j = 0; j < gridWidth; j++) {
+          final color = grid[i][j];
+          colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+        }
       }
-    }
-    
-    // Redistribute excess colors
-    for (final entry in colorCounts.entries) {
-      if (entry.value > maxColorCount) {
-        _redistributeColor(grid, gridWidth, gridHeight, entry.key, entry.value - maxColorCount);
+      
+      // Find colors that need redistribution
+      final overRepresented = <Color>[];
+      final underRepresented = <Color>[];
+      
+      for (final color in GameConstants.gameColors) {
+        final count = colorCounts[color] ?? 0;
+        if (count > maxCount) {
+          overRepresented.add(color);
+          needsRedistribution = true;
+        } else if (count < minCount) {
+          underRepresented.add(color);
+          needsRedistribution = true;
+        }
+      }
+      
+      // Redistribute: change over-represented colors to under-represented ones
+      if (overRepresented.isNotEmpty && underRepresented.isNotEmpty) {
+        final random = Random();
+        for (final overColor in overRepresented) {
+          final excess = (colorCounts[overColor] ?? 0) - maxCount;
+          if (excess <= 0) continue;
+          
+          int changed = 0;
+          for (int i = 0; i < gridHeight && changed < excess; i++) {
+            for (int j = 0; j < gridWidth && changed < excess; j++) {
+              if (grid[i][j] == overColor && random.nextDouble() < 0.5) {
+                // Check if we can change this cell without creating adjacent same colors
+                final adjacentColors = <Color>{};
+                if (i > 0) adjacentColors.add(grid[i - 1][j]);
+                if (i < gridHeight - 1) adjacentColors.add(grid[i + 1][j]);
+                if (j > 0) adjacentColors.add(grid[i][j - 1]);
+                if (j < gridWidth - 1) adjacentColors.add(grid[i][j + 1]);
+                if (i > 0 && j > 0) adjacentColors.add(grid[i - 1][j - 1]);
+                if (i > 0 && j < gridWidth - 1) adjacentColors.add(grid[i - 1][j + 1]);
+                if (i < gridHeight - 1 && j > 0) adjacentColors.add(grid[i + 1][j - 1]);
+                if (i < gridHeight - 1 && j < gridWidth - 1) adjacentColors.add(grid[i + 1][j + 1]);
+                
+                // Find an under-represented color that's not adjacent
+                for (final underColor in underRepresented) {
+                  if (!adjacentColors.contains(underColor) && 
+                      (colorCounts[underColor] ?? 0) < maxCount) {
+                    grid[i][j] = underColor;
+                    changed++;
+                    colorCounts[overColor] = (colorCounts[overColor] ?? 0) - 1;
+                    colorCounts[underColor] = (colorCounts[underColor] ?? 0) + 1;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -586,34 +671,189 @@ class GameService {
 
   /// Optimize the grid for maximum difficulty while keeping it solvable
   void _optimizeForDifficulty(List<List<Color>> grid, int gridWidth, int gridHeight, int level) {
-    // Ensure the grid has a good distribution of colors
-    final colorCounts = <Color, int>{};
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final color = grid[i][j];
-        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
-      }
-    }
+    // First ensure equal color distribution
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
     
-    // If any color is too dominant, redistribute
-    final totalCells = gridWidth * gridHeight;
-    final maxColorCount = (totalCells * 0.6).round();
-    
-    for (final entry in colorCounts.entries) {
-      if (entry.value > maxColorCount) {
-        _redistributeColor(grid, gridWidth, gridHeight, entry.key, entry.value - maxColorCount);
-      }
-    }
-    
-    // CRITICAL: Ensure no 4 same color cells are adjacent
+    // CRITICAL: Ensure no adjacent cells have the same color
     _preventFourAdjacentCells(grid, gridWidth, gridHeight);
+    
+    // Final pass: ensure equal distribution again after pattern prevention
+    _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // One more aggressive pass to guarantee equal distribution
+    _forceEqualColorDistribution(grid, gridWidth, gridHeight);
+  }
+  
+  /// Force equal color distribution - aggressive final pass
+  void _forceEqualColorDistribution(List<List<Color>> grid, int gridWidth, int gridHeight) {
+    final totalCells = gridWidth * gridHeight;
+    final numColors = GameConstants.gameColors.length;
+    final targetCount = totalCells / numColors;
+    final minCount = targetCount.floor();
+    final maxCount = targetCount.ceil();
+    
+    bool needsRedistribution = true;
+    int attempts = 0;
+    final maxAttempts = 300; // More attempts for final pass
+    
+    while (needsRedistribution && attempts < maxAttempts) {
+      attempts++;
+      needsRedistribution = false;
+      
+      final colorCounts = <Color, int>{};
+      
+      // Count colors
+      for (int i = 0; i < gridHeight; i++) {
+        for (int j = 0; j < gridWidth; j++) {
+          final color = grid[i][j];
+          colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+        }
+      }
+      
+      // Find colors that need redistribution
+      final overRepresented = <Color>[];
+      final underRepresented = <Color>[];
+      
+      for (final color in GameConstants.gameColors) {
+        final count = colorCounts[color] ?? 0;
+        if (count > maxCount) {
+          overRepresented.add(color);
+          needsRedistribution = true;
+        } else if (count < minCount) {
+          underRepresented.add(color);
+          needsRedistribution = true;
+        }
+      }
+      
+      // Aggressive redistribution - try every cell
+      if (overRepresented.isNotEmpty && underRepresented.isNotEmpty) {
+        final random = Random();
+        for (final overColor in overRepresented) {
+          final excess = (colorCounts[overColor] ?? 0) - maxCount;
+          if (excess <= 0) continue;
+          
+          int changed = 0;
+          for (int i = 0; i < gridHeight && changed < excess; i++) {
+            for (int j = 0; j < gridWidth && changed < excess; j++) {
+              if (grid[i][j] == overColor) {
+                // Check if we can change this cell without creating adjacent same colors
+                final adjacentColors = <Color>{};
+                if (i > 0) adjacentColors.add(grid[i - 1][j]);
+                if (i < gridHeight - 1) adjacentColors.add(grid[i + 1][j]);
+                if (j > 0) adjacentColors.add(grid[i][j - 1]);
+                if (j < gridWidth - 1) adjacentColors.add(grid[i][j + 1]);
+                if (i > 0 && j > 0) adjacentColors.add(grid[i - 1][j - 1]);
+                if (i > 0 && j < gridWidth - 1) adjacentColors.add(grid[i - 1][j + 1]);
+                if (i < gridHeight - 1 && j > 0) adjacentColors.add(grid[i + 1][j - 1]);
+                if (i < gridHeight - 1 && j < gridWidth - 1) adjacentColors.add(grid[i + 1][j + 1]);
+                
+                // Find an under-represented color that's not adjacent
+                for (final underColor in underRepresented) {
+                  if (!adjacentColors.contains(underColor) && 
+                      (colorCounts[underColor] ?? 0) < maxCount) {
+                    grid[i][j] = underColor;
+                    changed++;
+                    colorCounts[overColor] = (colorCounts[overColor] ?? 0) - 1;
+                    colorCounts[underColor] = (colorCounts[underColor] ?? 0) + 1;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  /// Ensure each color appears almost equally in the grid
+  void _ensureEqualColorDistribution(List<List<Color>> grid, int gridWidth, int gridHeight) {
+    final totalCells = gridWidth * gridHeight;
+    final numColors = GameConstants.gameColors.length;
+    final targetCount = totalCells / numColors;
+    final minCount = targetCount.floor();
+    final maxCount = targetCount.ceil();
+    
+    // Keep redistributing until all colors are within 1 count of target
+    bool needsRedistribution = true;
+    int attempts = 0;
+    final maxAttempts = 200;
+    
+    while (needsRedistribution && attempts < maxAttempts) {
+      attempts++;
+      needsRedistribution = false;
+      
+      final colorCounts = <Color, int>{};
+      
+      // Count colors
+      for (int i = 0; i < gridHeight; i++) {
+        for (int j = 0; j < gridWidth; j++) {
+          final color = grid[i][j];
+          colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+        }
+      }
+      
+      // Find colors that need redistribution
+      final overRepresented = <Color>[];
+      final underRepresented = <Color>[];
+      
+      for (final color in GameConstants.gameColors) {
+        final count = colorCounts[color] ?? 0;
+        if (count > maxCount) {
+          overRepresented.add(color);
+          needsRedistribution = true;
+        } else if (count < minCount) {
+          underRepresented.add(color);
+          needsRedistribution = true;
+        }
+      }
+      
+      // Redistribute: change over-represented colors to under-represented ones
+      if (overRepresented.isNotEmpty && underRepresented.isNotEmpty) {
+        final random = Random();
+        for (final overColor in overRepresented) {
+          final excess = (colorCounts[overColor] ?? 0) - maxCount;
+          if (excess <= 0) continue;
+          
+          int changed = 0;
+          for (int i = 0; i < gridHeight && changed < excess; i++) {
+            for (int j = 0; j < gridWidth && changed < excess; j++) {
+              if (grid[i][j] == overColor && random.nextDouble() < 0.6) {
+                // Check if we can change this cell without creating adjacent same colors
+                final adjacentColors = <Color>{};
+                if (i > 0) adjacentColors.add(grid[i - 1][j]);
+                if (i < gridHeight - 1) adjacentColors.add(grid[i + 1][j]);
+                if (j > 0) adjacentColors.add(grid[i][j - 1]);
+                if (j < gridWidth - 1) adjacentColors.add(grid[i][j + 1]);
+                if (i > 0 && j > 0) adjacentColors.add(grid[i - 1][j - 1]);
+                if (i > 0 && j < gridWidth - 1) adjacentColors.add(grid[i - 1][j + 1]);
+                if (i < gridHeight - 1 && j > 0) adjacentColors.add(grid[i + 1][j - 1]);
+                if (i < gridHeight - 1 && j < gridWidth - 1) adjacentColors.add(grid[i + 1][j + 1]);
+                
+                // Find an under-represented color that's not adjacent
+                for (final underColor in underRepresented) {
+                  if (!adjacentColors.contains(underColor) && 
+                      (colorCounts[underColor] ?? 0) < maxCount) {
+                    grid[i][j] = underColor;
+                    changed++;
+                    colorCounts[overColor] = (colorCounts[overColor] ?? 0) - 1;
+                    colorCounts[underColor] = (colorCounts[underColor] ?? 0) + 1;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  /// Ensure maximum 2 colors appear in adjacent cells for wild distribution
+  /// Ensure no adjacent cells have the same color - maximum wild distribution
   void _preventFourAdjacentCells(List<List<Color>> grid, int gridWidth, int gridHeight) {
     bool hasAdjacent = true;
     int attempts = 0;
-    final maxAttempts = 300; // More attempts for wild distribution
+    final maxAttempts = 500; // More attempts for maximum wild distribution
     
     while (hasAdjacent && attempts < maxAttempts) {
       hasAdjacent = false;
@@ -623,29 +863,43 @@ class GameService {
         for (int j = 0; j < gridWidth; j++) {
           final currentColor = grid[i][j];
           
-          // Check horizontal 2-in-a-row and break any 3+ patterns
+          // Check horizontal patterns of 2+ same colors
           if (j <= gridWidth - 2) {
             if (grid[i][j] == currentColor && grid[i][j + 1] == currentColor) {
-              // Found 2 in a row, check if there's a 3rd
-              if (j <= gridWidth - 3 && grid[i][j + 2] == currentColor) {
-                // Break the pattern by changing middle cell
-                final newColor = _getRandomDifferentColor(currentColor);
-                grid[i][j + 1] = newColor;
-                hasAdjacent = true;
-              }
+              // Found 2+ in a row horizontally, break the pattern
+              final newColor = _getBestDifferentColor(grid, gridWidth, gridHeight, i, j + 1, currentColor);
+              grid[i][j + 1] = newColor;
+              hasAdjacent = true;
             }
           }
           
-          // Check vertical 2-in-a-row and break any 3+ patterns
+          // Check vertical patterns of 2+ same colors
           if (i <= gridHeight - 2) {
             if (grid[i][j] == currentColor && grid[i + 1][j] == currentColor) {
-              // Found 2 in a row, check if there's a 3rd
-              if (i <= gridHeight - 3 && grid[i + 2][j] == currentColor) {
-                // Break the pattern by changing middle cell
-                final newColor = _getRandomDifferentColor(currentColor);
-                grid[i + 1][j] = newColor;
-                hasAdjacent = true;
-              }
+              // Found 2+ in a row vertically, break the pattern
+              final newColor = _getBestDifferentColor(grid, gridWidth, gridHeight, i + 1, j, currentColor);
+              grid[i + 1][j] = newColor;
+              hasAdjacent = true;
+            }
+          }
+          
+          // Check diagonal (top-left to bottom-right) patterns of 2+ same colors
+          if (i <= gridHeight - 2 && j <= gridWidth - 2) {
+            if (grid[i][j] == currentColor && grid[i + 1][j + 1] == currentColor) {
+              // Found 2+ in a row diagonally (top-left to bottom-right), break the pattern
+              final newColor = _getBestDifferentColor(grid, gridWidth, gridHeight, i + 1, j + 1, currentColor);
+              grid[i + 1][j + 1] = newColor;
+              hasAdjacent = true;
+            }
+          }
+          
+          // Check diagonal (top-right to bottom-left) patterns of 2+ same colors
+          if (i <= gridHeight - 2 && j >= 1) {
+            if (grid[i][j] == currentColor && grid[i + 1][j - 1] == currentColor) {
+              // Found 2+ in a row diagonally (top-right to bottom-left), break the pattern
+              final newColor = _getBestDifferentColor(grid, gridWidth, gridHeight, i + 1, j - 1, currentColor);
+              grid[i + 1][j - 1] = newColor;
+              hasAdjacent = true;
             }
           }
           
@@ -656,16 +910,13 @@ class GameService {
                 grid[i + 1][j] == currentColor &&
                 grid[i + 1][j + 1] == currentColor) {
               // Break the 2x2 square by changing two corners
-              final newColor1 = _getRandomDifferentColor(currentColor);
-              final newColor2 = _getRandomDifferentColor(currentColor);
+              final newColor1 = _getBestDifferentColor(grid, gridWidth, gridHeight, i, j, currentColor);
+              final newColor2 = _getBestDifferentColor(grid, gridWidth, gridHeight, i + 1, j + 1, currentColor);
               grid[i][j] = newColor1;
               grid[i + 1][j + 1] = newColor2;
               hasAdjacent = true;
             }
           }
-          
-          // Break L-shapes and other patterns
-          _breakLShapes(grid, gridWidth, gridHeight, i, j, currentColor);
         }
       }
     }
@@ -674,36 +925,14 @@ class GameService {
     _maximizeWildColorDistribution(grid, gridWidth, gridHeight);
   }
 
-  /// Break L-shaped patterns of same colors
-  void _breakLShapes(List<List<Color>> grid, int gridWidth, int gridHeight, int i, int j, Color currentColor) {
-    // Check for L-shapes and break them
-    if (i < gridHeight - 1 && j < gridWidth - 1) {
-      // L-shape: current + right + down
-      if (grid[i][j] == currentColor && 
-          grid[i][j + 1] == currentColor &&
-          grid[i + 1][j] == currentColor) {
-        final newColor = _getRandomDifferentColor(currentColor);
-        grid[i][j + 1] = newColor;
-      }
-      
-      // L-shape: current + left + down
-      if (j > 0 && grid[i][j] == currentColor && 
-          grid[i][j - 1] == currentColor &&
-          grid[i + 1][j] == currentColor) {
-        final newColor = _getRandomDifferentColor(currentColor);
-        grid[i][j - 1] = newColor;
-      }
-    }
-  }
 
   /// Maximize wild color distribution - no two adjacent cells can have the same color AND balanced color count
   void _maximizeWildColorDistribution(List<List<Color>> grid, int gridWidth, int gridHeight) {
-    final random = Random();
     bool changed = true;
     int attempts = 0;
-    final maxAttempts = 1000; // More attempts for complete distribution
+    final maxAttempts = 2000; // More attempts for maximum wild distribution
     
-    // Keep iterating until perfect distribution
+    // Keep iterating until perfect distribution - no adjacent same colors
     while (changed && attempts < maxAttempts) {
       changed = false;
       attempts++;
@@ -732,6 +961,81 @@ class GameService {
             final newColor = _getBestDifferentColor(grid, gridWidth, gridHeight, i, j, currentColor);
             grid[i][j] = newColor;
             changed = true;
+          }
+        }
+      }
+      
+      // Additional pass: balance color distribution
+      if (attempts % 100 == 0) {
+        _balanceColorDistribution(grid, gridWidth, gridHeight);
+      }
+    }
+  }
+  
+  /// Balance color distribution to ensure even spread - each color appears almost equally
+  void _balanceColorDistribution(List<List<Color>> grid, int gridWidth, int gridHeight) {
+    final totalCells = gridWidth * gridHeight;
+    final numColors = GameConstants.gameColors.length;
+    final targetCount = totalCells / numColors;
+    final minCount = targetCount.floor();
+    final maxCount = targetCount.ceil();
+    
+    // Count colors
+    final colorCounts = <Color, int>{};
+    for (int i = 0; i < gridHeight; i++) {
+      for (int j = 0; j < gridWidth; j++) {
+        final color = grid[i][j];
+        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
+      }
+    }
+    
+    // Find colors that are over or under-represented
+    final overRepresented = <Color>[];
+    final underRepresented = <Color>[];
+    
+    for (final color in GameConstants.gameColors) {
+      final count = colorCounts[color] ?? 0;
+      if (count > maxCount) {
+        overRepresented.add(color);
+      } else if (count < minCount) {
+        underRepresented.add(color);
+      }
+    }
+    
+    // Redistribute: change some over-represented colors to under-represented ones
+    if (overRepresented.isNotEmpty && underRepresented.isNotEmpty) {
+      final random = Random();
+      int changes = 0;
+      final maxChanges = (totalCells * 0.15).round(); // Change up to 15% of cells
+      
+      for (int i = 0; i < gridHeight && changes < maxChanges; i++) {
+        for (int j = 0; j < gridWidth && changes < maxChanges; j++) {
+          if (overRepresented.contains(grid[i][j]) && random.nextDouble() < 0.4) {
+            // Check if we can change this cell without creating adjacent same colors
+            final currentColor = grid[i][j];
+            final adjacentColors = <Color>{};
+            
+            if (i > 0) adjacentColors.add(grid[i - 1][j]);
+            if (i < gridHeight - 1) adjacentColors.add(grid[i + 1][j]);
+            if (j > 0) adjacentColors.add(grid[i][j - 1]);
+            if (j < gridWidth - 1) adjacentColors.add(grid[i][j + 1]);
+            if (i > 0 && j > 0) adjacentColors.add(grid[i - 1][j - 1]);
+            if (i > 0 && j < gridWidth - 1) adjacentColors.add(grid[i - 1][j + 1]);
+            if (i < gridHeight - 1 && j > 0) adjacentColors.add(grid[i + 1][j - 1]);
+            if (i < gridHeight - 1 && j < gridWidth - 1) adjacentColors.add(grid[i + 1][j + 1]);
+            
+            // Find an under-represented color that's not adjacent
+            for (final newColor in underRepresented) {
+              if (!adjacentColors.contains(newColor) && 
+                  newColor != currentColor &&
+                  (colorCounts[newColor] ?? 0) < maxCount) {
+                grid[i][j] = newColor;
+                changes++;
+                colorCounts[currentColor] = (colorCounts[currentColor] ?? 0) - 1;
+                colorCounts[newColor] = (colorCounts[newColor] ?? 0) + 1;
+                break;
+              }
+            }
           }
         }
       }
@@ -783,60 +1087,6 @@ class GameService {
     }
     
     return bestColor;
-  }
-
-  /// Break horizontal patterns of 3+ same colors
-  void _breakHorizontalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
-    if (j <= gridSize - 3) {
-      int count = 1;
-      for (int k = j + 1; k < gridSize && grid[i][k] == currentColor; k++) {
-        count++;
-      }
-      if (count >= 3) {
-        // Break the pattern by changing middle cells
-        for (int k = j + 1; k < j + count - 1; k++) {
-          if (k < gridSize) {
-            grid[i][k] = _getRandomDifferentColor(currentColor);
-          }
-        }
-      }
-    }
-  }
-
-  /// Break vertical patterns of 3+ same colors
-  void _breakVerticalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
-    if (i <= gridSize - 3) {
-      int count = 1;
-      for (int k = i + 1; k < gridSize && grid[k][j] == currentColor; k++) {
-        count++;
-      }
-      if (count >= 3) {
-        // Break the pattern by changing middle cells
-        for (int k = i + 1; k < i + count - 1; k++) {
-          if (k < gridSize) {
-            grid[k][j] = _getRandomDifferentColor(currentColor);
-          }
-        }
-      }
-    }
-  }
-
-  /// Break diagonal patterns of 3+ same colors
-  void _breakDiagonalPattern(List<List<Color>> grid, int gridSize, int i, int j, Color currentColor) {
-    // Check diagonal patterns and break them
-    if (i <= gridSize - 3 && j <= gridSize - 3) {
-      // Check main diagonal
-      if (grid[i + 1][j + 1] == currentColor && grid[i + 2][j + 2] == currentColor) {
-        grid[i + 1][j + 1] = _getRandomDifferentColor(currentColor);
-      }
-    }
-    
-    // Check anti-diagonal (need to ensure j is at least 2 to avoid negative indices)
-    if (i <= gridSize - 3 && j >= 2 && j <= gridSize - 1) {
-      if (grid[i + 1][j - 1] == currentColor && grid[i + 2][j - 2] == currentColor) {
-        grid[i + 1][j - 1] = _getRandomDifferentColor(currentColor);
-      }
-    }
   }
 
   /// Get a random color different from the given color
@@ -985,170 +1235,6 @@ class GameService {
     return isGridSolved(tempGrid) ? solutionMoves : -1;
   }
 
-  /// Strategic strategy: considers future moves and color distribution
-  int _calculateStrategicSolution(List<List<Color>> grid) {
-    if (grid.isEmpty || grid[0].isEmpty) return -1;
-    if (isGridSolved(grid)) return 0;
-    
-    List<List<Color>> tempGrid = cloneGrid(grid);
-    int solutionMoves = 0;
-    
-    // Calculate bailout based on total grid size
-    final gridHeight = grid.length;
-    final gridWidth = grid[0].length;
-    final totalCells = gridWidth * gridHeight;
-    final int bailout = math.max(totalCells * 3, 50);
-
-    while (!isGridSolved(tempGrid) && solutionMoves < bailout) {
-      final bestMove = _findStrategicMove(tempGrid);
-      if (bestMove == tempGrid[0][0]) {
-        break; // Can't make progress
-      }
-      tempGrid = floodFillOnGrid(tempGrid, 0, 0, bestMove);
-      solutionMoves++;
-      
-      if (isGridSolved(tempGrid)) {
-        return solutionMoves;
-      }
-    }
-
-    return isGridSolved(tempGrid) ? solutionMoves : -1;
-  }
-
-  /// Find a strategic move considering multiple factors
-  Color _findStrategicMove(List<List<Color>> grid) {
-    if (grid.isEmpty || grid[0].isEmpty || GameConstants.gameColors.isEmpty) {
-      return GameConstants.gameColors.isNotEmpty 
-          ? GameConstants.gameColors[0] 
-          : Colors.blue;
-    }
-    
-    try {
-      Color? bestColor;
-      double bestScore = -1.0;
-      final startColor = grid[0][0];
-
-      for (final color in GameConstants.gameColors) {
-        if (color == startColor) continue;
-        
-        try {
-          final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
-          final score = _calculateStrategicScore(grid, simulatedGrid, color);
-          
-          if (score > bestScore) {
-            bestScore = score;
-            bestColor = color;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-      
-      return bestColor ?? 
-             (GameConstants.gameColors.where((c) => c != startColor).isNotEmpty
-                 ? GameConstants.gameColors.where((c) => c != startColor).first
-                 : GameConstants.gameColors[0]);
-    } catch (e) {
-      return GameConstants.gameColors.isNotEmpty 
-          ? GameConstants.gameColors[0] 
-          : Colors.blue;
-    }
-  }
-
-  /// Calculate strategic score for a move
-  double _calculateStrategicScore(List<List<Color>> originalGrid, List<List<Color>> newGrid, Color moveColor) {
-    final gridHeight = originalGrid.length;
-    final gridWidth = originalGrid.isNotEmpty ? originalGrid[0].length : 0;
-    final totalCells = gridWidth * gridHeight;
-    
-    // Area gained (primary factor)
-    final areaGained = countCurrentArea(newGrid) - countCurrentArea(originalGrid);
-    final areaScore = areaGained / totalCells;
-    
-    // Color diversity (higher is better for strategic play)
-    final colorDiversity = _calculateColorDiversity(newGrid);
-    
-    // Connectivity potential (how well the new area connects)
-    final connectivityScore = _calculateConnectivityScore(newGrid);
-    
-    // Future move potential
-    final futurePotential = _calculateFutureMovePotential(newGrid);
-    
-    // Weighted combination
-    return (areaScore * 0.5) + 
-           (colorDiversity * 0.2) + 
-           (connectivityScore * 0.2) + 
-           (futurePotential * 0.1);
-  }
-
-  /// Calculate color diversity in the grid
-  double _calculateColorDiversity(List<List<Color>> grid) {
-    final colorCounts = <Color, int>{};
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final color = grid[i][j];
-        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
-      }
-    }
-    
-    // Calculate Shannon entropy
-    double entropy = 0.0;
-    final totalCells = gridWidth * gridHeight;
-    
-    for (final count in colorCounts.values) {
-      if (count > 0) {
-        final probability = count / totalCells;
-        entropy -= probability * math.log(probability) / math.ln2;
-      }
-    }
-    
-    // Normalize to 0-1 scale
-    final maxEntropy = math.log(GameConstants.gameColors.length) / math.ln2;
-    return entropy / maxEntropy;
-  }
-
-  /// Calculate connectivity score
-  double _calculateConnectivityScore(List<List<Color>> grid) {
-    final currentArea = countCurrentArea(grid);
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    final totalCells = gridWidth * gridHeight;
-    
-    return currentArea / totalCells;
-  }
-
-  /// Calculate future move potential
-  double _calculateFutureMovePotential(List<List<Color>> grid) {
-    final startColor = grid[0][0];
-    double maxPotential = 0.0;
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    final totalCells = gridWidth * gridHeight;
-    
-    for (final color in GameConstants.gameColors) {
-      if (color == startColor) continue;
-      
-      final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
-      final potentialArea = countCurrentArea(simulatedGrid);
-      final potential = potentialArea / totalCells;
-      
-      if (potential > maxPotential) {
-        maxPotential = potential;
-      }
-    }
-    
-    return maxPotential;
-  }
-
-  /// Minimax strategy: considers opponent's best response
-  int _calculateMinimaxSolution(List<List<Color>> grid) {
-    // Simplified minimax for now - could be expanded
-    return _calculateGreedySolution(grid);
-  }
-
   /// Create a new game configuration for the given level with AI-precise difficulty
   GameConfig createGameConfig(int level) {
     try {
@@ -1288,14 +1374,9 @@ class GameService {
   int _calculateGridDifficulty(List<List<Color>> grid, int solutionMoves) {
     final gridHeight = grid.length;
     final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    final totalCells = gridWidth * gridHeight;
     
     // Base difficulty from solution moves
     int difficulty = solutionMoves * 10;
-    
-    // Add difficulty for color distribution complexity
-    final colorDiversity = _calculateColorDiversity(grid);
-    difficulty += (colorDiversity * 20).round();
     
     // Add difficulty for grid size (use average of width and height)
     difficulty += ((gridWidth + gridHeight) ~/ 2) * 2;
@@ -1400,218 +1481,6 @@ class GameService {
     return edgeScore / (gridWidth + gridHeight);
   }
 
-  /// Verify that a solution actually solves the puzzle
-  bool _verifySolution(List<List<Color>> grid, int solutionMoves) {
-    try {
-      List<List<Color>> testGrid = cloneGrid(grid);
-      int moves = 0;
-      final maxMoves = solutionMoves * 2; // Allow some buffer for verification
-      
-      while (!isGridSolved(testGrid) && moves < maxMoves) {
-        final bestMove = findBestMove(testGrid);
-        if (bestMove == testGrid[0][0]) {
-          return false; // Can't make progress
-        }
-        testGrid = floodFillOnGrid(testGrid, 0, 0, bestMove);
-        moves++;
-      }
-      
-      return isGridSolved(testGrid) && moves <= solutionMoves * 1.5;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Calculate precise max moves using AI intelligence - GENEROUS BUFFER TO ENSURE SOLVABILITY
-  int _calculatePreciseMaxMoves(int level, int solutionMoves, List<List<Color>> grid) {
-    // Base buffer: minimum 5 extra moves, more for higher levels
-    int baseBuffer = 5;
-    
-    // Add more buffer for higher levels (scales with level)
-    final levelMultiplier = (level / GameConstants.maxLevel).clamp(0.0, 1.0);
-    final additionalBuffer = (levelMultiplier * 10).round(); // Up to 10 more moves for high levels
-    
-    // Add buffer based on grid size (larger grids need more moves)
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    final gridSizeFactor = ((gridWidth + gridHeight) / 2).round();
-    final sizeBuffer = (gridSizeFactor * 0.5).round(); // Larger grids get more buffer
-    
-    // Total buffer: base + level-based + size-based
-    final totalBuffer = baseBuffer + additionalBuffer + sizeBuffer;
-    
-    // Ensure minimum buffer of 5 moves, maximum reasonable buffer
-    final finalBuffer = totalBuffer.clamp(5, 20);
-    
-    // Final moves = solution + generous buffer
-    final finalMoves = solutionMoves + finalBuffer;
-    
-    // Safety check: ensure we have at least solution + 5 moves
-    return finalMoves.clamp(solutionMoves + 5, solutionMoves + 25);
-  }
-
-  /// Analyze the actual difficulty of a puzzle based on color distribution and patterns
-  double _analyzePuzzleDifficulty(List<List<Color>> grid, int solutionMoves) {
-    
-    // Analyze color distribution complexity
-    final colorDistributionScore = _analyzeColorDistributionComplexity(grid);
-    
-    // Analyze pattern complexity (isolated regions, clusters, etc.)
-    final patternComplexityScore = _analyzePatternComplexity(grid);
-    
-    // Analyze solution efficiency (how close to optimal the solution is)
-    final solutionEfficiencyScore = _analyzeSolutionEfficiency(grid, solutionMoves);
-    
-    // Analyze strategic difficulty (how many good vs bad moves exist)
-    final strategicDifficultyScore = _analyzeStrategicDifficulty(grid);
-    
-    // Weighted combination of all factors
-    return (colorDistributionScore * 0.3) + 
-           (patternComplexityScore * 0.3) + 
-           (solutionEfficiencyScore * 0.2) + 
-           (strategicDifficultyScore * 0.2);
-  }
-
-  /// Calculate extra moves based on actual puzzle difficulty, not just level
-  int _calculateExtraMovesBasedOnPuzzle(double puzzleDifficulty, int level) {
-    // Base extra moves based on puzzle difficulty (0-1 scale)
-    int baseExtraMoves = (puzzleDifficulty * 2).round(); // 0-2 extra moves based on difficulty
-    
-    // Small level adjustment (only 0-1 extra move based on level)
-    int levelAdjustment = 0;
-    if (level > 6) levelAdjustment = 1; // Only higher levels get 1 extra move
-    
-    return baseExtraMoves + levelAdjustment;
-  }
-
-  /// Analyze color distribution complexity
-  double _analyzeColorDistributionComplexity(List<List<Color>> grid) {
-    final colorCounts = <Color, int>{};
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    
-    // Count colors
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final color = grid[i][j];
-        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
-      }
-    }
-    
-    // Calculate distribution variance (higher variance = more complex)
-    final totalCells = gridWidth * gridHeight;
-    final expectedCount = totalCells / GameConstants.gameColors.length;
-    double variance = 0.0;
-    
-    for (final count in colorCounts.values) {
-      final diff = count - expectedCount;
-      variance += diff * diff;
-    }
-    
-    // Normalize variance to 0-1 scale
-    final maxVariance = totalCells * totalCells / GameConstants.gameColors.length;
-    return (variance / maxVariance).clamp(0.0, 1.0);
-  }
-
-  /// Analyze pattern complexity in the grid
-  double _analyzePatternComplexity(List<List<Color>> grid) {
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    
-    // Count isolated single cells (harder to solve)
-    int isolatedCells = 0;
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final currentColor = grid[i][j];
-        int sameColorNeighbors = 0;
-        
-        // Count adjacent same colors
-        if (i > 0 && grid[i - 1][j] == currentColor) sameColorNeighbors++;
-        if (i < gridHeight - 1 && grid[i + 1][j] == currentColor) sameColorNeighbors++;
-        if (j > 0 && grid[i][j - 1] == currentColor) sameColorNeighbors++;
-        if (j < gridWidth - 1 && grid[i][j + 1] == currentColor) sameColorNeighbors++;
-        
-        if (sameColorNeighbors == 0) isolatedCells++;
-      }
-    }
-    
-    // Count color regions (more regions = more complex)
-    final regionCount = _countIsolatedRegions(grid);
-    
-    // Calculate complexity score
-    final totalCells = gridWidth * gridHeight;
-    final isolatedScore = isolatedCells / totalCells;
-    final regionScore = regionCount / GameConstants.gameColors.length;
-    
-    return (isolatedScore * 0.6 + regionScore * 0.4).clamp(0.0, 1.0);
-  }
-
-  /// Analyze how efficient the solution is compared to optimal
-  double _analyzeSolutionEfficiency(List<List<Color>> grid, int solutionMoves) {
-    // Calculate theoretical minimum moves needed
-    final colorCounts = <Color, int>{};
-    final gridHeight = grid.length;
-    final gridWidth = grid.isNotEmpty ? grid[0].length : 0;
-    
-    for (int i = 0; i < gridHeight; i++) {
-      for (int j = 0; j < gridWidth; j++) {
-        final color = grid[i][j];
-        colorCounts[color] = (colorCounts[color] ?? 0) + 1;
-      }
-    }
-    
-    // Theoretical minimum is number of different colors - 1
-    final theoreticalMin = colorCounts.length - 1;
-    
-    // If solution is close to theoretical minimum, it's harder
-    if (theoreticalMin == 0) return 0.0;
-    final efficiency = theoreticalMin / solutionMoves;
-    
-    return efficiency.clamp(0.0, 1.0);
-  }
-
-  /// Analyze strategic difficulty (how many good vs bad moves exist)
-  double _analyzeStrategicDifficulty(List<List<Color>> grid) {
-    final startColor = grid[0][0];
-    int goodMoves = 0;
-    int totalMoves = 0;
-    
-    for (final color in GameConstants.gameColors) {
-      if (color == startColor) continue;
-      
-      totalMoves++;
-      final simulatedGrid = floodFillOnGrid(grid, 0, 0, color);
-      final areaGained = countCurrentArea(simulatedGrid) - countCurrentArea(grid);
-      
-      // A "good" move gains significant area
-      if (areaGained > grid.length) {
-        goodMoves++;
-      }
-    }
-    
-    if (totalMoves == 0) return 0.0;
-    
-    // More good moves = easier puzzle, fewer good moves = harder puzzle
-    final goodMoveRatio = goodMoves / totalMoves;
-    return (1.0 - goodMoveRatio).clamp(0.0, 1.0); // Invert so higher = harder
-  }
-
-  /// Calculate grid complexity
-  double _calculateGridComplexity(List<List<Color>> grid) {
-    final gridSize = grid.length;
-    
-    // Color distribution complexity
-    final colorDiversity = _calculateColorDiversity(grid);
-    
-    // Pattern complexity
-    final patternComplexity = _calculatePatternComplexity(grid);
-    
-    // Size factor
-    final sizeFactor = gridSize / 18.0; // Normalize to max level size
-    
-    return (colorDiversity * 0.4) + (patternComplexity * 0.4) + (sizeFactor * 0.2);
-  }
-
   /// Check if a move is valid
   bool isValidMove(List<List<Color>> grid, Color newColor) {
     try {
@@ -1641,44 +1510,4 @@ class GameService {
     }
   }
 
-  /// Get AI hint for the current grid state
-  Color getAIHint(List<List<Color>> grid) {
-    return findBestMove(grid);
-  }
-
-  /// Calculate move efficiency (how good a move was)
-  double calculateMoveEfficiency(List<List<Color>> originalGrid, List<List<Color>> newGrid) {
-    final originalArea = countCurrentArea(originalGrid);
-    final newArea = countCurrentArea(newGrid);
-    final gridHeight = originalGrid.length;
-    final gridWidth = originalGrid.isNotEmpty ? originalGrid[0].length : 0;
-    final totalCells = gridWidth * gridHeight;
-    
-    final areaGained = newArea - originalArea;
-    final efficiency = areaGained / totalCells;
-    
-    return efficiency.clamp(0.0, 1.0);
-  }
-
-  /// Check if a move is suboptimal (penalty system)
-  bool isSuboptimalMove(List<List<Color>> grid, Color moveColor) {
-    final aiHint = getAIHint(grid);
-    return moveColor != aiHint;
-  }
-
-  /// Calculate difficulty rating for the current grid
-  String getDifficultyRating(List<List<Color>> grid, int level) {
-    final complexity = _calculateGridComplexity(grid);
-    final solutionMoves = calculateAIOptimalSolution(grid);
-    
-    if (solutionMoves == -1) return "Impossible";
-    
-    final difficultyScore = complexity * 100 + (solutionMoves * 2) + (level * 3);
-    
-    if (difficultyScore < 30) return "Easy";
-    if (difficultyScore < 60) return "Medium";
-    if (difficultyScore < 100) return "Hard";
-    if (difficultyScore < 150) return "Expert";
-    return "Master";
-  }
 }

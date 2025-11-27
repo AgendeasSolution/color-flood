@@ -90,19 +90,6 @@ class LevelProgressionService {
     }
   }
   
-  /// Reset all progress (for testing or reset functionality)
-  Future<void> resetProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_unlockedLevelsKey);
-    await prefs.remove(_completedLevelsKey);
-  }
-  
-  /// Unlock all levels for testing purposes
-  Future<void> unlockAllLevels() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_unlockedLevelsKey, GameConstants.maxLevel);
-  }
-  
   /// Get level status for all levels
   Future<Map<int, LevelStatus>> getAllLevelStatuses() async {
     final highestUnlocked = await getHighestUnlockedLevel();
