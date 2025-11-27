@@ -241,7 +241,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     if (_isGameOver || _gameState != GameState.playing) return;
     
     // Validate game config exists and is valid
-    if (_gameConfig.grid.isEmpty || _gameConfig.gridSize <= 0) {
+    if (_gameConfig.grid.isEmpty || _gameConfig.gridWidth <= 0 || _gameConfig.gridHeight <= 0) {
       debugPrint('Invalid game config in color selection');
       return;
     }
@@ -264,8 +264,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       final newGrid = _gameService.applyMove(_gameConfig.grid, newColor);
       
       // Validate new grid before updating state
-      if (newGrid.isEmpty || newGrid.length != _gameConfig.gridSize) {
-        debugPrint('Invalid grid after move');
+      if (newGrid.isEmpty || 
+          newGrid.length != _gameConfig.gridHeight ||
+          (newGrid.isNotEmpty && newGrid[0].length != _gameConfig.gridWidth)) {
+        debugPrint('Invalid grid after move: expected ${_gameConfig.gridWidth}x${_gameConfig.gridHeight}, got ${newGrid.isNotEmpty ? newGrid[0].length : 0}x${newGrid.length}');
         return;
       }
       
@@ -903,7 +905,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                         // Game Board - Moved down slightly
                         GameBoard(
                           grid: _gameConfig.grid,
-                          gridSize: _gameConfig.gridSize,
+                          gridWidth: _gameConfig.gridWidth,
+                          gridHeight: _gameConfig.gridHeight,
                           gameStarted: true, // Always show the game board
                         ),
 
@@ -1376,7 +1379,7 @@ class _GameCompletedDialog extends StatelessWidget {
                       tablet: 12,
                     )),
                     Text(
-                      "You've completed all 14 levels!\nYou are a Color Flood master!",
+                      "You've completed all 30 levels!\nYou are a Color Flood master!",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,

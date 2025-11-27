@@ -33,23 +33,33 @@ class GameConstants {
   static const int maxPatternComplexity = 7;
   static const double maxColorDominance = 0.6; // Max 60% of any single color
   
-  // Level progression configuration (level 1-12 only)
-  static const Map<int, int> levelGridSizes = {
-    1: 5,   // level 1 - 5x5
-    2: 6,   // level 2 - 6x6
-    3: 7,   // level 3 - 7x7
-    4: 8,   // level 4 - 8x8
-    5: 9,   // level 5 - 9x9
-    6: 10,  // level 6 - 10x10
-    7: 11,  // level 7 - 11x11
-    8: 12,  // level 8 - 12x12
-    9: 13,  // level 9 - 13x13
-    10: 14, // level 10 - 14x14
-    11: 15, // level 11 - 15x15
-    12: 16, // level 12 - 16x16
-  };
+  // Level progression configuration (30 levels with rectangular grids)
+  // Get grid width for a given level
+  static int getGridWidth(int level) {
+    if (level < 1 || level > maxLevel) return baseGridSize;
+    // Calculate base size: every 3 levels, base increases by 1
+    // Base starts at 5 for levels 1-3
+    final groupIndex = (level - 1) ~/ 3;
+    return 5 + groupIndex;
+  }
   
-  static const int maxLevel = 12;
+  // Get grid height for a given level
+  static int getGridHeight(int level) {
+    if (level < 1 || level > maxLevel) return baseGridSize;
+    // Calculate base size: every 3 levels, base increases by 1
+    final groupIndex = (level - 1) ~/ 3;
+    final baseSize = 5 + groupIndex;
+    // Within each group of 3, height increases: base, base+1, base+2
+    final positionInGroup = (level - 1) % 3;
+    return baseSize + positionInGroup;
+  }
+  
+  // Legacy support: get grid size (returns width for backward compatibility)
+  static int getGridSize(int level) {
+    return getGridWidth(level);
+  }
+  
+  static const int maxLevel = 30;
 
   // UI configuration
   static const double gameBoardPadding = 12.0;

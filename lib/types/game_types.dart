@@ -16,29 +16,36 @@ enum GameResult {
 /// Game configuration data class
 class GameConfig {
   final int level;
-  final int gridSize;
+  final int gridWidth;
+  final int gridHeight;
   final int maxMoves;
   final List<List<Color>> grid;
   final List<List<Color>> originalGrid;
 
   const GameConfig({
     required this.level,
-    required this.gridSize,
+    required this.gridWidth,
+    required this.gridHeight,
     required this.maxMoves,
     required this.grid,
     required this.originalGrid,
   });
 
+  // Legacy support: gridSize returns width for backward compatibility
+  int get gridSize => gridWidth;
+
   GameConfig copyWith({
     int? level,
-    int? gridSize,
+    int? gridWidth,
+    int? gridHeight,
     int? maxMoves,
     List<List<Color>>? grid,
     List<List<Color>>? originalGrid,
   }) {
     return GameConfig(
       level: level ?? this.level,
-      gridSize: gridSize ?? this.gridSize,
+      gridWidth: gridWidth ?? this.gridWidth,
+      gridHeight: gridHeight ?? this.gridHeight,
       maxMoves: maxMoves ?? this.maxMoves,
       grid: grid ?? this.grid,
       originalGrid: originalGrid ?? this.originalGrid,

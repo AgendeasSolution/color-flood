@@ -5,15 +5,20 @@ import '../utils/responsive_utils.dart';
 /// Game board component that displays the color grid
 class GameBoard extends StatefulWidget {
   final List<List<Color>> grid;
-  final int gridSize;
+  final int gridWidth;
+  final int gridHeight;
   final bool gameStarted;
 
   const GameBoard({
     super.key,
     required this.grid,
-    required this.gridSize,
+    required this.gridWidth,
+    required this.gridHeight,
     required this.gameStarted,
   });
+  
+  // Legacy support: gridSize returns width for backward compatibility
+  int get gridSize => gridWidth;
 
   @override
   State<GameBoard> createState() => _GameBoardState();
@@ -26,7 +31,7 @@ class _GameBoardState extends State<GameBoard> {
   void initState() {
     super.initState();
     // Validate grid before cloning
-    if (widget.grid.isEmpty || widget.gridSize <= 0) {
+    if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
       _previousGrid = _createEmptyGrid();
     } else {
       _previousGrid = _cloneGrid(widget.grid);
@@ -37,14 +42,15 @@ class _GameBoardState extends State<GameBoard> {
   void didUpdateWidget(GameBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Validate current grid
-    if (widget.grid.isEmpty || widget.gridSize <= 0) {
+    if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
       _previousGrid = _createEmptyGrid();
       return;
     }
     
     // If grid size changed (new level), update _previousGrid to match new grid
     // Otherwise, keep the old grid for animation purposes
-    if (oldWidget.gridSize != widget.gridSize || 
+    if (oldWidget.gridWidth != widget.gridWidth || 
+        oldWidget.gridHeight != widget.gridHeight ||
         oldWidget.grid.length != widget.grid.length ||
         oldWidget.grid.isEmpty) {
       _previousGrid = _cloneGrid(widget.grid);
@@ -73,24 +79,25 @@ class _GameBoardState extends State<GameBoard> {
   }
   
   List<List<Color>> _createEmptyGrid() {
-    final size = widget.gridSize > 0 ? widget.gridSize : 6;
+    final width = widget.gridWidth > 0 ? widget.gridWidth : 6;
+    final height = widget.gridHeight > 0 ? widget.gridHeight : 6;
     return List.generate(
-      size,
-      (_) => List.generate(size, (_) => Colors.grey),
+      height,
+      (_) => List.generate(width, (_) => Colors.grey),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     try {
-      // Validate grid and gridSize before building
-      if (widget.grid.isEmpty || widget.gridSize <= 0) {
+      // Validate grid and dimensions before building
+      if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
         return _buildErrorPlaceholder();
       }
       
-      // Validate grid dimensions match gridSize
-      if (widget.grid.length != widget.gridSize ||
-          (widget.grid.isNotEmpty && widget.grid[0].length != widget.gridSize)) {
+      // Validate grid dimensions match expected width and height
+      if (widget.grid.length != widget.gridHeight ||
+          (widget.grid.isNotEmpty && widget.grid[0].length != widget.gridWidth)) {
         return _buildErrorPlaceholder();
       }
       
@@ -102,8 +109,11 @@ class _GameBoardState extends State<GameBoard> {
         tablet: 14,
       );
       
+      // Calculate aspect ratio based on width and height
+      final aspectRatio = widget.gridWidth / widget.gridHeight;
+      
       return AspectRatio(
-        aspectRatio: 1.0,
+        aspectRatio: aspectRatio,
         child: Container(
           padding: EdgeInsets.all(boardPadding),
           decoration: BoxDecoration(
@@ -148,15 +158,15 @@ class _GameBoardState extends State<GameBoard> {
               ? GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: widget.gridSize,
+                    crossAxisCount: widget.gridWidth,
                     crossAxisSpacing: 6,
                     mainAxisSpacing: 6,
                   ),
-                  itemCount: widget.gridSize * widget.gridSize,
+                  itemCount: widget.gridWidth * widget.gridHeight,
                   itemBuilder: (context, index) {
                     try {
-                      final row = index ~/ widget.gridSize;
-                      final col = index % widget.gridSize;
+                      final row = index ~/ widget.gridWidth;
+                      final col = index % widget.gridWidth;
                       
                       // Validate indices before accessing
                       if (row < 0 || row >= widget.grid.length ||
@@ -213,8 +223,11 @@ class _GameBoardState extends State<GameBoard> {
   }
   
   Widget _buildErrorPlaceholder() {
+    final aspectRatio = widget.gridWidth > 0 && widget.gridHeight > 0
+        ? widget.gridWidth / widget.gridHeight
+        : 1.0;
     return AspectRatio(
-      aspectRatio: 1.0,
+      aspectRatio: aspectRatio,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey.withOpacity(0.1),

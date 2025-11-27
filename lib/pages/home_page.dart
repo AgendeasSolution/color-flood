@@ -38,6 +38,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Unlock all levels for testing purposes
+    _levelService.unlockAllLevels();
     _loadLevelStatuses();
   }
 
