@@ -17,8 +17,8 @@ class RewardedAdService {
   static const String _testAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
   
   /// Production ad unit IDs for each platform
-  static const String _productionAdUnitIdAndroid = 'ca-app-pub-3772142815301617/REWARDED_AD_ANDROID';
-  static const String _productionAdUnitIdIOS = 'ca-app-pub-3772142815301617/REWARDED_AD_IOS';
+  static const String _productionAdUnitIdAndroid = 'ca-app-pub-3772142815301617/4970564142';
+  static const String _productionAdUnitIdIOS = 'ca-app-pub-3772142815301617/6945882997';
   
   /// Get the production ad unit ID based on the current platform
   static String get _productionAdUnitId {

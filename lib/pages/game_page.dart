@@ -312,19 +312,23 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       final rewardEarned = await RewardedAdService.instance.showAd(
         onRewarded: (reward) {
           debugPrint('[GamePage] Reward earned: ${reward.amount} ${reward.type}');
-          // Add 5 extra moves when ad is watched
+          // Get reward amount from ad, default to 3 if not found
+          final rewardAmount = reward.amount > 0 ? reward.amount.toInt() : 3;
+          debugPrint('[GamePage] Adding $rewardAmount extra moves');
+          
+          // Add extra moves based on reward amount
           if (mounted) {
             setState(() {
               _gameConfig = _gameConfig.copyWith(
-                maxMoves: _gameConfig.maxMoves + 5,
+                maxMoves: _gameConfig.maxMoves + rewardAmount,
               );
               _isLoadingExtraMoves = false;
             });
-            // Show success message
+            // Show success message with actual reward amount
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('+5 Extra Moves Added!'),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text('+$rewardAmount Extra Moves Added!'),
+                duration: const Duration(seconds: 2),
                 backgroundColor: Colors.green,
               ),
             );
