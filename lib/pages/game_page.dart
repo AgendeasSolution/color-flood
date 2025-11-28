@@ -11,6 +11,7 @@ import '../services/level_progression_service.dart';
 import '../services/interstitial_ad_service.dart';
 import '../services/rewarded_ad_service.dart';
 import '../services/audio_service.dart';
+import '../services/daily_puzzle_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
 import '../components/glass_button.dart';
@@ -39,6 +40,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   final LevelProgressionService _levelService =
       LevelProgressionService.instance;
   final AudioService _audioService = AudioService();
+  final DailyPuzzleService _dailyPuzzleService = DailyPuzzleService.instance;
+  bool _isDailyPuzzle = false;
 
   // Animation controllers
   late AnimationController _popupAnimationController;
@@ -121,9 +124,31 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _startNewGame() {
+  Future<void> _startNewGame() async {
     if (!mounted) return;
     try {
+      // Check if this is a daily puzzle (level 0)
+      if (widget.initialLevel == 0) {
+        _isDailyPuzzle = true;
+        try {
+          final puzzle = await _dailyPuzzleService.getTodaysPuzzle();
+          if (mounted && puzzle.grid.isNotEmpty) {
+            setState(() {
+              _gameConfig = puzzle;
+              _moves = 0;
+              _isGameOver = false;
+              _gameState = GameState.playing;
+            });
+            return;
+          }
+        } catch (e) {
+          // Fall through to regular level if daily puzzle fails
+          _isDailyPuzzle = false;
+        }
+      }
+      
+      // Regular level game
+      _isDailyPuzzle = false;
       // Validate initial level
       final requestedLevel = widget.initialLevel ?? 1;
       final validLevel = requestedLevel.clamp(1, GameConstants.maxLevel);
@@ -402,7 +427,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Future<void> _markLevelCompleted() async {
     try {
-      await _levelService.completeLevel(_gameConfig.level);
+      if (_isDailyPuzzle) {
+        // Mark daily puzzle as completed
+        await _dailyPuzzleService.markTodaysPuzzleCompleted();
+      } else {
+        // Mark regular level as completed
+        await _levelService.completeLevel(_gameConfig.level);
+      }
     } catch (e) {
       // Silently handle errors
     }
@@ -430,15 +461,16 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         barrierDismissible: false,
         barrierLabel: '',
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (context, anim1, anim2) => _GameOverDialog(
+        pageBuilder: (dialogContext, anim1, anim2) => _GameOverDialog(
           didWin: result == GameResult.win,
           level: _gameConfig.level,
           moves: _moves,
           maxMoves: _gameConfig.maxMoves,
-          onNextLevel: () async {
-            if (context.mounted) {
+          isDailyPuzzle: _isDailyPuzzle,
+          onNextLevel: _isDailyPuzzle ? null : () async {
+            if (dialogContext.mounted) {
               try {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               } catch (e) {
                 // Continue even if navigation fails
               }
@@ -446,15 +478,46 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             await _nextLevel();
           },
           onRestart: () async {
-            if (context.mounted) {
+            if (dialogContext.mounted) {
               try {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               } catch (e) {
                 // Continue even if navigation fails
               }
             }
             await _restartCurrentLevel();
           },
+          onBackToHome: _isDailyPuzzle ? () async {
+            // Close dialog first
+            if (dialogContext.mounted) {
+              try {
+                Navigator.of(dialogContext).pop();
+              } catch (e) {
+                // Continue even if dialog pop fails
+              }
+            }
+            
+            // Show 100% interstitial ad before going back to home
+            try {
+              final adShown = await InterstitialAdService.instance.showAdAlways();
+              // Preload next ad for future use
+              if (adShown) {
+                InterstitialAdService.instance.preloadAd();
+              }
+            } catch (e) {
+              // Silently handle ad failures - still allow navigation
+              InterstitialAdService.instance.preloadAd();
+            }
+            
+            // Navigate back to home page
+            if (mounted && context.mounted) {
+              try {
+                Navigator.of(context).pop();
+              } catch (e) {
+                // Continue even if navigation fails
+              }
+            }
+          } : null,
         ),
         transitionBuilder: (context, anim1, anim2, child) {
           try {
@@ -1070,16 +1133,20 @@ class _GameOverDialog extends StatelessWidget {
   final int level;
   final int moves;
   final int maxMoves;
-  final VoidCallback onNextLevel;
+  final bool isDailyPuzzle;
+  final VoidCallback? onNextLevel;
   final VoidCallback onRestart;
+  final VoidCallback? onBackToHome;
 
   const _GameOverDialog({
     required this.didWin,
     required this.level,
     required this.moves,
     required this.maxMoves,
-    required this.onNextLevel,
+    this.isDailyPuzzle = false,
+    this.onNextLevel,
     required this.onRestart,
+    this.onBackToHome,
   });
 
   @override
@@ -1131,9 +1198,12 @@ class _GameOverDialog extends StatelessWidget {
                       tablet: 20,
                     )),
                     Text(
-                      didWin
-                          ? AppConstants.levelCompleteText
-                          : AppConstants.gameOverText,
+                      isDailyPuzzle
+                          ? (didWin ? "Daily Puzzle Complete!" : "Daily Puzzle Failed")
+                          : (didWin
+                              ? AppConstants.levelCompleteText
+                              : AppConstants.gameOverText),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: ResponsiveUtils.getResponsiveFontSize(
                           context,
@@ -1180,11 +1250,12 @@ class _GameOverDialog extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _StatItem(
-                          label: AppConstants.levelStatLabel,
-                          value: "$level",
-                          context: context,
-                        ),
+                        if (!isDailyPuzzle)
+                          _StatItem(
+                            label: AppConstants.levelStatLabel,
+                            value: "$level",
+                            context: context,
+                          ),
                         _StatItem(
                           label: AppConstants.movesUsedStatLabel,
                           value: "$moves",
@@ -1204,11 +1275,18 @@ class _GameOverDialog extends StatelessWidget {
                       largePhone: 28,
                       tablet: 36,
                     )),
-                    if (didWin)
+                    if (didWin && onNextLevel != null)
                       _PopupButton(
                         context: context,
-                        onTap: onNextLevel,
+                        onTap: onNextLevel!,
                         text: AppConstants.nextLevelText,
+                        isPrimary: true,
+                      )
+                    else if (didWin && isDailyPuzzle && onBackToHome != null)
+                      _PopupButton(
+                        context: context,
+                        onTap: onBackToHome!,
+                        text: "Back to Home",
                         isPrimary: true,
                       )
                     else
