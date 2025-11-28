@@ -567,18 +567,18 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                               Container(
                               padding: ResponsiveUtils.getResponsivePadding(
                                 context,
-                                smallPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                mediumPhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                                largePhone: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                tablet: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                mediumPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                largePhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                tablet: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               ),
                               constraints: BoxConstraints(
                                 minHeight: ResponsiveUtils.getResponsiveValue(
                                   context: context,
-                                  smallPhone: 56.0, // Same as button
-                                  mediumPhone: 60.0,
-                                  largePhone: 64.0,
-                                  tablet: 72.0,
+                                  smallPhone: 40.0,
+                                  mediumPhone: 44.0,
+                                  largePhone: 48.0,
+                                  tablet: 52.0,
                                 ),
                               ),
                               decoration: BoxDecoration(
@@ -590,7 +590,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: Colors.white.withOpacity(0.15),
                                   width: 2,
@@ -612,6 +612,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
@@ -619,10 +620,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                     style: TextStyle(
                                       fontSize: ResponsiveUtils.getResponsiveFontSize(
                                         context,
-                                        smallPhone: 10,
-                                        mediumPhone: 11,
-                                        largePhone: 12,
-                                        tablet: 13,
+                                        smallPhone: 8,
+                                        mediumPhone: 9,
+                                        largePhone: 10,
+                                        tablet: 11,
                                       ),
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white.withOpacity(0.9),
@@ -631,10 +632,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                   ),
                                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                                     context,
-                                    smallPhone: 2,
-                                    mediumPhone: 3,
-                                    largePhone: 4,
-                                    tablet: 4,
+                                    smallPhone: 1,
+                                    mediumPhone: 2,
+                                    largePhone: 2,
+                                    tablet: 3,
                                   )),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -646,10 +647,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                           fontSize: ResponsiveUtils.getResponsiveFontSize(
                                             context,
-                                            smallPhone: 24,
-                                            mediumPhone: 26,
-                                            largePhone: 28,
-                                            tablet: 32,
+                                            smallPhone: 16,
+                                            mediumPhone: 18,
+                                            largePhone: 20,
+                                            tablet: 22,
                                           ),
                                           fontWeight: FontWeight.w900,
                                           color: Colors.white,
@@ -657,8 +658,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                           shadows: [
                                             Shadow(
                                               color: Colors.black.withOpacity(0.6),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 1),
                                             ),
                                           ],
                                         ),
@@ -668,10 +669,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                           fontSize: ResponsiveUtils.getResponsiveFontSize(
                                             context,
-                                            smallPhone: 20,
-                                            mediumPhone: 22,
-                                            largePhone: 24,
-                                            tablet: 28,
+                                            smallPhone: 14,
+                                            mediumPhone: 16,
+                                            largePhone: 18,
+                                            tablet: 20,
                                           ),
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white.withOpacity(0.7),
@@ -682,10 +683,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                           fontSize: ResponsiveUtils.getResponsiveFontSize(
                                             context,
-                                            smallPhone: 24,
-                                            mediumPhone: 26,
-                                            largePhone: 28,
-                                            tablet: 32,
+                                            smallPhone: 16,
+                                            mediumPhone: 18,
+                                            largePhone: 20,
+                                            tablet: 22,
                                           ),
                                           fontWeight: FontWeight.w900,
                                           color: Colors.white.withOpacity(0.95),
@@ -693,8 +694,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                           shadows: [
                                             Shadow(
                                               color: Colors.black.withOpacity(0.6),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 1),
                                             ),
                                           ],
                                         ),
@@ -732,10 +733,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                       constraints: BoxConstraints(
                                         minHeight: ResponsiveUtils.getResponsiveValue(
                                           context: context,
-                                          smallPhone: 56.0, // 8*2 + 40 (content height)
-                                          mediumPhone: 60.0,
-                                          largePhone: 64.0,
-                                          tablet: 72.0,
+                                          smallPhone: 40.0,
+                                          mediumPhone: 44.0,
+                                          largePhone: 48.0,
+                                          tablet: 52.0,
                                         ),
                                       ),
                                       decoration: BoxDecoration(
@@ -748,7 +749,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
-                                        borderRadius: BorderRadius.circular(20),
+                                        borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: Colors.white.withOpacity(0.4),
                                           width: 2,
