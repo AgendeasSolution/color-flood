@@ -526,10 +526,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Top spacing for logo
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                     context,
-                    smallPhone: 30,
-                    mediumPhone: 35,
-                    largePhone: 40,
-                    tablet: 45,
+                    smallPhone: 40,
+                    mediumPhone: 50,
+                    largePhone: 60,
+                    tablet: 70,
                   )),
                   
                   // Color Flood Logo
@@ -545,10 +545,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           // Spacing between logo and daily puzzle
                           SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                             context,
-                            smallPhone: 16,
-                            mediumPhone: 18,
-                            largePhone: 20,
-                            tablet: 24,
+                           smallPhone: 12,
+                            mediumPhone: 14,
+                            largePhone: 16,
+                            tablet: 20,
                           )),
                           
                           // Daily Puzzle Section
@@ -560,10 +560,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           // Spacing between daily puzzle and level selection
                           SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                             context,
-                            smallPhone: 16,
-                            mediumPhone: 18,
-                            largePhone: 20,
-                            tablet: 24,
+                            smallPhone: 8,
+                            mediumPhone: 9,
+                            largePhone: 10,
+                            tablet: 12,
                           )),
                           
                           // Level Selection Carousel
