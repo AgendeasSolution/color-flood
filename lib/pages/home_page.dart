@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
@@ -288,27 +287,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Container(
-                child: Material(
-                  color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _showSettings,
-                      borderRadius: BorderRadius.circular(10),
-                      splashColor: Colors.white.withOpacity(0.2),
-                      highlightColor: Colors.white.withOpacity(0.1),
-                      child: Container(
-                        height: 36,
-                        width: 36,
-                        padding: const EdgeInsets.all(0),
-                        child: Center(
-                          child: Icon(
-                            Icons.settings,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+              child: Material(
+                color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _showSettings,
+                    borderRadius: BorderRadius.circular(10),
+                    splashColor: Colors.white.withOpacity(0.2),
+                    highlightColor: Colors.white.withOpacity(0.1),
+                    child: Container(
+                      height: 36,
+                      width: 36,
+                      padding: const EdgeInsets.all(0),
+                      child: Center(
+                        child: Icon(
+                          Icons.settings,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
-                  ),
+                    ),
                 ),
               ),
             ),
@@ -664,7 +661,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // How to Play Button - Top Left
           Positioned(
             top: 0,
-            left: GameConstants.mediumSpacing,
+            left: ResponsiveUtils.getResponsiveSpacing(
+              context,
+              smallPhone: 12,
+              mediumPhone: 14,
+              largePhone: 16,
+              tablet: 20,
+            ),
             child: SafeArea(
               child: _buildSmallHowToPlayButton(),
             ),
@@ -673,7 +676,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Settings Button - Top Right
           Positioned(
             top: 0,
-            right: GameConstants.mediumSpacing,
+            right: ResponsiveUtils.getResponsiveSpacing(
+              context,
+              smallPhone: 12,
+              mediumPhone: 14,
+              largePhone: 16,
+              tablet: 20,
+            ),
             child: SafeArea(
               child: _buildSettingsButton(),
             ),

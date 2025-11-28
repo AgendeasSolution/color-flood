@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../utils/responsive_utils.dart';
 
 /// Color Flood Logo component with gradient text effects and animations
 class ColorFloodLogo extends StatefulWidget {
@@ -121,16 +122,13 @@ class _ColorFloodLogoState extends State<ColorFloodLogo>
   double _getResponsiveFontSize(BuildContext context) {
     if (widget.fontSize != null) return widget.fontSize!;
     
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth < 360) {
-      return 40.0; // Increased from 32.0 for very small screens
-    } else if (screenWidth < 480) {
-      return 50.0; // Increased from 40.0 for small mobile
-    } else if (screenWidth < 768) {
-      return 60.0; // Increased from 48.0 for mobile
-    } else {
-      return 80.0; // Increased from 64.0 for desktop
-    }
+    return ResponsiveUtils.getResponsiveFontSize(
+      context,
+      smallPhone: 40.0,
+      mediumPhone: 50.0,
+      largePhone: 60.0,
+      tablet: 80.0,
+    );
   }
 
   @override

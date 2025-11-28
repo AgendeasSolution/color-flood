@@ -381,20 +381,6 @@ class _AnimatedCellState extends State<_AnimatedCell>
       ),
     );
   }
-
-  Color _lightenColor(Color color, double amount) {
-    assert(amount >= 0 && amount <= 1);
-    final hsl = HSLColor.fromColor(color);
-    final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
-    return hsl.withLightness(lightness).toColor();
-  }
-
-  Color _darkenColor(Color color, double amount) {
-    assert(amount >= 0 && amount <= 1);
-    final hsl = HSLColor.fromColor(color);
-    final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
-    return hsl.withLightness(lightness).toColor();
-  }
 }
 
 /// Custom painter for faceted 3D gem cells

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/audio_service.dart';
+import '../utils/responsive_utils.dart';
 
 /// Settings dialog component for managing audio settings
 class SettingsDialog extends StatefulWidget {
@@ -107,11 +108,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.9,
             ),
-            padding: EdgeInsets.only(
-              left: GameConstants.mediumSpacing,
-              right: GameConstants.mediumSpacing,
-              top: GameConstants.smallSpacing,
-              bottom: GameConstants.mediumSpacing,
+            padding: ResponsiveUtils.getResponsivePadding(
+              context,
+              smallPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              mediumPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              largePhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              tablet: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -140,28 +142,46 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Settings',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 20,
+                          mediumPhone: 22,
+                          largePhone: 24,
+                          tablet: 28,
+                        ),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
                         color: Colors.white,
-                        size: 24,
+                        size: ResponsiveUtils.getResponsiveIconSize(
+                          context,
+                          smallPhone: 20,
+                          mediumPhone: 22,
+                          largePhone: 24,
+                          tablet: 26,
+                        ),
                       ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-                const SizedBox(height: GameConstants.mediumSpacing),
+                SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 12,
+                  mediumPhone: 14,
+                  largePhone: 16,
+                  tablet: 20,
+                )),
                 
                 // Sound Effects Toggle
                 _buildSettingTile(
@@ -172,7 +192,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   onChanged: _onSoundEffectsChanged,
                 ),
                 
-                const SizedBox(height: GameConstants.smallSpacing),
+                SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 6,
+                  mediumPhone: 7,
+                  largePhone: 8,
+                  tablet: 10,
+                )),
                 
                 // Background Music Toggle
                 _buildSettingTile(
@@ -202,7 +228,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: ResponsiveUtils.getResponsivePadding(
+            context,
+            smallPhone: const EdgeInsets.all(12),
+            mediumPhone: const EdgeInsets.all(14),
+            largePhone: const EdgeInsets.all(16),
+            tablet: const EdgeInsets.all(20),
+          ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -219,7 +251,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
             children: [
               // Icon
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: ResponsiveUtils.getResponsivePadding(
+                  context,
+                  smallPhone: const EdgeInsets.all(8),
+                  mediumPhone: const EdgeInsets.all(9),
+                  largePhone: const EdgeInsets.all(10),
+                  tablet: const EdgeInsets.all(12),
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -235,10 +273,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 child: Icon(
                   icon,
                   color: Colors.white,
-                  size: 24,
+                  size: ResponsiveUtils.getResponsiveIconSize(
+                    context,
+                    smallPhone: 20,
+                    mediumPhone: 22,
+                    largePhone: 24,
+                    tablet: 26,
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                context,
+                smallPhone: 12,
+                mediumPhone: 14,
+                largePhone: 16,
+                tablet: 20,
+              )),
               
               // Title and Subtitle
               Expanded(
@@ -247,18 +297,36 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 14,
+                          mediumPhone: 15,
+                          largePhone: 16,
+                          tablet: 18,
+                        ),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 3,
+                      mediumPhone: 4,
+                      largePhone: 4,
+                      tablet: 5,
+                    )),
                     Text(
                       subtitle,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 11,
+                          mediumPhone: 12,
+                          largePhone: 13,
+                          tablet: 14,
+                        ),
                       ),
                     ),
                   ],

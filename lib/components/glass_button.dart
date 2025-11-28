@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../utils/responsive_utils.dart';
 
 /// Glass morphism button component
 class GlassButton extends StatelessWidget {
@@ -26,9 +27,12 @@ class GlassButton extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-            padding: padding ?? const EdgeInsets.symmetric(
-              horizontal: 20, 
-              vertical: 12,
+            padding: padding ?? ResponsiveUtils.getResponsivePadding(
+              context,
+              smallPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              mediumPhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+              largePhone: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              tablet: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(

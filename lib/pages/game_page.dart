@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
 import '../types/game_types.dart';
@@ -1017,7 +1016,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         // Exit Button (Left)
         Positioned(
           top: 0,
-          left: GameConstants.mediumSpacing,
+          left: ResponsiveUtils.getResponsiveSpacing(
+            context,
+            smallPhone: 12,
+            mediumPhone: 14,
+            largePhone: 16,
+            tablet: 20,
+          ),
           child: GlassButton(
             onTap: _handleExit,
             padding: ResponsiveUtils.getResponsivePadding(
@@ -1114,7 +1119,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         // Reset Button (Right)
         Positioned(
           top: 0,
-          right: GameConstants.mediumSpacing,
+          right: ResponsiveUtils.getResponsiveSpacing(
+            context,
+            smallPhone: 12,
+            mediumPhone: 14,
+            largePhone: 16,
+            tablet: 20,
+          ),
           child: GlassButton(
             onTap: _restartCurrentLevel,
             padding: ResponsiveUtils.getResponsivePadding(
@@ -1201,7 +1212,13 @@ class _GameOverDialog extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
             child: Container(
               width: min(500, MediaQuery.of(context).size.width * 0.9),
-              padding: const EdgeInsets.all(GameConstants.largeSpacing),
+              padding: ResponsiveUtils.getResponsivePadding(
+                context,
+                smallPhone: const EdgeInsets.all(16),
+                mediumPhone: const EdgeInsets.all(18),
+                largePhone: const EdgeInsets.all(20),
+                tablet: const EdgeInsets.all(24),
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
