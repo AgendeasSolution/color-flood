@@ -16,8 +16,13 @@ class LevelProgressionService {
   
   /// Get the highest unlocked level (1-based)
   Future<int> getHighestUnlockedLevel() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_unlockedLevelsKey) ?? 1; // Level 1 is unlocked by default
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_unlockedLevelsKey) ?? 1; // Level 1 is unlocked by default
+    } catch (e) {
+      // Return default level 1 if any error occurs
+      return 1;
+    }
   }
   
   /// Get all completed levels
@@ -48,23 +53,37 @@ class LevelProgressionService {
   
   /// Check if a specific level is unlocked
   Future<bool> isLevelUnlocked(int level) async {
-    final highestUnlocked = await getHighestUnlockedLevel();
-    return level <= highestUnlocked;
+    try {
+      final highestUnlocked = await getHighestUnlockedLevel();
+      return level <= highestUnlocked;
+    } catch (e) {
+      // Default to unlocked for level 1, locked for others
+      return level == 1;
+    }
   }
   
   /// Check if a specific level is completed
   Future<bool> isLevelCompleted(int level) async {
-    final completedLevels = await getCompletedLevels();
-    return completedLevels.contains(level);
+    try {
+      final completedLevels = await getCompletedLevels();
+      return completedLevels.contains(level);
+    } catch (e) {
+      // Return false if error occurs
+      return false;
+    }
   }
   
   /// Unlock a specific level
   Future<void> unlockLevel(int level) async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentHighest = await getHighestUnlockedLevel();
-    
-    if (level > currentHighest && level <= GameConstants.maxLevel) {
-      await prefs.setInt(_unlockedLevelsKey, level);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentHighest = await getHighestUnlockedLevel();
+      
+      if (level > currentHighest && level <= GameConstants.maxLevel) {
+        await prefs.setInt(_unlockedLevelsKey, level);
+      }
+    } catch (e) {
+      // Silently handle errors - don't crash
     }
   }
   
@@ -92,27 +111,36 @@ class LevelProgressionService {
   
   /// Get level status for all levels
   Future<Map<int, LevelStatus>> getAllLevelStatuses() async {
-    final highestUnlocked = await getHighestUnlockedLevel();
-    final completedLevels = await getCompletedLevels();
-    
-    final Map<int, LevelStatus> statuses = {};
-    
-    for (int level = 1; level <= GameConstants.maxLevel; level++) {
-      // Level 1 is always unlocked
-      if (level == 1) {
-        statuses[level] = completedLevels.contains(level) 
-            ? LevelStatus.completed 
-            : LevelStatus.unlocked;
-      } else if (level <= highestUnlocked) {
-        statuses[level] = completedLevels.contains(level) 
-            ? LevelStatus.completed 
-            : LevelStatus.unlocked;
-      } else {
-        statuses[level] = LevelStatus.locked;
+    try {
+      final highestUnlocked = await getHighestUnlockedLevel();
+      final completedLevels = await getCompletedLevels();
+      
+      final Map<int, LevelStatus> statuses = {};
+      
+      for (int level = 1; level <= GameConstants.maxLevel; level++) {
+        // Level 1 is always unlocked
+        if (level == 1) {
+          statuses[level] = completedLevels.contains(level) 
+              ? LevelStatus.completed 
+              : LevelStatus.unlocked;
+        } else if (level <= highestUnlocked) {
+          statuses[level] = completedLevels.contains(level) 
+              ? LevelStatus.completed 
+              : LevelStatus.unlocked;
+        } else {
+          statuses[level] = LevelStatus.locked;
+        }
       }
+      
+      return statuses;
+    } catch (e) {
+      // Return default statuses if error occurs
+      final Map<int, LevelStatus> defaultStatuses = {};
+      for (int level = 1; level <= GameConstants.maxLevel; level++) {
+        defaultStatuses[level] = level == 1 ? LevelStatus.unlocked : LevelStatus.locked;
+      }
+      return defaultStatuses;
     }
-    
-    return statuses;
   }
 }
 

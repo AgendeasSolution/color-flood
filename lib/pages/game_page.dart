@@ -468,6 +468,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           maxMoves: _gameConfig.maxMoves,
           isDailyPuzzle: _isDailyPuzzle,
           onNextLevel: _isDailyPuzzle ? null : () async {
+            try {
+              _audioService.playClickSound();
+            } catch (e) {
+              // Continue even if audio fails
+            }
             if (dialogContext.mounted) {
               try {
                 Navigator.of(dialogContext).pop();
@@ -478,6 +483,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             await _nextLevel();
           },
           onRestart: () async {
+            try {
+              _audioService.playClickSound();
+            } catch (e) {
+              // Continue even if audio fails
+            }
             if (dialogContext.mounted) {
               try {
                 Navigator.of(dialogContext).pop();
@@ -488,6 +498,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             await _restartCurrentLevel();
           },
           onBackToHome: _isDailyPuzzle ? () async {
+            try {
+              _audioService.playClickSound();
+            } catch (e) {
+              // Continue even if audio fails
+            }
             // Close dialog first
             if (dialogContext.mounted) {
               try {
