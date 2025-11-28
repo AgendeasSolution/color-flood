@@ -12,6 +12,7 @@ import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
 import '../components/glass_button.dart';
 import '../components/update_popup.dart';
+import '../components/settings_dialog.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
 import '../utils/responsive_utils.dart';
@@ -33,12 +34,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
   final LevelProgressionService _levelService = LevelProgressionService.instance;
   final AudioService _audioService = AudioService();
+  bool _hasEnsuredMusic = false; // Track if we've ensured music is playing
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadLevelStatuses();
+    _hasEnsuredMusic = false;
+    // Start background music when home page loads
+    _audioService.playBackgroundMusic();
   }
 
   @override
@@ -46,7 +51,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.didChangeDependencies();
     // Refresh level statuses when returning to home screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLevelStatuses();
+      if (mounted) {
+        _loadLevelStatuses();
+        // Ensure background music is playing when returning to home screen
+        // Add a small delay to ensure navigation is complete
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && _audioService.backgroundMusicEnabled) {
+            _hasEnsuredMusic = false; // Reset flag to ensure music plays
+            _audioService.ensureBackgroundMusicPlaying();
+          }
+        });
+      }
     });
   }
 
@@ -68,6 +83,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _fadeAnimationController.dispose();
+    // Don't stop background music in dispose - just pause it
+    // This allows it to resume when returning
+    _audioService.pauseBackgroundMusic();
     super.dispose();
   }
 
@@ -81,6 +99,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       
       if (!mounted || !context.mounted) return;
       
+      // Pause background music when navigating to game
+      _audioService.pauseBackgroundMusic();
+      _hasEnsuredMusic = false; // Reset flag so music will resume when returning
+      
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => GamePage(initialLevel: level),
@@ -89,6 +111,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Refresh level statuses when returning from game
       if (mounted) {
         await _loadLevelStatuses();
+        // Ensure background music is playing when returning to home
+        // Add a small delay to ensure navigation animation is complete
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _audioService.backgroundMusicEnabled) {
+            _hasEnsuredMusic = false; // Reset flag to ensure music plays
+            _audioService.ensureBackgroundMusicPlaying();
+          }
+        });
       }
     } catch (e) {
       // App should continue working even if navigation fails
@@ -133,20 +163,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return const SizedBox.shrink(); // Remove the "Select Level" label
   }
 
-  void _toggleSound() {
+  void _showSettings() {
     _audioService.playClickSound();
-    setState(() {
-      _audioService.setEnabled(!_audioService.isEnabled);
-    });
+    SettingsDialog.show(context);
   }
 
   void _navigateToOtherGames() {
     _audioService.playClickSound();
+    // Pause background music when navigating away
+    _audioService.pauseBackgroundMusic();
+    _hasEnsuredMusic = false; // Reset flag so music will resume when returning
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const OtherGamesScreen(),
       ),
-    );
+    ).then((_) {
+      // Ensure background music is playing when returning to home
+      // Add a small delay to ensure navigation animation is complete
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted && _audioService.backgroundMusicEnabled) {
+          _hasEnsuredMusic = false; // Reset flag to ensure music plays
+          _audioService.ensureBackgroundMusicPlaying();
+        }
+      });
+    });
   }
 
   Future<void> _openWebGames() async {
@@ -177,7 +217,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildSoundToggleButton() {
+  Widget _buildSettingsButton() {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 2000),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -213,7 +253,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Material(
                   color: Colors.transparent,
                     child: InkWell(
-                      onTap: _toggleSound,
+                      onTap: _showSettings,
                       borderRadius: BorderRadius.circular(10),
                       splashColor: Colors.white.withOpacity(0.2),
                       highlightColor: Colors.white.withOpacity(0.1),
@@ -223,7 +263,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: const EdgeInsets.all(0),
                         child: Center(
                           child: Icon(
-                            _audioService.isEnabled ? Icons.volume_up : Icons.volume_off,
+                            Icons.settings,
                             color: Colors.white,
                             size: 20,
                           ),
@@ -416,6 +456,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       tablet: 24,
     );
     
+    // Ensure background music is playing when screen is visible
+    // Check on every build if music should be playing
+    if (_audioService.backgroundMusicEnabled && !_hasEnsuredMusic) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _audioService.backgroundMusicEnabled) {
+          // Small delay to ensure everything is ready
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted && _audioService.backgroundMusicEnabled) {
+              _audioService.ensureBackgroundMusicPlaying();
+              _hasEnsuredMusic = true;
+            }
+          });
+        }
+      });
+    }
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -464,12 +520,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           
-          // Sound Toggle Button - Top Right
+          // Settings Button - Top Right
           Positioned(
             top: 0,
             right: GameConstants.mediumSpacing,
             child: SafeArea(
-              child: _buildSoundToggleButton(),
+              child: _buildSettingsButton(),
             ),
           ),
           

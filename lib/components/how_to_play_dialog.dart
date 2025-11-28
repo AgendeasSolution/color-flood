@@ -1,17 +1,68 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
+import '../services/audio_service.dart';
 
 /// How to Play popup dialog component
-class HowToPlayDialog extends StatelessWidget {
+class HowToPlayDialog extends StatefulWidget {
   const HowToPlayDialog({super.key});
 
   static void show(BuildContext context) {
+    // Force background music to play when dialog opens
+    final audioService = AudioService();
+    if (audioService.backgroundMusicEnabled) {
+      // Use multiple attempts to ensure music plays
+      audioService.ensureBackgroundMusicPlaying();
+      // Also try force start as backup
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (audioService.backgroundMusicEnabled) {
+          audioService.forceStartBackgroundMusic();
+        }
+      });
+    }
+    
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => const HowToPlayDialog(),
-    );
+    ).then((_) {
+      // Ensure music continues after dialog closes
+      if (audioService.backgroundMusicEnabled) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          audioService.ensureBackgroundMusicPlaying();
+        });
+      }
+    });
+  }
+
+  @override
+  State<HowToPlayDialog> createState() => _HowToPlayDialogState();
+}
+
+class _HowToPlayDialogState extends State<HowToPlayDialog> {
+  @override
+  void initState() {
+    super.initState();
+    // Force background music to play when dialog is shown
+    final audioService = AudioService();
+    if (audioService.backgroundMusicEnabled) {
+      // Multiple attempts to ensure music plays
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        audioService.ensureBackgroundMusicPlaying();
+        // Backup attempt
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (audioService.backgroundMusicEnabled) {
+            audioService.forceStartBackgroundMusic();
+          }
+        });
+        // Another backup attempt
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (audioService.backgroundMusicEnabled) {
+            audioService.ensureBackgroundMusicPlaying();
+          }
+        });
+      });
+    }
   }
 
   @override
@@ -45,31 +96,26 @@ class HowToPlayDialog extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
-                maxWidth: MediaQuery.of(context).size.width * 0.98,
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
               ),
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    GameConstants.largeSpacing,
-                    GameConstants.mediumSpacing,
-                    GameConstants.largeSpacing,
-                    GameConstants.largeSpacing,
+                  padding: EdgeInsets.only(
+                    left: GameConstants.mediumSpacing,
+                    right: GameConstants.mediumSpacing,
+                    top: GameConstants.smallSpacing,
+                    bottom: GameConstants.mediumSpacing,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Goal Section with Close Button
+                      // Goal Section with Close Button in top right
                       _buildGoalSectionWithClose(context),
                       
                       const SizedBox(height: GameConstants.largeSpacing),
                       
                       // How to Play Section
                       _buildHowToPlaySection(),
-                      
-                      const SizedBox(height: GameConstants.largeSpacing),
-                      
-                      // Close Button
-                      _buildCloseButton(context),
                     ],
                   ),
                 ),
@@ -83,22 +129,47 @@ class HowToPlayDialog extends StatelessWidget {
 
   Widget _buildGoalSectionWithClose(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Goal and Close button in same row (no container)
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '🎯',
-              style: TextStyle(fontSize: 18),
+            // Spacer to push Goal to center
+            Expanded(
+              child: Container(),
             ),
-            const SizedBox(width: GameConstants.smallSpacing),
-            const Text(
-              'Goal',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            // Goal section (centered)
+            Row(
+              children: [
+                const Text(
+                  '🎯',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(width: GameConstants.smallSpacing),
+                const Text(
+                  'Goal',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            // Spacer to balance the close button
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ),
             ),
           ],
@@ -253,40 +324,4 @@ class HowToPlayDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildCloseButton(BuildContext context) {
-    return Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).pop(),
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 8,
-          shadowColor: Colors.black.withOpacity(0.5),
-        ),
-        child: Ink(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-            child: const Text(
-              'Got it!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
