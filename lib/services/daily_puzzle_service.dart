@@ -73,18 +73,26 @@ class DailyPuzzleService {
           savedWidth != null && 
           savedHeight != null &&
           savedMaxMoves != null) {
-        // Restore saved puzzle
-        final grid = _parseGridFromString(savedGridString, savedWidth, savedHeight);
-        if (grid.isNotEmpty) {
-          return GameConfig(
-            level: 0, // Special level 0 for daily puzzle
-            gridWidth: savedWidth,
-            gridHeight: savedHeight,
-            maxMoves: savedMaxMoves,
-            grid: grid,
-            originalGrid: _gameService.cloneGrid(grid),
-          );
+        // Check if the saved puzzle's grid size matches the current highest unlocked level
+        final currentGridSize = await _getGridSizeForDailyPuzzle();
+        final currentWidth = currentGridSize['width']!;
+        final currentHeight = currentGridSize['height']!;
+        
+        // If grid size matches, restore saved puzzle
+        if (savedWidth == currentWidth && savedHeight == currentHeight) {
+          final grid = _parseGridFromString(savedGridString, savedWidth, savedHeight);
+          if (grid.isNotEmpty) {
+            return GameConfig(
+              level: 0, // Special level 0 for daily puzzle
+              gridWidth: savedWidth,
+              gridHeight: savedHeight,
+              maxMoves: savedMaxMoves,
+              grid: grid,
+              originalGrid: _gameService.cloneGrid(grid),
+            );
+          }
         }
+        // If grid size doesn't match, fall through to regenerate with correct size
       }
     }
     

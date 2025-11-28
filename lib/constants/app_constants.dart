@@ -21,6 +21,7 @@ class AppConstants {
   // HUD labels
   static const String levelLabel = 'Level';
   static const String movesLabel = 'Moves';
+  static const String todaysChallengeLabel = "Today's Challenge";
   
   // Stats labels
   static const String levelStatLabel = 'Level';

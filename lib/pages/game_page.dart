@@ -1025,47 +1025,73 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           top: 0,
           left: 0,
           right: 0,
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppConstants.levelLabel,
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      smallPhone: 20,
-                      mediumPhone: 22,
-                      largePhone: 24,
-                      tablet: 28,
+          child: Align(
+            alignment: Alignment.center,
+            child: Container(
+              padding: ResponsiveUtils.getResponsivePadding(
+                context,
+                smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              child: _isDailyPuzzle
+                  ? Text(
+                      AppConstants.todaysChallengeLabel,
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 14,
+                          mediumPhone: 15,
+                          largePhone: 16,
+                          tablet: 18,
+                        ),
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 1.1,
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppConstants.levelLabel,
+                          style: TextStyle(
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                              context,
+                              smallPhone: 20,
+                              mediumPhone: 22,
+                              largePhone: 24,
+                              tablet: 28,
+                            ),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 4,
+                          mediumPhone: 5,
+                          largePhone: 6,
+                          tablet: 8,
+                        )),
+                        Text(
+                          '${_gameConfig.level}',
+                          style: TextStyle(
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                              context,
+                              smallPhone: 20,
+                              mediumPhone: 22,
+                              largePhone: 24,
+                              tablet: 28,
+                            ),
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                  context,
-                  smallPhone: 4,
-                  mediumPhone: 5,
-                  largePhone: 6,
-                  tablet: 8,
-                )),
-                Text(
-                  '${_gameConfig.level}',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      smallPhone: 20,
-                      mediumPhone: 22,
-                      largePhone: 24,
-                      tablet: 28,
-                    ),
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
             ),
           ),
         ),
