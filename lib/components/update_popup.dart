@@ -31,6 +31,16 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
   }
   
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for updates when page becomes visible again
+    // This ensures popup appears when returning to home page
+    if (!_isChecking && !_isVisible) {
+      _checkForUpdate();
+    }
+  }
+  
+  @override
   void dispose() {
     _slideController.dispose();
     super.dispose();
@@ -55,15 +65,18 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
 
   Future<void> _checkForUpdate() async {
     try {
-      final hasUpdate = await _updateService.checkForUpdate();
+      // Check if popup should be shown (automatically checks for update and ensures once per day)
+      final shouldShow = await _updateService.shouldShowPopup();
       if (mounted) {
         setState(() {
           _isChecking = false;
-          _isVisible = hasUpdate;
+          _isVisible = shouldShow;
         });
         
-        if (hasUpdate) {
-          // Slide in the pop-up
+        if (shouldShow) {
+          // Mark popup as shown for today
+          await _updateService.markPopupShown();
+          // Slide in the pop-up automatically
           _slideController.forward();
         }
       }

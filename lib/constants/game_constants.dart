@@ -20,7 +20,7 @@ class GameConstants {
   static const Duration gameOverDelay = Duration(milliseconds: 600);
 
   // Game configuration
-  static const int baseGridSize = 5;
+  static const int baseGridSize = 3;
   static const int gridSizeIncrement = 3;
   static const int maxBailoutMoves = 5; // Increased for AI complexity
   static const int moveBufferBase = 3; // Reduced for tighter difficulty
@@ -33,25 +33,28 @@ class GameConstants {
   static const int maxPatternComplexity = 7;
   static const double maxColorDominance = 0.6; // Max 60% of any single color
   
-  // Level progression configuration (24 levels with rectangular grids)
+  // Level progression configuration (30 levels with rectangular grids)
+  // Progression: Level 1 = 3x3, Level 30 = 12x14
   // Get grid width for a given level
   static int getGridWidth(int level) {
     if (level < 1 || level > maxLevel) return baseGridSize;
-    // Calculate base size: every 3 levels, base increases by 1
-    // Base starts at 5 for levels 1-3
-    final groupIndex = (level - 1) ~/ 3;
-    return 5 + groupIndex;
+    
+    // Smooth linear progression from 3 to 12 over 30 levels
+    // Formula: 3 + (level - 1) * (12 - 3) / (30 - 1)
+    final progress = (level - 1) / (maxLevel - 1);
+    final width = (3 + progress * 9).round();
+    return width.clamp(3, 12);
   }
   
   // Get grid height for a given level
   static int getGridHeight(int level) {
     if (level < 1 || level > maxLevel) return baseGridSize;
-    // Calculate base size: every 3 levels, base increases by 1
-    final groupIndex = (level - 1) ~/ 3;
-    final baseSize = 5 + groupIndex;
-    // Within each group of 3, height increases: base, base+1, base+2
-    final positionInGroup = (level - 1) % 3;
-    return baseSize + positionInGroup;
+    
+    // Smooth linear progression from 3 to 14 over 30 levels
+    // Formula: 3 + (level - 1) * (14 - 3) / (30 - 1)
+    final progress = (level - 1) / (maxLevel - 1);
+    final height = (3 + progress * 11).round();
+    return height.clamp(3, 14);
   }
   
   // Legacy support: get grid size (returns width for backward compatibility)
@@ -59,7 +62,7 @@ class GameConstants {
     return getGridWidth(level);
   }
   
-  static const int maxLevel = 24;
+  static const int maxLevel = 30;
 
   // UI configuration
   static const double gameBoardPadding = 12.0;

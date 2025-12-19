@@ -18,9 +18,13 @@ class UpdateService {
   static const String _lastUpdateCheckKey = 'last_update_check_timestamp';
   static const String _hasUpdateAvailableKey = 'has_update_available';
   static const String _lastKnownStoreVersionKey = 'last_known_store_version';
+  static const String _lastPopupShownKey = 'last_popup_shown_timestamp';
   
   // Cache duration - check once per day
   static const Duration _cacheDuration = Duration(hours: 24);
+  
+  // Popup show duration - show once per day
+  static const Duration _popupShowDuration = Duration(hours: 24);
   
   /// Check if an update is available
   /// Returns true if update is available, false otherwise
@@ -189,10 +193,58 @@ class UpdateService {
     return '';
   }
   
-  /// Mark update pop-up as dismissed (don't show again until new update is available)
+  /// Check if popup should be shown (only once per day)
+  /// Returns true if popup should be shown, false otherwise
+  Future<bool> shouldShowPopup() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // First check if there's an update available
+      final hasUpdate = await checkForUpdate();
+      if (!hasUpdate) {
+        return false;
+      }
+      
+      // Check when popup was last shown
+      final lastShownTimestamp = prefs.getInt(_lastPopupShownKey);
+      if (lastShownTimestamp == null) {
+        // Never shown before, so show it
+        return true;
+      }
+      
+      final lastShownTime = DateTime.fromMillisecondsSinceEpoch(lastShownTimestamp);
+      final now = DateTime.now();
+      
+      // Check if 24 hours have passed since last shown
+      final timeSinceLastShown = now.difference(lastShownTime);
+      if (timeSinceLastShown >= _popupShowDuration) {
+        // 24 hours have passed, show again
+        return true;
+      }
+      
+      // Less than 24 hours since last shown, don't show
+      return false;
+    } catch (e) {
+      // On error, don't show popup
+      return false;
+    }
+  }
+  
+  /// Mark popup as shown (record current timestamp)
+  Future<void> markPopupShown() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_lastPopupShownKey, DateTime.now().millisecondsSinceEpoch);
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  /// Mark update pop-up as dismissed (but allow showing again tomorrow if update still available)
   Future<void> dismissUpdate() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_hasUpdateAvailableKey, false);
+    // Don't change hasUpdateAvailableKey - we want to keep checking
+    // Just mark that popup was shown for today
+    await markPopupShown();
   }
   
   /// Get last known store version
