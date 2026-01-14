@@ -200,32 +200,29 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0A0A0A), // Deep black
-            Color(0xFF1A1A2E), // Dark blue
-            Color(0xFF16213E), // Darker blue
-            Color(0xFF0F3460), // Navy blue
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: [0.0, 0.3, 0.7, 1.0],
-        ),
-      ),
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          return CustomPaint(
-            painter: CustomParticlePainter(
-              animationValue: _animation.value,
-              screenSize: MediaQuery.of(context).size,
+    return Image.asset(
+      'assets/img/bg.png',
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        // Fallback to gradient if image fails to load
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF0A0A0A),
+                Color(0xFF1A1A2E),
+                Color(0xFF16213E),
+                Color(0xFF0F3460),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [0.0, 0.3, 0.7, 1.0],
             ),
-            size: MediaQuery.of(context).size,
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

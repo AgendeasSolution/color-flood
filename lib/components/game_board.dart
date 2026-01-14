@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../utils/responsive_utils.dart';
+import 'mahjong_icon.dart';
 
 /// Game board component that displays the color grid
 class GameBoard extends StatefulWidget {
@@ -116,51 +117,13 @@ class _GameBoardState extends State<GameBoard> {
         aspectRatio: aspectRatio,
         child: Container(
           padding: EdgeInsets.all(boardPadding),
-          decoration: BoxDecoration(
-            gradient: widget.gameStarted
-                ? LinearGradient(
-                    colors: [
-                      Colors.black.withOpacity(0.4),
-                      Colors.black.withOpacity(0.2),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: widget.gameStarted 
-                ? null 
-                : Colors.grey.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(24),
-            border: widget.gameStarted 
-                ? Border.all(
-                    color: Colors.white.withOpacity(0.15),
-                    width: 2,
-                  )
-                : null,
-            boxShadow: widget.gameStarted
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      blurRadius: 20,
-                      spreadRadius: -5,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: -2,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
           child: widget.gameStarted
               ? GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: widget.gridWidth,
-                    crossAxisSpacing: 3,
-                    mainAxisSpacing: 3,
+                    crossAxisSpacing: 1.5,
+                    mainAxisSpacing: 1.5,
                   ),
                   itemCount: widget.gridWidth * widget.gridHeight,
                   itemBuilder: (context, index) {
@@ -339,507 +302,96 @@ class _AnimatedCellState extends State<_AnimatedCell>
   }
 
   Widget _buildGemCell(Color baseColor, double cellSize) {
-    final bevelSize = cellSize * 0.14; // Optimized bevel size for perfect 3D effect
+    final borderRadius = cellSize * 0.08;
     
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(cellSize * 0.12),
-        boxShadow: [
-          // Deep shadow for dramatic 3D effect
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 10,
-            spreadRadius: -3,
-            offset: const Offset(0, 5),
-          ),
-          // Medium shadow layer
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            spreadRadius: -1,
-            offset: const Offset(0, 2),
-          ),
-          // Inner glow with color
-          BoxShadow(
-            color: baseColor.withOpacity(0.4),
-            blurRadius: 6,
-            spreadRadius: 1.5,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(cellSize * 0.12),
-        child: CustomPaint(
-          painter: _FacetedGemPainter(
-            baseColor: baseColor,
-            cellSize: cellSize,
-            bevelSize: bevelSize,
-          ),
-          child: Container(),
-        ),
-      ),
-    );
-  }
-}
-
-/// Custom painter for faceted 3D gem cells
-class _FacetedGemPainter extends CustomPainter {
-  final Color baseColor;
-  final double cellSize;
-  final double bevelSize;
-
-  _FacetedGemPainter({
-    required this.baseColor,
-    required this.cellSize,
-    required this.bevelSize,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centerSize = cellSize - (bevelSize * 2);
-    final innerOffset = bevelSize * 0.65; // Inner edge of bevel for 3D perspective
-    
-    // Helper function to lighten color with saturation boost
+    // Helper functions for color manipulation
     Color lightenColor(Color color, double amount) {
       final hsl = HSLColor.fromColor(color);
       final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
-      final saturation = (hsl.saturation * 1.1).clamp(0.0, 1.0); // Boost saturation
-      return hsl.withLightness(lightness).withSaturation(saturation).toColor();
+      return hsl.withLightness(lightness).toColor();
     }
     
-    // Helper function to darken color
     Color darkenColor(Color color, double amount) {
       final hsl = HSLColor.fromColor(color);
       final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
       return hsl.withLightness(lightness).toColor();
     }
     
-    // Helper to blend colors
-    Color blendColor(Color c1, Color c2, double ratio) {
-      return Color.lerp(c1, c2, ratio)!;
-    }
-
-    // Base background with rich gradient for depth
-    final baseGradient = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.center,
-        radius: 1.2,
-        colors: [
-          darkenColor(baseColor, 0.2),
-          darkenColor(baseColor, 0.15),
-          darkenColor(baseColor, 0.1),
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, 0, cellSize, cellSize),
-      );
+    final tileColor = baseColor;
     
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, cellSize, cellSize),
-        Radius.circular(cellSize * 0.12),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: [
+          // Deep shadow for strong 3D effect - bottom-right
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(cellSize * 0.04, cellSize * 0.04),
+          ),
+          // Medium shadow layer
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            spreadRadius: -1,
+            offset: Offset(cellSize * 0.02, cellSize * 0.02),
+          ),
+          // Inner glow with color
+          BoxShadow(
+            color: tileColor.withOpacity(0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      baseGradient,
-    );
-
-    // Central square facet (main raised surface) - the jewel's face
-    final centerLeft = bevelSize;
-    final centerTop = bevelSize;
-    final centerRight = cellSize - bevelSize;
-    final centerBottom = cellSize - bevelSize;
-    
-    // Central facet with rich, multi-stop gradient for realistic depth
-    final centerGradient = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          lightenColor(baseColor, 0.3),
-          lightenColor(baseColor, 0.15),
-          baseColor,
-          darkenColor(baseColor, 0.15),
-          darkenColor(baseColor, 0.3),
-        ],
-        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-      ).createShader(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize, centerSize),
-      );
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize, centerSize),
-        Radius.circular(cellSize * 0.12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Stack(
+          children: [
+            // Base glass/ball layer with radial gradient (like color palette balls)
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                gradient: RadialGradient(
+                  center: Alignment.topLeft,
+                  radius: 1.2,
+                  colors: [
+                    lightenColor(tileColor, 0.2),
+                    tileColor,
+                    darkenColor(tileColor, 0.25),
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
+            ),
+            
+            // Subtle border (like glass edge)
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+            ),
+            
+            // Mahjong icon on top
+            Center(
+              child: MahjongIcon(
+                color: Colors.white,
+                size: cellSize * 0.55,
+                iconType: MahjongIcon.getIconTypeForColor(baseColor),
+              ),
+            ),
+          ],
+        ),
       ),
-      centerGradient,
-    );
-
-    // Primary light source highlight (top-left, bright and focused)
-    final primaryHighlight = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.topLeft,
-        radius: 0.65,
-        colors: [
-          Colors.white.withOpacity(0.8),
-          Colors.white.withOpacity(0.5),
-          Colors.white.withOpacity(0.2),
-          blendColor(Colors.white, baseColor, 0.3).withOpacity(0.1),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-      ).createShader(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize * 0.7, centerSize * 0.7),
-      );
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize * 0.7, centerSize * 0.7),
-        Radius.circular(cellSize * 0.12),
-      ),
-      primaryHighlight,
-    );
-
-    // Secondary highlight (top-right, softer)
-    final secondaryHighlight = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.topRight,
-        radius: 0.5,
-        colors: [
-          Colors.white.withOpacity(0.4),
-          Colors.white.withOpacity(0.15),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      ).createShader(
-        Rect.fromLTWH(centerLeft + centerSize * 0.3, centerTop, centerSize * 0.5, centerSize * 0.5),
-      );
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(centerLeft + centerSize * 0.3, centerTop, centerSize * 0.5, centerSize * 0.5),
-        Radius.circular(cellSize * 0.12),
-      ),
-      secondaryHighlight,
-    );
-
-    // Inner glow for depth
-    final innerGlow = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.center,
-        radius: 0.8,
-        colors: [
-          Colors.transparent,
-          baseColor.withOpacity(0.2),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      ).createShader(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize, centerSize),
-      );
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(centerLeft, centerTop, centerSize, centerSize),
-        Radius.circular(cellSize * 0.12),
-      ),
-      innerGlow,
-    );
-
-    // Top trapezoidal facet (brightest, catches main light)
-    final topFacetPath = Path()
-      ..moveTo(bevelSize, bevelSize)
-      ..lineTo(cellSize - bevelSize, bevelSize)
-      ..lineTo(cellSize - innerOffset, innerOffset)
-      ..lineTo(innerOffset, innerOffset)
-      ..close();
-    
-    final topFacetPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white.withOpacity(0.7),
-          Colors.white.withOpacity(0.4),
-          blendColor(Colors.white, baseColor, 0.5).withOpacity(0.3),
-          lightenColor(baseColor, 0.15).withOpacity(0.5),
-        ],
-        stops: const [0.0, 0.3, 0.6, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, 0, cellSize, bevelSize),
-      );
-    
-    canvas.drawPath(topFacetPath, topFacetPaint);
-
-    // Bottom trapezoidal facet (deepest shadow, most dramatic)
-    final bottomFacetPath = Path()
-      ..moveTo(innerOffset, cellSize - innerOffset)
-      ..lineTo(cellSize - innerOffset, cellSize - innerOffset)
-      ..lineTo(cellSize - bevelSize, cellSize - bevelSize)
-      ..lineTo(bevelSize, cellSize - bevelSize)
-      ..close();
-    
-    final bottomFacetPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          baseColor.withOpacity(0.5),
-          darkenColor(baseColor, 0.35).withOpacity(0.85),
-          darkenColor(baseColor, 0.5).withOpacity(0.95),
-          Colors.black.withOpacity(0.3),
-        ],
-        stops: const [0.0, 0.4, 0.7, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, cellSize - bevelSize, cellSize, bevelSize),
-      );
-    
-    canvas.drawPath(bottomFacetPath, bottomFacetPaint);
-
-    // Left trapezoidal facet (bright side, catches light)
-    final leftFacetPath = Path()
-      ..moveTo(bevelSize, bevelSize)
-      ..lineTo(innerOffset, innerOffset)
-      ..lineTo(innerOffset, cellSize - innerOffset)
-      ..lineTo(bevelSize, cellSize - bevelSize)
-      ..close();
-    
-    final leftFacetPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [
-          Colors.white.withOpacity(0.55),
-          Colors.white.withOpacity(0.3),
-          Colors.white.withOpacity(0.1),
-          lightenColor(baseColor, 0.1).withOpacity(0.4),
-        ],
-        stops: const [0.0, 0.3, 0.6, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, 0, bevelSize, cellSize),
-      );
-    
-    canvas.drawPath(leftFacetPath, leftFacetPaint);
-
-    // Right trapezoidal facet (shadow side, away from light)
-    final rightFacetPath = Path()
-      ..moveTo(cellSize - bevelSize, bevelSize)
-      ..lineTo(cellSize - bevelSize, cellSize - bevelSize)
-      ..lineTo(cellSize - innerOffset, cellSize - innerOffset)
-      ..lineTo(cellSize - innerOffset, innerOffset)
-      ..close();
-    
-    final rightFacetPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerRight,
-        end: Alignment.centerLeft,
-        colors: [
-          darkenColor(baseColor, 0.4).withOpacity(0.8),
-          darkenColor(baseColor, 0.25).withOpacity(0.65),
-          darkenColor(baseColor, 0.1).withOpacity(0.5),
-          baseColor.withOpacity(0.4),
-        ],
-        stops: const [0.0, 0.3, 0.6, 1.0],
-      ).createShader(
-        Rect.fromLTWH(cellSize - bevelSize, 0, bevelSize, cellSize),
-      );
-    
-    canvas.drawPath(rightFacetPath, rightFacetPaint);
-    
-    // Professional facet separation lines (subtle but defined)
-    final linePaint = Paint()
-      ..color = Colors.black.withOpacity(0.25)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    
-    // Top facet separation
-    canvas.drawLine(
-      Offset(bevelSize, bevelSize),
-      Offset(cellSize - bevelSize, bevelSize),
-      linePaint,
-    );
-    // Bottom facet separation
-    canvas.drawLine(
-      Offset(bevelSize, cellSize - bevelSize),
-      Offset(cellSize - bevelSize, cellSize - bevelSize),
-      linePaint,
-    );
-    // Left facet separation
-    canvas.drawLine(
-      Offset(bevelSize, bevelSize),
-      Offset(bevelSize, cellSize - bevelSize),
-      linePaint,
-    );
-    // Right facet separation
-    canvas.drawLine(
-      Offset(cellSize - bevelSize, bevelSize),
-      Offset(cellSize - bevelSize, cellSize - bevelSize),
-      linePaint,
-    );
-
-    // Top-left triangular corner facet (brightest corner, catches primary light)
-    final topLeftCornerPath = Path()
-      ..moveTo(0, 0)
-      ..lineTo(bevelSize, bevelSize)
-      ..lineTo(innerOffset, innerOffset)
-      ..lineTo(innerOffset, 0)
-      ..lineTo(0, innerOffset)
-      ..close();
-    
-    final topLeftCornerPaint = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.topLeft,
-        radius: 1.1,
-        colors: [
-          Colors.white.withOpacity(0.85),
-          Colors.white.withOpacity(0.6),
-          Colors.white.withOpacity(0.3),
-          blendColor(Colors.white, baseColor, 0.4).withOpacity(0.15),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, 0, bevelSize, bevelSize),
-      );
-    
-    canvas.drawPath(topLeftCornerPath, topLeftCornerPaint);
-
-    // Top-right triangular corner facet (bright, secondary light)
-    final topRightCornerPath = Path()
-      ..moveTo(cellSize, 0)
-      ..lineTo(cellSize, innerOffset)
-      ..lineTo(cellSize - innerOffset, innerOffset)
-      ..lineTo(cellSize - bevelSize, bevelSize)
-      ..lineTo(cellSize - innerOffset, 0)
-      ..close();
-    
-    final topRightCornerPaint = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.topRight,
-        radius: 1.1,
-        colors: [
-          Colors.white.withOpacity(0.8),
-          Colors.white.withOpacity(0.5),
-          Colors.white.withOpacity(0.25),
-          blendColor(Colors.white, baseColor, 0.3).withOpacity(0.1),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-      ).createShader(
-        Rect.fromLTWH(cellSize - bevelSize, 0, bevelSize, bevelSize),
-      );
-    
-    canvas.drawPath(topRightCornerPath, topRightCornerPaint);
-
-    // Bottom-left triangular corner facet (medium shadow, some reflected light)
-    final bottomLeftCornerPath = Path()
-      ..moveTo(0, cellSize)
-      ..lineTo(0, cellSize - innerOffset)
-      ..lineTo(innerOffset, cellSize - innerOffset)
-      ..lineTo(bevelSize, cellSize - bevelSize)
-      ..lineTo(innerOffset, cellSize)
-      ..close();
-    
-    final bottomLeftCornerPaint = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.bottomLeft,
-        radius: 1.0,
-        colors: [
-          darkenColor(baseColor, 0.25).withOpacity(0.6),
-          darkenColor(baseColor, 0.15).withOpacity(0.4),
-          baseColor.withOpacity(0.2),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.4, 0.7, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, cellSize - bevelSize, bevelSize, bevelSize),
-      );
-    
-    canvas.drawPath(bottomLeftCornerPath, bottomLeftCornerPaint);
-
-    // Bottom-right triangular corner facet (darkest shadow, deepest corner)
-    final bottomRightCornerPath = Path()
-      ..moveTo(cellSize, cellSize)
-      ..lineTo(cellSize - innerOffset, cellSize)
-      ..lineTo(cellSize - bevelSize, cellSize - bevelSize)
-      ..lineTo(cellSize - innerOffset, cellSize - innerOffset)
-      ..lineTo(cellSize, cellSize - innerOffset)
-      ..close();
-    
-    final bottomRightCornerPaint = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.bottomRight,
-        radius: 1.0,
-        colors: [
-          darkenColor(baseColor, 0.5).withOpacity(0.85),
-          darkenColor(baseColor, 0.35).withOpacity(0.7),
-          darkenColor(baseColor, 0.2).withOpacity(0.5),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.3, 0.6, 1.0],
-      ).createShader(
-        Rect.fromLTWH(cellSize - bevelSize, cellSize - bevelSize, bevelSize, bevelSize),
-      );
-    
-    canvas.drawPath(bottomRightCornerPath, bottomRightCornerPaint);
-
-    // Professional glass effect overlay (frosted glass with diagonal reflection)
-    final glassPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withOpacity(0.25),
-          Colors.white.withOpacity(0.12),
-          Colors.white.withOpacity(0.05),
-          Colors.white.withOpacity(0.02),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-      ).createShader(
-        Rect.fromLTWH(0, 0, cellSize, cellSize),
-      );
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, cellSize, cellSize),
-        Radius.circular(cellSize * 0.12),
-      ),
-      glassPaint,
-    );
-
-    // Professional border with subtle highlight
-    final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(1, 1, cellSize - 2, cellSize - 2),
-        Radius.circular(cellSize * 0.12),
-      ),
-      borderPaint,
-    );
-    
-    // Subtle inner border for extra definition
-    final innerBorderPaint = Paint()
-      ..color = Colors.black.withOpacity(0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(1.5, 1.5, cellSize - 3, cellSize - 3),
-        Radius.circular(cellSize * 0.12),
-      ),
-      innerBorderPaint,
     );
   }
 
-  @override
-  bool shouldRepaint(_FacetedGemPainter oldDelegate) {
-    return oldDelegate.baseColor != baseColor ||
-        oldDelegate.cellSize != cellSize ||
-        oldDelegate.bevelSize != bevelSize;
-  }
 }
+
+

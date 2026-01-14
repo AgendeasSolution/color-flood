@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../utils/responsive_utils.dart';
+import 'mahjong_icon.dart';
 
 /// Reusable 3D gem-style color button component for the color palette
 class ColorButton extends StatefulWidget {
@@ -198,6 +199,15 @@ class _ColorButtonState extends State<ColorButton>
                     ),
                   ),
                 ),
+                
+                // Mahjong icon on top
+                Center(
+                  child: MahjongIcon(
+                    color: Colors.white,
+                    size: buttonSize * 0.5,
+                    iconType: MahjongIcon.getIconTypeForColor(baseColor),
+                  ),
+                ),
               ],
             ),
           ),
@@ -205,6 +215,7 @@ class _ColorButtonState extends State<ColorButton>
       ),
     );
   }
+
 
   Color _lightenColor(Color color, double amount) {
     assert(amount >= 0 && amount <= 1);
