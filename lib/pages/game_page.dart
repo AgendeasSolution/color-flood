@@ -14,6 +14,7 @@ import '../services/daily_puzzle_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
 import '../components/glass_button.dart';
+import '../components/back_button_row.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
 import '../utils/responsive_utils.dart';
@@ -964,167 +965,74 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Widget _buildHud() {
     return Stack(
       children: [
-        // Exit Button (Left)
-        Positioned(
-          top: 0,
-          left: ResponsiveUtils.getResponsiveSpacing(
-            context,
-            smallPhone: 12,
-            mediumPhone: 14,
-            largePhone: 16,
-            tablet: 20,
-          ),
-          child: GlassButton(
-            onTap: _handleExit,
-            padding: ResponsiveUtils.getResponsivePadding(
-              context,
-              smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            child: Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: ResponsiveUtils.getResponsiveIconSize(context),
-            ),
-          ),
-        ),
-
-        // Level Display (Centered on Screen)
+        // Back Button Row with Level Number (Top)
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          child: Align(
-            alignment: Alignment.center,
-            child: Container(
-              padding: ResponsiveUtils.getResponsivePadding(
-                context,
-                smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              child: _isDailyPuzzle
-                  ? Text(
-                      AppConstants.todaysChallengeLabel,
-                      style: TextStyle(
-                        fontSize: ResponsiveUtils.getResponsiveFontSize(
-                          context,
-                          smallPhone: 14,
-                          mediumPhone: 15,
-                          largePhone: 16,
-                          tablet: 18,
-                        ),
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 1.1,
+          child: BackButtonRow(
+            onBack: _handleExit,
+            onReset: _restartCurrentLevel,
+            centerWidget: _isDailyPuzzle
+                ? Text(
+                    AppConstants.todaysChallengeLabel,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        smallPhone: 14,
+                        mediumPhone: 15,
+                        largePhone: 16,
+                        tablet: 18,
                       ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppConstants.levelLabel,
-                          style: TextStyle(
-                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                              context,
-                              smallPhone: 20,
-                              mediumPhone: 22,
-                              largePhone: 24,
-                              tablet: 28,
-                            ),
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white70,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                          context,
-                          smallPhone: 4,
-                          mediumPhone: 5,
-                          largePhone: 6,
-                          tablet: 8,
-                        )),
-                        Text(
-                          '${_gameConfig.level}',
-                          style: TextStyle(
-                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                              context,
-                              smallPhone: 20,
-                              mediumPhone: 22,
-                              largePhone: 24,
-                              tablet: 28,
-                            ),
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.1,
                     ),
-            ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppConstants.levelLabel.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            smallPhone: 20,
+                            mediumPhone: 22,
+                            largePhone: 24,
+                            tablet: 28,
+                          ),
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                        context,
+                        smallPhone: 4,
+                        mediumPhone: 5,
+                        largePhone: 6,
+                        tablet: 8,
+                      )),
+                      Text(
+                        '${_gameConfig.level}',
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            smallPhone: 20,
+                            mediumPhone: 22,
+                            largePhone: 24,
+                            tablet: 28,
+                          ),
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
 
-        // Reset Button (Right)
-        Positioned(
-          top: 0,
-          right: ResponsiveUtils.getResponsiveSpacing(
-            context,
-            smallPhone: 12,
-            mediumPhone: 14,
-            largePhone: 16,
-            tablet: 20,
-          ),
-          child: GlassButton(
-            onTap: _restartCurrentLevel,
-            padding: ResponsiveUtils.getResponsivePadding(
-              context,
-              smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            gradientColors: [
-              const Color(0xFFEF4444).withOpacity(0.9),
-              const Color(0xFFDC2626).withOpacity(0.8),
-              const Color(0xFFB91C1C).withOpacity(0.9),
-            ],
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.refresh,
-                  color: Colors.white,
-                  size: ResponsiveUtils.getResponsiveIconSize(context),
-                ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                  context,
-                  smallPhone: 4,
-                  mediumPhone: 5,
-                  largePhone: 6,
-                  tablet: 8,
-                )),
-                Text(
-                  'Reset',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      smallPhone: 12,
-                      mediumPhone: 13,
-                      largePhone: 14,
-                      tablet: 16,
-                    ),
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
