@@ -1346,6 +1346,102 @@ class GameService {
     }
   }
 
+  /// Get all cells in the current flood area (starting from top-left)
+  Set<Point<int>> getFloodAreaCells(List<List<Color>> grid) {
+    final floodArea = <Point<int>>{};
+    if (grid.isEmpty || grid[0].isEmpty) {
+      return floodArea;
+    }
+    
+    try {
+      final startColor = grid[0][0];
+      final queue = Queue<Point<int>>();
+      queue.add(const Point(0, 0));
+      floodArea.add(const Point(0, 0));
+
+      while (queue.isNotEmpty) {
+        final point = queue.removeFirst();
+        final x = point.x;
+        final y = point.y;
+
+        // Check orthogonal neighbors only
+        final neighbors = [
+          Point(x + 1, y),
+          Point(x - 1, y),
+          Point(x, y + 1),
+          Point(x, y - 1),
+        ];
+
+        for (final neighbor in neighbors) {
+          final nx = neighbor.x;
+          final ny = neighbor.y;
+          if (nx >= 0 &&
+              nx < grid.length &&
+              ny >= 0 &&
+              ny < grid[nx].length &&
+              !floodArea.contains(neighbor) &&
+              grid[nx][ny] == startColor) {
+            floodArea.add(neighbor);
+            queue.add(neighbor);
+          }
+        }
+      }
+    } catch (e) {
+      // Return empty set if error occurs
+      return <Point<int>>{};
+    }
+    
+    return floodArea;
+  }
+
+  /// Check if a color is orthogonally adjacent to the current flood area
+  bool isColorOrthogonallyAdjacent(List<List<Color>> grid, Color targetColor) {
+    try {
+      // Validate grid before accessing
+      if (grid.isEmpty || grid[0].isEmpty) {
+        return false;
+      }
+      
+      // Get all cells in the current flood area
+      final floodArea = getFloodAreaCells(grid);
+      
+      // Check if any orthogonal neighbor of flood area cells has the target color
+      for (final cell in floodArea) {
+        final x = cell.x;
+        final y = cell.y;
+        
+        // Check orthogonal neighbors (up, down, left, right)
+        final orthogonalNeighbors = [
+          if (x > 0) Point(x - 1, y),
+          if (x < grid.length - 1) Point(x + 1, y),
+          if (y > 0) Point(x, y - 1),
+          if (y < grid[x].length - 1) Point(x, y + 1),
+        ];
+        
+        for (final neighbor in orthogonalNeighbors) {
+          final nx = neighbor.x;
+          final ny = neighbor.y;
+          
+          // Check bounds
+          if (nx >= 0 &&
+              nx < grid.length &&
+              ny >= 0 &&
+              ny < grid[nx].length &&
+              grid[nx][ny] == targetColor) {
+            // Found the target color in an orthogonal neighbor
+            return true;
+          }
+        }
+      }
+      
+      // Target color not found in any orthogonal neighbor
+      return false;
+    } catch (e) {
+      // If any error occurs, consider move invalid
+      return false;
+    }
+  }
+
   /// Check if a move is valid
   bool isValidMove(List<List<Color>> grid, Color newColor) {
     try {
@@ -1354,7 +1450,14 @@ class GameService {
         return false;
       }
       final startColor = grid[0][0];
-      return startColor != newColor;
+      
+      // Move is invalid if selecting the same color
+      if (startColor == newColor) {
+        return false;
+      }
+      
+      // Move is only valid if the new color is orthogonally adjacent to the flood area
+      return isColorOrthogonallyAdjacent(grid, newColor);
     } catch (e) {
       // If any error occurs, consider move invalid
       return false;
