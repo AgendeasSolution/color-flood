@@ -13,6 +13,7 @@ import '../components/glass_button.dart';
 import '../components/update_popup.dart';
 import '../components/settings_dialog.dart';
 import '../components/daily_puzzle_card.dart';
+import '../components/wood_button.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
 import '../utils/responsive_utils.dart';
@@ -255,149 +256,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildSettingsButton() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 2000),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.95 + (0.05 * value),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Material(
-                color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _showSettings,
-                    borderRadius: BorderRadius.circular(10),
-                    splashColor: Colors.white.withOpacity(0.2),
-                    highlightColor: Colors.white.withOpacity(0.1),
-                    child: Container(
-                      height: 36,
-                      width: 36,
-                      padding: const EdgeInsets.all(0),
-                      child: Center(
-                        child: Icon(
-                          Icons.settings,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+  Widget _buildHowToPlayButton() {
+    final buttonSize = ResponsiveUtils.getResponsiveButtonSize(context) * 0.8;
+    
+    return WoodButton(
+      onTap: _showHowToPlay,
+      size: buttonSize,
+      icon: Icon(
+        Icons.help_outline,
+        color: Colors.white,
+        size: buttonSize * 0.5,
+      ),
     );
   }
 
-  Widget _buildSmallHowToPlayButton() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 2000),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.95 + (0.05 * value),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF10B981).withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: const Color(0xFF059669).withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: -5,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF10B981).withOpacity(0.9),
-                        const Color(0xFF059669).withOpacity(0.8),
-                        const Color(0xFF047857).withOpacity(0.9),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                      child: InkWell(
-                      onTap: _showHowToPlay,
-                      borderRadius: BorderRadius.circular(10),
-                      splashColor: Colors.white.withOpacity(0.2),
-                      highlightColor: Colors.white.withOpacity(0.1),
-                      child: Container(
-                        height: 36,
-                        width: 36,
-                        padding: const EdgeInsets.all(0),
-                        child: Center(
-                          child: TweenAnimationBuilder<double>(
-                            duration: const Duration(milliseconds: 1500),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            builder: (context, rotationValue, child) {
-                              return Transform.rotate(
-                                angle: rotationValue * 0.1,
-                                child: const Icon(
-                                  Icons.help_outline,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+  Widget _buildSettingsButton() {
+    final buttonSize = ResponsiveUtils.getResponsiveButtonSize(context) * 0.8;
+    
+    return WoodButton(
+      onTap: _showSettings,
+      size: buttonSize,
+      icon: Icon(
+        Icons.settings,
+        color: Colors.white,
+        size: buttonSize * 0.5,
+      ),
     );
   }
 
@@ -669,7 +552,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               tablet: 20,
             ),
             child: SafeArea(
-              child: _buildSmallHowToPlayButton(),
+              child: _buildHowToPlayButton(),
             ),
           ),
           

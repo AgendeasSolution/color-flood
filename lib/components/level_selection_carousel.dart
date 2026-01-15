@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/level_progression_service.dart';
 import '../utils/responsive_utils.dart';
-import 'gem_level_button.dart';
 
 /// Level selection carousel component showing levels in cards
 /// Each card contains 9 levels in a 3x3 grid (3 columns × 3 rows)
@@ -153,29 +152,20 @@ class _LevelSelectionCarouselState extends State<LevelSelectionCarousel> {
     // Get base color based on status
     final baseColor = _getLevelButtonBaseColor(status);
     
-    // Custom shadows for different statuses
-    final customShadows = _getLevelButtonShadows(status, baseColor);
-    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Use the smaller dimension to ensure square gems, with padding for shadows
+          // Use the smaller dimension to ensure square tiles
           final availableSize = constraints.maxWidth < constraints.maxHeight 
               ? constraints.maxWidth 
               : constraints.maxHeight;
           
-          // Leave some space for shadows (about 10% on each side)
-          final gemSize = availableSize * 0.9;
-          
           return Center(
-            child: GemLevelButton(
-              size: gemSize,
-              baseColor: baseColor,
-              customShadows: customShadows,
+            child: GestureDetector(
               onTap: isLocked ? null : () => widget.onLevelSelected(level),
-              child: _buildGemLevelContent(context, level, status),
+              child: _buildGameboardTile(availableSize, baseColor, level, status),
             ),
           );
         },
@@ -194,66 +184,96 @@ class _LevelSelectionCarouselState extends State<LevelSelectionCarousel> {
     }
   }
 
-  List<BoxShadow> _getLevelButtonShadows(LevelStatus status, Color baseColor) {
-    switch (status) {
-      case LevelStatus.completed:
-        return [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 10,
-            spreadRadius: -3,
-            offset: const Offset(0, 5),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            spreadRadius: -1,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: baseColor.withOpacity(0.5),
-            blurRadius: 8,
-            spreadRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ];
-      case LevelStatus.unlocked:
-        return [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 10,
-            spreadRadius: -3,
-            offset: const Offset(0, 5),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            spreadRadius: -1,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: baseColor.withOpacity(0.4),
-            blurRadius: 6,
-            spreadRadius: 1.5,
-            offset: const Offset(0, 1),
-          ),
-        ];
-      case LevelStatus.locked:
-        return [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 8,
-            spreadRadius: -2,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: baseColor.withOpacity(0.2),
-            blurRadius: 4,
-            spreadRadius: 0.5,
-            offset: const Offset(0, 1),
-          ),
-        ];
+  /// Build a tile matching the gameboard tile design
+  Widget _buildGameboardTile(double size, Color baseColor, int level, LevelStatus status) {
+    final borderRadius = size * 0.08;
+    
+    // Helper functions for color manipulation (same as gameboard)
+    Color lightenColor(Color color, double amount) {
+      final hsl = HSLColor.fromColor(color);
+      final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
+      return hsl.withLightness(lightness).toColor();
     }
+    
+    Color darkenColor(Color color, double amount) {
+      final hsl = HSLColor.fromColor(color);
+      final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
+      return hsl.withLightness(lightness).toColor();
+    }
+    
+    final tileColor = baseColor;
+    
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          boxShadow: [
+            // Deep shadow for strong 3D effect - bottom-right
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: Offset(size * 0.04, size * 0.04),
+            ),
+            // Medium shadow layer
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: -1,
+              offset: Offset(size * 0.02, size * 0.02),
+            ),
+            // Inner glow with color
+            BoxShadow(
+              color: tileColor.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Stack(
+            children: [
+              // Base glass/ball layer with radial gradient (like gameboard tiles)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  gradient: RadialGradient(
+                    center: Alignment.topLeft,
+                    radius: 1.2,
+                    colors: [
+                      lightenColor(tileColor, 0.2),
+                      tileColor,
+                      darkenColor(tileColor, 0.25),
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                ),
+              ),
+              
+              // Subtle border (like glass edge)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              
+              // Level content on top (instead of Mahjong icon)
+              Center(
+                child: _buildGemLevelContent(context, level, status),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildGemLevelContent(BuildContext context, int level, LevelStatus status) {
