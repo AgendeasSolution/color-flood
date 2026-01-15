@@ -20,25 +20,8 @@ class ColorButton extends StatefulWidget {
   State<ColorButton> createState() => _ColorButtonState();
 }
 
-class _ColorButtonState extends State<ColorButton> 
-    with SingleTickerProviderStateMixin {
+class _ColorButtonState extends State<ColorButton> {
   bool _isPressed = false;
-  late AnimationController _shineController;
-
-  @override
-  void initState() {
-    super.initState();
-    _shineController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _shineController.dispose();
-    super.dispose();
-  }
 
   void _onTapDown(TapDownDetails details) {
     if (!widget.isDisabled) {
@@ -69,11 +52,7 @@ class _ColorButtonState extends State<ColorButton>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: GameConstants.colorButtonAnimationDuration,
-        curve: Curves.fastOutSlowIn,
-        child: Container(
+      child: Container(
           width: buttonSize,
           height: buttonSize,
           decoration: BoxDecoration(
@@ -159,36 +138,6 @@ class _ColorButtonState extends State<ColorButton>
                   ),
                 ),
                 
-                // Animated shine effect (sweeping across)
-                AnimatedBuilder(
-                  animation: _shineController,
-                  builder: (context, child) {
-                    return Positioned(
-                      top: -buttonSize * 0.5,
-                      left: -buttonSize * 0.5 + 
-                          (_shineController.value * buttonSize * 1.5),
-                      child: Transform.rotate(
-                        angle: -0.785, // -45 degrees
-                        child: Container(
-                          width: buttonSize * 0.3,
-                          height: buttonSize * 1.5,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                Colors.transparent,
-                                Colors.white.withOpacity(0.4),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                
                 // Subtle border
                 Container(
                   decoration: BoxDecoration(
@@ -204,7 +153,7 @@ class _ColorButtonState extends State<ColorButton>
                 Center(
                   child: MahjongIcon(
                     color: Colors.white,
-                    size: buttonSize * 0.5,
+                    size: buttonSize * 0.7,
                     iconType: MahjongIcon.getIconTypeForColor(baseColor),
                   ),
                 ),
@@ -212,7 +161,6 @@ class _ColorButtonState extends State<ColorButton>
             ),
           ),
         ),
-      ),
     );
   }
 

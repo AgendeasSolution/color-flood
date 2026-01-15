@@ -129,11 +129,11 @@ class ResponsiveUtils {
   /// Get responsive button size
   static double getResponsiveButtonSize(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    if (width < smallPhone) return 36;
-    if (width < mediumPhone) return 40;
-    if (width < largePhone) return 44;
-    if (width < smallTablet) return 48;
-    return 52;
+    if (width < smallPhone) return 42;
+    if (width < mediumPhone) return 46;
+    if (width < largePhone) return 50;
+    if (width < smallTablet) return 54;
+    return 58;
   }
 
   /// Get responsive logo font size

@@ -44,33 +44,8 @@ class ColorPalette extends StatelessWidget {
             vertical: padding,
           ),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.black.withOpacity(0.4),
-                Colors.black.withOpacity(0.2),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(60),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.15),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 20,
-                spreadRadius: -5,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: Colors.white.withOpacity(0.1),
-                blurRadius: 10,
-                spreadRadius: -2,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Wrap(
             alignment: WrapAlignment.center,

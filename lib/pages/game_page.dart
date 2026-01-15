@@ -635,59 +635,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Moves Display with Extra Moves Button (Above Game Board)
-                        IntrinsicHeight(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Moves Counter - Game-like design
-                              Container(
-                              padding: ResponsiveUtils.getResponsivePadding(
-                                context,
-                                smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                mediumPhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                largePhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                tablet: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              ),
-                              constraints: BoxConstraints(
-                                minHeight: ResponsiveUtils.getResponsiveValue(
-                                  context: context,
-                                  smallPhone: 40.0,
-                                  mediumPhone: 44.0,
-                                  largePhone: 48.0,
-                                  tablet: 52.0,
-                                ),
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.black.withOpacity(0.4),
-                                    Colors.black.withOpacity(0.2),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.15),
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.5),
-                                    blurRadius: 20,
-                                    spreadRadius: -5,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    spreadRadius: -2,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Moves Counter - No container background
+                            Column(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,7 +734,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
-                            ),
                             
                             // Extra Moves Button (appears when 2 moves remaining)
                             if (_shouldShowExtraMovesButton())
@@ -954,8 +906,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                          ],
                         ),
 
                         SizedBox(height: ResponsiveUtils.getResponsiveSpacing(

@@ -6,9 +6,9 @@ class GameConstants {
   static const List<Color> gameColors = [
     Color(0xFFEF4444), // red
     Color(0xFF3B82F6), // blue
-    Color(0xFF22C55E), // green
-    Color(0xFFFFFF00), // yellow
-    Color(0xFFFFA500), // orange
+    Color(0xFF30D158), // green
+    Color(0xFFFFD60A), // yellow
+    Color(0xFFFF9F0A), // orange
     Color(0xFFEC4899), // pink
   ];
 

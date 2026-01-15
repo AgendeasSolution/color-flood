@@ -49,15 +49,15 @@ class MahjongIcon extends StatelessWidget {
       return MahjongIconType.beta;
     }
     // Green - Gamma (γ)
-    else if (color.value == 0xFF22C55E) {
+    else if (color.value == 0xFF30D158) {
       return MahjongIconType.gamma;
     }
     // Yellow - Sigma (σ)
-    else if (color.value == 0xFFFFFF00) {
+    else if (color.value == 0xFFFFD60A) {
       return MahjongIconType.sigma;
     }
     // Orange - Triangle (Δ)
-    else if (color.value == 0xFFFFA500) {
+    else if (color.value == 0xFFFF9F0A) {
       return MahjongIconType.triangle;
     }
     // Pink - 3 Vertical Lines (|||)
