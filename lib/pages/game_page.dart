@@ -904,9 +904,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            const Color(0xFFF59E0B), // Amber
-                                            const Color(0xFFEF4444), // Red
-                                            const Color(0xFFDC2626), // Dark red
+                                            const Color(0xFF60A5FA), // Light blue
+                                            const Color(0xFF3B82F6), // Base blue
+                                            const Color(0xFF2563EB), // Dark blue
                                           ],
                                           stops: const [0.0, 0.5, 1.0],
                                         ),
@@ -916,9 +916,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                           width: 2.5,
                                         ),
                                         boxShadow: [
-                                          // Outer glow with orange/red tint
+                                          // Outer glow with blue tint
                                           BoxShadow(
-                                            color: const Color(0xFFF59E0B).withOpacity(0.5),
+                                            color: const Color(0xFF3B82F6).withOpacity(0.5),
                                             blurRadius: 12,
                                             spreadRadius: 0,
                                             offset: const Offset(0, 0),
