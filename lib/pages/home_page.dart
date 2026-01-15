@@ -130,11 +130,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _onLevelSelected(int level) {
-    // Navigate directly to game for unlocked levels
-    if (_levelStatuses[level] != LevelStatus.locked) {
-      _audioService.playClickSound();
-      _navigateToLevel(level);
-    }
+    // Navigate directly to game for any level (all levels unlocked)
+    _audioService.playClickSound();
+    _navigateToLevel(level);
   }
 
   void _navigateToDailyPuzzle() async {

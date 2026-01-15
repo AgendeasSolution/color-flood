@@ -91,8 +91,10 @@ class LevelSelectionGrid extends StatelessWidget {
           itemCount: GameConstants.maxLevel,
           itemBuilder: (context, index) {
             final level = index + 1;
-            final status = levelStatuses[level] ?? LevelStatus.locked;
-            return _buildHexagonalLevelButton(context, level, status);
+            // All levels are unlocked - treat locked levels as unlocked
+            final status = levelStatuses[level] ?? LevelStatus.unlocked;
+            final effectiveStatus = status == LevelStatus.locked ? LevelStatus.unlocked : status;
+            return _buildHexagonalLevelButton(context, level, effectiveStatus);
           },
         ),
       ],
@@ -100,7 +102,8 @@ class LevelSelectionGrid extends StatelessWidget {
   }
 
   Widget _buildHexagonalLevelButton(BuildContext context, int level, LevelStatus status) {
-    final isLocked = status == LevelStatus.locked;
+    // All levels are unlocked
+    final isLocked = false;
     
     // Get base color based on status
     final baseColor = _getLevelButtonBaseColor(status);
@@ -126,7 +129,7 @@ class LevelSelectionGrid extends StatelessWidget {
               size: gemSize,
               baseColor: baseColor,
               customShadows: customShadows,
-              onTap: isLocked ? null : () => onLevelSelected(level),
+              onTap: () => onLevelSelected(level),
               child: _buildGemLevelContent(context, level, status),
             ),
           );

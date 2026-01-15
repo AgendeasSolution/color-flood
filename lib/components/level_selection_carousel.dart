@@ -136,8 +136,10 @@ class _LevelSelectionCarouselState extends State<LevelSelectionCarousel> {
                 if (level > GameConstants.maxLevel) {
                   return const SizedBox.shrink();
                 }
-                final status = widget.levelStatuses[level] ?? LevelStatus.locked;
-                return _buildHexagonalLevelButton(context, level, status);
+                // All levels are unlocked - treat locked levels as unlocked
+                final status = widget.levelStatuses[level] ?? LevelStatus.unlocked;
+                final effectiveStatus = status == LevelStatus.locked ? LevelStatus.unlocked : status;
+                return _buildHexagonalLevelButton(context, level, effectiveStatus);
               },
             );
           },
@@ -147,10 +149,12 @@ class _LevelSelectionCarouselState extends State<LevelSelectionCarousel> {
   }
 
   Widget _buildHexagonalLevelButton(BuildContext context, int level, LevelStatus status) {
-    final isLocked = status == LevelStatus.locked;
+    // All levels are unlocked - treat all as unlocked
+    final isLocked = false;
     
-    // Get base color based on status
-    final baseColor = _getLevelButtonBaseColor(status);
+    // Get base color - treat all as unlocked if locked
+    final effectiveStatus = status == LevelStatus.locked ? LevelStatus.unlocked : status;
+    final baseColor = _getLevelButtonBaseColor(effectiveStatus);
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -164,8 +168,8 @@ class _LevelSelectionCarouselState extends State<LevelSelectionCarousel> {
           
           return Center(
             child: GestureDetector(
-              onTap: isLocked ? null : () => widget.onLevelSelected(level),
-              child: _buildGameboardTile(availableSize, baseColor, level, status),
+              onTap: () => widget.onLevelSelected(level),
+              child: _buildGameboardTile(availableSize, baseColor, level, effectiveStatus),
             ),
           );
         },

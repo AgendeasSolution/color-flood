@@ -36,6 +36,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   bool _isGameOver = false;
   GameState _gameState = GameState.notStarted;
   bool _isLoadingExtraMoves = false; // Loading state for extra moves button
+  bool _isSolving = false; // Track if auto-solving is in progress
   final GameService _gameService = GameService();
   final LevelProgressionService _levelService =
       LevelProgressionService.instance;
@@ -253,9 +254,115 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     }
   }
 
-  void _handleColorSelection(Color newColor) {
+  /// Auto-solve the puzzle step by step
+  Future<void> _autoSolve() async {
+    if (!mounted) return;
+    if (_isGameOver || _gameState != GameState.playing || _isSolving) return;
+    
+    setState(() {
+      _isSolving = true;
+    });
+    
+    _audioService.playClickSound();
+    
+    // Solve the puzzle automatically
+    while (!_isGameOver && _gameState == GameState.playing && mounted) {
+      // Check if already solved
+      if (_gameService.isGridSolved(_gameConfig.grid)) {
+        break;
+      }
+      
+      // Check if we've run out of moves
+      if (_moves >= _gameConfig.maxMoves) {
+        break;
+      }
+      
+      // Find the best move
+      final bestColor = _gameService.findBestMove(_gameConfig.grid);
+      
+      // Check if move is valid
+      if (!_gameService.isValidMove(_gameConfig.grid, bestColor)) {
+        // If no valid move found, try any available color
+        bool foundValidMove = false;
+        for (final color in GameConstants.gameColors) {
+          if (_gameService.isValidMove(_gameConfig.grid, color)) {
+            await _applyAutoMove(color);
+            foundValidMove = true;
+            break;
+          }
+        }
+        if (!foundValidMove) {
+          break; // No valid moves available
+        }
+      } else {
+        await _applyAutoMove(bestColor);
+      }
+      
+      // Wait between moves so user can see the solution
+      await Future.delayed(const Duration(milliseconds: 600));
+      
+      // Check win condition after each move
+      _checkWinCondition();
+      
+      if (_isGameOver) {
+        break;
+      }
+    }
+    
+    if (mounted) {
+      setState(() {
+        _isSolving = false;
+      });
+    }
+  }
+  
+  /// Apply a move automatically (without user interaction)
+  Future<void> _applyAutoMove(Color newColor) async {
     if (!mounted) return;
     if (_isGameOver || _gameState != GameState.playing) return;
+    
+    // Validate game config exists and is valid
+    if (_gameConfig.grid.isEmpty || _gameConfig.gridWidth <= 0 || _gameConfig.gridHeight <= 0) {
+      return;
+    }
+
+    try {
+      // Validate move before applying
+      if (!_gameService.isValidMove(_gameConfig.grid, newColor)) {
+        return;
+      }
+
+      // Play sound with error handling
+      try {
+        _audioService.playSwipeSound();
+      } catch (e) {
+        // Continue even if audio fails
+      }
+
+      // Apply move with validation
+      final newGrid = _gameService.applyMove(_gameConfig.grid, newColor);
+      
+      // Validate new grid before updating state
+      if (newGrid.isEmpty || 
+          newGrid.length != _gameConfig.gridHeight ||
+          (newGrid.isNotEmpty && newGrid[0].length != _gameConfig.gridWidth)) {
+        return;
+      }
+      
+      if (mounted) {
+        setState(() {
+          _moves++;
+          _gameConfig = _gameConfig.copyWith(grid: newGrid);
+        });
+      }
+    } catch (e) {
+      // Silently handle errors - don't interrupt gameplay
+    }
+  }
+
+  void _handleColorSelection(Color newColor) {
+    if (!mounted) return;
+    if (_isGameOver || _gameState != GameState.playing || _isSolving) return;
     
     // Validate game config exists and is valid
     if (_gameConfig.grid.isEmpty || _gameConfig.gridWidth <= 0 || _gameConfig.gridHeight <= 0) {
@@ -655,7 +762,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                         ColorPalette(
                           colors: GameConstants.gameColors,
                           onColorSelected: _handleColorSelection,
-                          isDisabled: _isGameOver,
+                          isDisabled: _isGameOver || _isSolving,
                         ),
                       ],
                     ),
