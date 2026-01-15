@@ -37,7 +37,7 @@ class DailyPuzzleCardState extends State<DailyPuzzleCard> {
   Future<void> _loadDailyPuzzle() async {
     try {
       final puzzle = await _dailyPuzzleService.getTodaysPuzzle();
-      final completed = await _dailyPuzzleService.isTodaysPuzzleCompleted();
+      final completed = await _dailyPuzzleService.isDailyPuzzleCompleted();
       
       if (mounted) {
         setState(() {
@@ -165,9 +165,11 @@ class DailyPuzzleCardState extends State<DailyPuzzleCard> {
                         ),
                       ),
                       SizedBox(height: spacing * 0.3),
-                      // Description
+                      // Description with completion status
                       Text(
-                        'Play a new puzzle every day and build your streak.',
+                        _isCompleted
+                            ? 'Today\'s challenge completed! View your progress.'
+                            : 'Play a new puzzle every day and build your streak.',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: ResponsiveUtils.getResponsiveFontSize(

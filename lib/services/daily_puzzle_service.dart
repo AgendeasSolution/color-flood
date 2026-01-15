@@ -8,11 +8,18 @@ import '../services/level_progression_service.dart';
 
 /// Service to manage daily puzzles
 class DailyPuzzleService {
+  // Old keys (for puzzle generation)
   static const String _lastPuzzleDateKey = 'last_daily_puzzle_date';
   static const String _dailyPuzzleGridKey = 'daily_puzzle_grid';
   static const String _dailyPuzzleWidthKey = 'daily_puzzle_width';
   static const String _dailyPuzzleHeightKey = 'daily_puzzle_height';
   static const String _dailyPuzzleMaxMovesKey = 'daily_puzzle_max_moves';
+  
+  // New storage keys for streak system
+  static const String _dailyPuzzleDateKey = 'daily_puzzle_date';
+  static const String _dailyPuzzleCompletedKey = 'daily_puzzle_completed';
+  static const String _dailyPuzzleHistoryKey = 'daily_puzzle_history';
+  static const String _bestStreakKey = 'best_streak';
   
   static DailyPuzzleService? _instance;
   static DailyPuzzleService get instance {
@@ -25,10 +32,26 @@ class DailyPuzzleService {
   final GameService _gameService = GameService();
   final LevelProgressionService _levelService = LevelProgressionService.instance;
   
-  /// Get the current date as a string (YYYY-MM-DD format)
+  /// Get the current date as a string (YYYY-M-D format - no padding)
   String _getCurrentDateString() {
     final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    return '${now.year}-${now.month}-${now.day}';
+  }
+  
+  /// Convert DateTime to date key string (YYYY-M-D format)
+  String _dateToKey(DateTime date) {
+    return '${date.year}-${date.month}-${date.day}';
+  }
+  
+  /// Parse date key string to DateTime
+  DateTime? _keyToDate(String dateKey) {
+    try {
+      final parts = dateKey.split('-');
+      if (parts.length != 3) return null;
+      return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+    } catch (e) {
+      return null;
+    }
   }
   
   /// Get the grid size based on current progress
@@ -317,24 +340,249 @@ class DailyPuzzleService {
     return await generateDailyPuzzle();
   }
   
-  /// Check if today's puzzle has been completed
-  Future<bool> isTodaysPuzzleCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentDate = _getCurrentDateString();
-    final lastDate = prefs.getString(_lastPuzzleDateKey);
-    
-    if (lastDate != currentDate) {
-      return false; // New day, puzzle not completed yet
+  // ========== Daily Puzzle Availability ==========
+  
+  /// Returns true if daily puzzle is available (no date saved, different date, or today but not completed)
+  Future<bool> isDailyPuzzleAvailable() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentDate = _getCurrentDateString();
+      final savedDate = prefs.getString(_dailyPuzzleDateKey);
+      
+      // No date saved - available
+      if (savedDate == null) {
+        return true;
+      }
+      
+      // Date is different from today - available
+      if (savedDate != currentDate) {
+        // Reset completion status for new day
+        await prefs.setBool(_dailyPuzzleCompletedKey, false);
+        return true;
+      }
+      
+      // It's today but not completed - available
+      final isCompleted = prefs.getBool(_dailyPuzzleCompletedKey) ?? false;
+      return !isCompleted;
+    } catch (e) {
+      return true; // Default to available on error
     }
-    
-    return prefs.getBool('daily_puzzle_completed_$currentDate') ?? false;
   }
   
-  /// Mark today's puzzle as completed
+  // ========== Starting a Daily Puzzle ==========
+  
+  /// Marks the puzzle as started by saving today's date key
+  Future<void> startDailyPuzzle() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentDate = _getCurrentDateString();
+      await prefs.setString(_dailyPuzzleDateKey, currentDate);
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  // ========== Completion Tracking ==========
+  
+  /// Returns true only if it's today's puzzle AND it's marked as completed
+  Future<bool> isDailyPuzzleCompleted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentDate = _getCurrentDateString();
+      final savedDate = prefs.getString(_dailyPuzzleDateKey);
+      
+      // Not today's puzzle
+      if (savedDate != currentDate) {
+        return false;
+      }
+      
+      // Check completion flag
+      return prefs.getBool(_dailyPuzzleCompletedKey) ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  /// Marks today's puzzle as completed
+  Future<void> completeDailyPuzzle() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentDate = _getCurrentDateString();
+      
+      // Save today's date
+      await prefs.setString(_dailyPuzzleDateKey, currentDate);
+      
+      // Set completion flag to true
+      await prefs.setBool(_dailyPuzzleCompletedKey, true);
+      
+      // Add date to history
+      await _addDateToHistory(currentDate);
+      
+      // Update best streak if current streak is higher
+      final currentStreak = await getCompletionStreak();
+      await updateBestStreak(currentStreak);
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  /// Marks a specific date as completed (adds to history, only updates flags/best streak if it's today)
+  Future<void> completeDailyPuzzleForDate(DateTime date) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final dateKey = _dateToKey(date);
+      final currentDate = _getCurrentDateString();
+      
+      // Add to history
+      await _addDateToHistory(dateKey);
+      
+      // Only update flags/best streak if it's today's puzzle
+      if (dateKey == currentDate) {
+        await prefs.setString(_dailyPuzzleDateKey, currentDate);
+        await prefs.setBool(_dailyPuzzleCompletedKey, true);
+        
+        final currentStreak = await getCompletionStreak();
+        await updateBestStreak(currentStreak);
+      }
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  /// Helper to add a date to history
+  Future<void> _addDateToHistory(String dateKey) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyString = prefs.getString(_dailyPuzzleHistoryKey) ?? '';
+      final historySet = historyString.isEmpty 
+          ? <String>{}
+          : historyString.split(',').where((s) => s.isNotEmpty).toSet();
+      
+      historySet.add(dateKey);
+      
+      await prefs.setString(_dailyPuzzleHistoryKey, historySet.join(','));
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  // ========== Completion History ==========
+  
+  /// Returns a Set of all completed date keys (format: 'YYYY-M-D')
+  Future<Set<String>> getCompletedDailyPuzzleDates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyString = prefs.getString(_dailyPuzzleHistoryKey) ?? '';
+      
+      if (historyString.isEmpty) {
+        return <String>{};
+      }
+      
+      return historyString.split(',').where((s) => s.isNotEmpty).toSet();
+    } catch (e) {
+      return <String>{};
+    }
+  }
+  
+  /// Checks if a specific date was completed
+  Future<bool> isDateCompleted(String dateKey) async {
+    try {
+      final completedDates = await getCompletedDailyPuzzleDates();
+      return completedDates.contains(dateKey);
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  // ========== Streak System ==========
+  
+  /// Counts consecutive days from today backwards
+  /// Returns 0 if today is not completed (streak broken)
+  /// Maximum check: 365 days
+  Future<int> getCompletionStreak() async {
+    try {
+      final completedDates = await getCompletedDailyPuzzleDates();
+      if (completedDates.isEmpty) {
+        return 0;
+      }
+      
+      final today = DateTime.now();
+      final todayKey = _getCurrentDateString();
+      
+      // If today is not completed, streak is 0
+      if (!completedDates.contains(todayKey)) {
+        return 0;
+      }
+      
+      // Count backwards day by day
+      int streak = 0;
+      DateTime checkDate = today;
+      
+      for (int i = 0; i < 365; i++) {
+        final dateKey = _dateToKey(checkDate);
+        
+        if (completedDates.contains(dateKey)) {
+          streak++;
+        } else {
+          // Stop at first missing day
+          break;
+        }
+        
+        // Move to previous day
+        checkDate = DateTime(checkDate.year, checkDate.month, checkDate.day - 1);
+      }
+      
+      return streak;
+    } catch (e) {
+      return 0;
+    }
+  }
+  
+  /// Returns the highest streak ever achieved
+  Future<int> getBestStreak() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_bestStreakKey) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  
+  /// Updates best streak only if current streak > best streak
+  Future<void> updateBestStreak(int currentStreak) async {
+    try {
+      final bestStreak = await getBestStreak();
+      if (currentStreak > bestStreak) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_bestStreakKey, currentStreak);
+      }
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
+  
+  // ========== Total Completions ==========
+  
+  /// Returns the total count of completed daily puzzles
+  Future<int> getTotalCompleted() async {
+    try {
+      final completedDates = await getCompletedDailyPuzzleDates();
+      return completedDates.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+  
+  // ========== Legacy Methods (for backward compatibility) ==========
+  
+  /// Check if today's puzzle has been completed (legacy method)
+  Future<bool> isTodaysPuzzleCompleted() async {
+    return await isDailyPuzzleCompleted();
+  }
+  
+  /// Mark today's puzzle as completed (legacy method)
   Future<void> markTodaysPuzzleCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentDate = _getCurrentDateString();
-    await prefs.setBool('daily_puzzle_completed_$currentDate', true);
+    await completeDailyPuzzle();
   }
 }
 

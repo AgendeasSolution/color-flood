@@ -99,9 +99,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black.withOpacity(0.6),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(GameConstants.popupBorderRadius),
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
@@ -118,19 +118,23 @@ class _SettingsDialogState extends State<SettingsDialog> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
+                  const Color(0xFF1F2937).withOpacity(0.95),
+                  const Color(0xFF111827).withOpacity(0.95),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(GameConstants.popupBorderRadius),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0xFF3B82F6).withOpacity(0.6),
+                width: 2,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withOpacity(0.5),
                   blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),

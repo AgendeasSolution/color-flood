@@ -16,9 +16,11 @@ import '../components/daily_puzzle_card.dart';
 import '../components/wood_button.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
+import '../services/daily_puzzle_service.dart';
 import '../utils/responsive_utils.dart';
 import 'game_page.dart';
 import 'other_games_screen.dart';
+import 'daily_challenge_screen.dart';
 
 
 /// Home page of the Color Flood game
@@ -35,6 +37,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
   final LevelProgressionService _levelService = LevelProgressionService.instance;
   final AudioService _audioService = AudioService();
+  final DailyPuzzleService _dailyPuzzleService = DailyPuzzleService.instance;
   bool _hasEnsuredMusic = false; // Track if we've ensured music is playing
   final GlobalKey<DailyPuzzleCardState> _dailyPuzzleCardKey = GlobalKey<DailyPuzzleCardState>();
 
@@ -142,28 +145,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Play click sound
       _audioService.playClickSound();
       
-      // Pause background music when navigating to game
-      _audioService.pauseBackgroundMusic();
-      _hasEnsuredMusic = false; // Reset flag so music will resume when returning
+      // Mark puzzle as started when navigating from home
+      await _dailyPuzzleService.startDailyPuzzle();
       
+      // Navigate to Daily Challenge Screen (calendar view)
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const GamePage(initialLevel: 0), // Level 0 = daily puzzle
+          builder: (context) => const DailyChallengeScreen(),
         ),
       );
-      // Refresh level statuses and daily puzzle when returning from game
+      
+      // Refresh level statuses and daily puzzle when returning
       if (mounted) {
         await _loadLevelStatuses();
         // Refresh daily puzzle card to show updated completion status
         _dailyPuzzleCardKey.currentState?.refresh();
-        // Ensure background music is playing when returning to home
-        // Add a small delay to ensure navigation animation is complete
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (mounted && _audioService.backgroundMusicEnabled) {
-            _hasEnsuredMusic = false; // Reset flag to ensure music plays
-            _audioService.ensureBackgroundMusicPlaying();
-          }
-        });
       }
     } catch (e) {
       // App should continue working even if navigation fails
