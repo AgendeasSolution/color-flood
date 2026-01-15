@@ -126,14 +126,6 @@ class _AdBannerState extends State<AdBanner> {
     }
   }
 
-  void _retryLoadAd() {
-    if (_bannerAd != null) {
-      _bannerAd!.dispose();
-      _bannerAd = null;
-    }
-    _loadBannerAd();
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(

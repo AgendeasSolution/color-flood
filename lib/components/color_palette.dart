@@ -55,13 +55,11 @@ class ColorPalette extends StatelessWidget {
             alignment: WrapAlignment.center,
             spacing: spacing,
             runSpacing: spacing,
-            children: colors.map((color) {
-              return ColorButton(
-                color: color,
-                onTap: () => onColorSelected(color),
-                isDisabled: isDisabled,
-              );
-            }).toList(),
+            children: colors.map((color) => ColorButton(
+              color: color,
+              onTap: () => onColorSelected(color),
+              isDisabled: isDisabled,
+            )).toList(),
           ),
         ),
       ),

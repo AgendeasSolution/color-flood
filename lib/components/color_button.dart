@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/game_constants.dart';
 import '../utils/responsive_utils.dart';
 import 'mahjong_icon.dart';
 
@@ -21,23 +20,18 @@ class ColorButton extends StatefulWidget {
 }
 
 class _ColorButtonState extends State<ColorButton> {
-  bool _isPressed = false;
-
   void _onTapDown(TapDownDetails details) {
-    if (!widget.isDisabled) {
-      setState(() => _isPressed = true);
-    }
+    // Visual feedback can be added here if needed
   }
 
   void _onTapUp(TapUpDetails details) {
-    setState(() => _isPressed = false);
     if (!widget.isDisabled) {
       widget.onTap();
     }
   }
 
   void _onTapCancel() {
-    setState(() => _isPressed = false);
+    // Handle tap cancel if needed
   }
 
   @override

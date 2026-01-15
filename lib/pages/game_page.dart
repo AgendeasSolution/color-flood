@@ -13,7 +13,6 @@ import '../services/audio_service.dart';
 import '../services/daily_puzzle_service.dart';
 import '../components/game_board.dart';
 import '../components/color_palette.dart';
-import '../components/glass_button.dart';
 import '../components/back_button_row.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
@@ -175,7 +174,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         }
       }
       
-      if (mounted && config != null) {
+      if (mounted) {
         setState(() {
           _gameConfig = config!;
           _moves = 0;

@@ -5,13 +5,11 @@ import '../ad_banner.dart';
 class BannerAdWidget extends StatelessWidget {
   final VoidCallback? onAdLoaded;
   final VoidCallback? onAdFailedToLoad;
-  final VoidCallback? onAdClicked;
 
   const BannerAdWidget({
     super.key,
     this.onAdLoaded,
     this.onAdFailedToLoad,
-    this.onAdClicked,
   });
 
   @override

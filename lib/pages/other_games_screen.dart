@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../components/common/animated_background.dart';
+import '../components/animated_background.dart';
 import '../components/common/banner_ad_widget.dart';
 import '../constants/app_constants.dart';
 import '../models/fgtp_app_model.dart';
@@ -137,7 +137,7 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
         storeUrl = app.playstoreUrl;
       }
 
-      if (storeUrl == null || storeUrl.isEmpty) {
+      if (storeUrl.isEmpty) {
         throw Exception('Store URL is not available');
       }
 
@@ -200,7 +200,6 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
             child: BannerAdWidget(
               onAdLoaded: null,
               onAdFailedToLoad: null,
-              onAdClicked: null,
             ),
           ),
         ],

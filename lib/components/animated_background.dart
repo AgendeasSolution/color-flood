@@ -154,7 +154,6 @@ class AnimatedBackground extends StatefulWidget {
 class _AnimatedBackgroundState extends State<AnimatedBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _animation;
   bool _isExternalController = false;
 
   @override
@@ -168,19 +167,11 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
       // Use external controller
       _animationController = widget.controller!;
       _isExternalController = true;
-      _animation = CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.linear,
-      );
     } else {
       // Create internal controller
       _animationController = AnimationController(
         vsync: this,
         duration: widget.animationDuration,
-      );
-      _animation = CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.linear,
       );
 
       if (widget.enableAnimation) {
