@@ -154,7 +154,7 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
           GestureDetector(
             onTap: _onLaterPressed,
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.2),
             ),
           ),
           // Popup content that slides in from bottom

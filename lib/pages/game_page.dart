@@ -133,6 +133,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       final result = await showDialog<bool>(
         context: context,
         barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.2),
         builder: (dialogContext) => _ExitConfirmationDialog(
           onConfirm: () {
             _audioService.playClickSound();
@@ -646,6 +647,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         barrierLabel: '',
+        barrierColor: Colors.black.withOpacity(0.2),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (dialogContext, anim1, anim2) => _GameOverDialog(
           didWin: result == GameResult.win,
@@ -745,6 +747,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         barrierLabel: '',
+        barrierColor: Colors.black.withOpacity(0.2),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (context, anim1, anim2) => _GameCompletedDialog(
           onPlayAgain: () {

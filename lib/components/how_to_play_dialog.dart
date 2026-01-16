@@ -25,6 +25,7 @@ class HowToPlayDialog extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.2),
       builder: (context) => const HowToPlayDialog(),
     ).then((_) {
       // Ensure music continues after dialog closes
