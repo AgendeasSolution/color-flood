@@ -235,7 +235,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       tablet: 24,
     );
     final availableWidth = screenWidth - (horizontalPadding * 2);
-    final buttonSize = (availableWidth * 0.5).clamp(150.0, 250.0);
+    final buttonSize = (availableWidth * 0.42).clamp(130.0, 220.0);
     
     return GestureDetector(
       onTap: () => _onLevelSelected(level),
@@ -739,10 +739,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Top spacing for logo
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                     context,
-                    smallPhone: 50,
-                    mediumPhone: 60,
-                    largePhone: 70,
-                    tablet: 80,
+                    smallPhone: 40,
+                    mediumPhone: 50,
+                    largePhone: 60,
+                    tablet: 70,
                   )),
                   
                   // Color Flood Logo
@@ -770,10 +770,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       'assets/img/color_flood_logo.png',
                       width: ResponsiveUtils.getResponsiveFontSize(
                         context,
-                        smallPhone: 240.0,
-                        mediumPhone: 300.0,
-                        largePhone: 360.0,
-                        tablet: 480.0,
+                        smallPhone: 215.0,
+                        mediumPhone: 265.0,
+                        largePhone: 315.0,
+                        tablet: 415.0,
                       ),
                       fit: BoxFit.contain,
                     ),
@@ -782,10 +782,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Spacing after logo
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                     context,
-                    smallPhone: 16,
-                    mediumPhone: 20,
-                    largePhone: 24,
-                    tablet: 28,
+                    smallPhone: 12,
+                    mediumPhone: 16,
+                    largePhone: 20,
+                    tablet: 24,
                   )),
                   
                   // Content area with proper layout structure
@@ -798,22 +798,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         // Top gap for level card
                         SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                           context,
-                          smallPhone: 16,
-                          mediumPhone: 20,
-                          largePhone: 24,
-                          tablet: 28,
+                          smallPhone: 4,
+                          mediumPhone: 8,
+                          largePhone: 12,
+                          tablet: 16,
                         )),
                         
                         // Level Card - Positioned higher up
                         _buildCurrentLevelDisplay(),
                         
-                        // Spacing between level card and daily challenge (increased for top gap)
+                        // Spacing between level card and daily challenge
                         SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                           context,
-                          smallPhone: 28,
-                          mediumPhone: 32,
-                          largePhone: 36,
-                          tablet: 40,
+                          smallPhone: 38,
+                          mediumPhone: 42,
+                          largePhone: 46,
+                          tablet: 50,
                         )),
                         
                         // Daily Challenge Button - Positioned higher from bottom

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math' show min;
+import 'dart:math' show min, Random;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
@@ -44,6 +44,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   bool _isGameOver = false;
   GameState _gameState = GameState.notStarted;
   bool _isLoadingExtraMoves = false; // Loading state for extra moves button
+  bool _isLoadingUndo = false; // Loading state for undo button
   bool _isSolving = false; // Track if auto-solving is in progress
   final GameService _gameService = GameService();
   final LevelProgressionService _levelService =
@@ -247,22 +248,98 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     }
   }
 
-  void _handleUndo() {
+  Future<void> _handleUndo() async {
     if (!mounted) return;
     if (_isGameOver || _gameState != GameState.playing || _isSolving) return;
     if (_undoHistory.isEmpty) return; // No previous state to undo to
+    if (_isLoadingUndo) return; // Prevent multiple simultaneous calls
     
     _audioService.playClickSound();
     
-    // Pop the last state from history
-    final previousState = _undoHistory.removeLast();
+    // 50% chance to show rewarded ad
+    final shouldShowAd = Random().nextDouble() < 0.5;
     
-    setState(() {
-      _gameConfig = _gameConfig.copyWith(
-        grid: _gameService.cloneGrid(previousState.grid),
-      );
-      _moves = previousState.moves;
-    });
+    if (shouldShowAd) {
+      // Show rewarded ad
+      if (mounted) {
+        setState(() {
+          _isLoadingUndo = true;
+        });
+      }
+      
+      try {
+        final rewardEarned = await RewardedAdService.instance.showAd(
+          onRewarded: (reward) {
+            // Perform undo when reward is earned
+            if (mounted && _undoHistory.isNotEmpty) {
+              final previousState = _undoHistory.removeLast();
+              setState(() {
+                _gameConfig = _gameConfig.copyWith(
+                  grid: _gameService.cloneGrid(previousState.grid),
+                );
+                _moves = previousState.moves;
+                _isLoadingUndo = false;
+              });
+              // Preload next ad for future use
+              RewardedAdService.instance.preloadAd();
+            }
+          },
+          onAdFailedToShow: () {
+            if (mounted) {
+              setState(() {
+                _isLoadingUndo = false;
+              });
+              // Show error message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Ad not available. Please try again later.'),
+                  duration: Duration(seconds: 2),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              // Preload next ad for next time
+              RewardedAdService.instance.preloadAd();
+            }
+          },
+        );
+        
+        // If ad wasn't shown, try to preload for next time
+        if (!rewardEarned) {
+          if (mounted) {
+            setState(() {
+              _isLoadingUndo = false;
+            });
+          }
+          RewardedAdService.instance.preloadAd();
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoadingUndo = false;
+          });
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              duration: const Duration(seconds: 2),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        // Preload for next time
+        RewardedAdService.instance.preloadAd();
+      }
+    } else {
+      // 50% chance: Perform undo without showing ad
+      final previousState = _undoHistory.removeLast();
+      
+      setState(() {
+        _gameConfig = _gameConfig.copyWith(
+          grid: _gameService.cloneGrid(previousState.grid),
+        );
+        _moves = previousState.moves;
+      });
+    }
   }
 
   Future<void> _restartCurrentLevel() async {
@@ -969,6 +1046,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             onBack: _handleExit,
             onReset: _isGameOver ? null : _restartCurrentLevel,
             onUndo: _isGameOver ? null : (_undoHistory.isNotEmpty ? _handleUndo : null),
+            isUndoLoading: _isLoadingUndo,
             centerWidget: _isDailyPuzzle
                 ? Text(
                     AppConstants.todaysChallengeLabel,

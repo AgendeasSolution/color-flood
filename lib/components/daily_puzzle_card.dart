@@ -87,10 +87,10 @@ class DailyPuzzleCardState extends State<DailyPuzzleCard> {
         right: horizontalPadding,
         top: ResponsiveUtils.getResponsiveSpacing(
           context,
-          smallPhone: 40,
-          mediumPhone: 44,
-          largePhone: 48,
-          tablet: 52,
+          smallPhone: 24,
+          mediumPhone: 28,
+          largePhone: 32,
+          tablet: 36,
         ),
       ),
       child: GestureDetector(

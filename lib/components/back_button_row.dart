@@ -9,6 +9,7 @@ class BackButtonRow extends StatelessWidget {
   final VoidCallback? onUndo;
   final Widget? centerWidget;
   final bool showResetBadge;
+  final bool isUndoLoading;
   final EdgeInsetsGeometry? padding;
 
   const BackButtonRow({
@@ -18,6 +19,7 @@ class BackButtonRow extends StatelessWidget {
     this.onUndo,
     this.centerWidget,
     this.showResetBadge = false,
+    this.isUndoLoading = false,
     this.padding,
   });
 
@@ -77,13 +79,16 @@ class BackButtonRow extends StatelessWidget {
             children: [
               // Undo Button (Left of Reset)
               if (onUndo != null)
-                WoodButton(
-                  onTap: onUndo!,
-                  size: buttonSize,
-                  icon: Icon(
-                    Icons.undo,
-                    color: Colors.white, // White for contrast on blue
-                    size: buttonSize * 0.5,
+                Opacity(
+                  opacity: isUndoLoading ? 0.7 : 1.0,
+                  child: WoodButton(
+                    onTap: isUndoLoading ? () {} : onUndo!,
+                    size: buttonSize,
+                    icon: Icon(
+                      Icons.undo,
+                      color: Colors.white, // White for contrast on blue
+                      size: buttonSize * 0.5,
+                    ),
                   ),
                 ),
               
