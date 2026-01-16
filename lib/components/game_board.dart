@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/color_utils.dart';
 import 'mahjong_icon.dart';
 
 /// Game board component that displays the color grid
@@ -754,20 +755,6 @@ class _AnimatedCellState extends State<_AnimatedCell>
 
   Widget _buildGemCell(Color baseColor, double cellSize) {
     final borderRadius = cellSize * 0.08;
-    
-    // Helper functions for color manipulation
-    Color lightenColor(Color color, double amount) {
-      final hsl = HSLColor.fromColor(color);
-      final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
-      return hsl.withLightness(lightness).toColor();
-    }
-    
-    Color darkenColor(Color color, double amount) {
-      final hsl = HSLColor.fromColor(color);
-      final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
-      return hsl.withLightness(lightness).toColor();
-    }
-    
     final tileColor = baseColor;
     
     return Container(
@@ -809,9 +796,9 @@ class _AnimatedCellState extends State<_AnimatedCell>
                   center: Alignment.topLeft,
                   radius: 1.2,
                   colors: [
-                    lightenColor(tileColor, 0.2),
+                    ColorUtils.lightenColor(tileColor, 0.2),
                     tileColor,
-                    darkenColor(tileColor, 0.25),
+                    ColorUtils.darkenColor(tileColor, 0.25),
                   ],
                   stops: const [0.0, 0.6, 1.0],
                 ),

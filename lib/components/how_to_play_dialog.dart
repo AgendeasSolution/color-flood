@@ -108,10 +108,10 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
                 child: Padding(
                   padding: ResponsiveUtils.getResponsivePadding(
                     context,
-                    smallPhone: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    mediumPhone: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    largePhone: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    tablet: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    smallPhone: const EdgeInsets.all(14),
+                    mediumPhone: const EdgeInsets.all(16),
+                    largePhone: const EdgeInsets.all(18),
+                    tablet: const EdgeInsets.all(20),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -144,14 +144,11 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Goal and Close button in same row (no container)
+        // Goal and Close button in same row
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Spacer to push Goal to center
-            Expanded(
-              child: Container(),
-            ),
-            // Goal section (centered)
+            // Goal section (left aligned)
             Row(
               children: [
                 Text(
@@ -189,25 +186,41 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
                 ),
               ],
             ),
-            // Spacer to balance the close button
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: ResponsiveUtils.getResponsiveIconSize(
+            // Close button in a box
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(
                       context,
-                      smallPhone: 20,
-                      mediumPhone: 22,
-                      largePhone: 24,
-                      tablet: 26,
+                      smallPhone: 4,
+                      mediumPhone: 5,
+                      largePhone: 6,
+                      tablet: 7,
+                    )),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: ResponsiveUtils.getResponsiveIconSize(
+                        context,
+                        smallPhone: 16,
+                        mediumPhone: 18,
+                        largePhone: 20,
+                        tablet: 22,
+                      ),
                     ),
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
               ),
             ),
@@ -222,7 +235,7 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
         )),
         Text(
           'Fill the entire board with the same color by strategically selecting colors from the palette. Complete each level within the move limit!',
-          textAlign: TextAlign.center,
+          textAlign: TextAlign.left,
           style: TextStyle(
             color: Colors.white,
             fontSize: ResponsiveUtils.getResponsiveFontSize(
@@ -241,10 +254,10 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
 
   Widget _buildHowToPlaySection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
               '🎮',
@@ -325,10 +338,10 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
         child: Container(
           padding: ResponsiveUtils.getResponsivePadding(
             context,
-            smallPhone: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            mediumPhone: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-            largePhone: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            tablet: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            smallPhone: const EdgeInsets.all(10),
+            mediumPhone: const EdgeInsets.all(11),
+            largePhone: const EdgeInsets.all(12),
+            tablet: const EdgeInsets.all(14),
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(

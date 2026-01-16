@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/color_utils.dart';
 import 'mahjong_icon.dart';
 
 /// Reusable 3D gem-style color button component for the color palette
@@ -79,9 +80,9 @@ class _ColorButtonState extends State<ColorButton> {
                       center: Alignment.topLeft,
                       radius: 1.2,
                       colors: [
-                        _lightenColor(baseColor, 0.2),
+                        ColorUtils.lightenColor(baseColor, 0.2),
                         baseColor,
-                        _darkenColor(baseColor, 0.25),
+                        ColorUtils.darkenColor(baseColor, 0.25),
                       ],
                       stops: const [0.0, 0.6, 1.0],
                     ),
@@ -156,20 +157,5 @@ class _ColorButtonState extends State<ColorButton> {
           ),
         ),
     );
-  }
-
-
-  Color _lightenColor(Color color, double amount) {
-    assert(amount >= 0 && amount <= 1);
-    final hsl = HSLColor.fromColor(color);
-    final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
-    return hsl.withLightness(lightness).toColor();
-  }
-
-  Color _darkenColor(Color color, double amount) {
-    assert(amount >= 0 && amount <= 1);
-    final hsl = HSLColor.fromColor(color);
-    final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
-    return hsl.withLightness(lightness).toColor();
   }
 }
