@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
-import '../components/color_flood_logo.dart';
 import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
@@ -332,7 +331,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       padding: EdgeInsets.only(
         left: horizontalPadding,
         right: horizontalPadding,
-        bottom: 70, // Space for ad banner (90px) + small gap (10px)
+        bottom: ResponsiveUtils.getResponsiveSpacing(
+          context,
+          smallPhone: 90,
+          mediumPhone: 100,
+          largePhone: 110,
+          tablet: 120,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -747,42 +752,91 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Top spacing for logo
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                     context,
-                    smallPhone: 40,
-                    mediumPhone: 50,
-                    largePhone: 60,
-                    tablet: 70,
+                    smallPhone: 50,
+                    mediumPhone: 60,
+                    largePhone: 70,
+                    tablet: 80,
                   )),
                   
                   // Color Flood Logo
-                  const ColorFloodLogo(),
+                  Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withOpacity(0.5),
+                          blurRadius: 35,
+                          spreadRadius: 12,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                          blurRadius: 55,
+                          spreadRadius: 18,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF06B6D4).withOpacity(0.35),
+                          blurRadius: 75,
+                          spreadRadius: 22,
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/img/color_flood_logo.png',
+                      width: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        smallPhone: 240.0,
+                        mediumPhone: 300.0,
+                        largePhone: 360.0,
+                        tablet: 480.0,
+                      ),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                   
-                  // Content area
+                  // Spacing after logo
+                  SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                    context,
+                    smallPhone: 16,
+                    mediumPhone: 20,
+                    largePhone: 24,
+                    tablet: 28,
+                  )),
+                  
+                  // Content area with proper layout structure
                   Expanded(
                     child: Column(
                       children: [
-                        // Daily Puzzle Section - Fixed at top
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: ResponsiveUtils.getResponsiveSpacing(
-                              context,
-                              smallPhone: 12,
-                              mediumPhone: 14,
-                              largePhone: 16,
-                              tablet: 20,
-                            ),
-                          ),
-                          child: DailyPuzzleCard(
-                            key: _dailyPuzzleCardKey,
-                            onTap: _navigateToDailyPuzzle,
-                          ),
+                        // Flexible top spacer to push content up (reduced to move level card up)
+                        Spacer(flex: 1),
+                        
+                        // Top gap for level card
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 16,
+                          mediumPhone: 20,
+                          largePhone: 24,
+                          tablet: 28,
+                        )),
+                        
+                        // Level Card - Positioned higher up
+                        _buildCurrentLevelDisplay(),
+                        
+                        // Spacing between level card and daily challenge (increased for top gap)
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 28,
+                          mediumPhone: 32,
+                          largePhone: 36,
+                          tablet: 40,
+                        )),
+                        
+                        // Daily Challenge Button - Positioned higher from bottom
+                        DailyPuzzleCard(
+                          key: _dailyPuzzleCardKey,
+                          onTap: _navigateToDailyPuzzle,
                         ),
                         
-                        // Level Card - Centered in remaining space
-                        Expanded(
-                          child: Center(
-                            child: _buildCurrentLevelDisplay(),
-                          ),
-                        ),
+                        // Flexible bottom spacer (less than top to keep content higher)
+                        Spacer(flex: 3),
                       ],
                     ),
                   ),

@@ -127,8 +127,11 @@ class DailyPuzzleService {
     
     // Generate a puzzle with similar difficulty to the base level
     // Use a seed based on the current date for consistent daily puzzles
+    // Add additional randomization factors to ensure uniqueness from regular levels
     final dateSeed = _getDateSeed(currentDate);
-    final random = Random(dateSeed);
+    // Add grid dimensions and level to seed to ensure different patterns
+    final enhancedSeed = dateSeed ^ (gridWidth * 1000) ^ (gridHeight * 100) ^ (baseLevel * 10);
+    final random = Random(enhancedSeed);
     
     // Generate grid with seeded random for consistency
     final grid = _generateSeededGrid(gridWidth, gridHeight, baseLevel, random);
@@ -166,8 +169,10 @@ class DailyPuzzleService {
   }
   
   /// Generate a grid with seeded random for daily puzzles
+  /// This ensures the daily puzzle is completely random and different from regular levels
   List<List<Color>> _generateSeededGrid(int gridWidth, int gridHeight, int level, Random random) {
-    // Start with a random grid
+    // Use multiple randomization passes to ensure uniqueness
+    // Start with a completely random grid
     final grid = List.generate(
       gridHeight,
       (_) => List.generate(
@@ -176,8 +181,8 @@ class DailyPuzzleService {
       ),
     );
     
-    // Shuffle the grid
-    for (int pass = 0; pass < 3; pass++) {
+    // Enhanced shuffling with more passes for better randomization
+    for (int pass = 0; pass < 5; pass++) {
       for (int i = 0; i < gridHeight; i++) {
         for (int j = 0; j < gridWidth; j++) {
           final swapI = random.nextInt(gridHeight);
@@ -189,14 +194,54 @@ class DailyPuzzleService {
       }
     }
     
+    // Additional randomization: randomly swap colors in different patterns
+    for (int i = 0; i < gridWidth * gridHeight * 2; i++) {
+      final row1 = random.nextInt(gridHeight);
+      final col1 = random.nextInt(gridWidth);
+      final row2 = random.nextInt(gridHeight);
+      final col2 = random.nextInt(gridWidth);
+      
+      final temp = grid[row1][col1];
+      grid[row1][col1] = grid[row2][col2];
+      grid[row2][col2] = temp;
+    }
+    
     // Ensure equal color distribution
     _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
     
     // Prevent four adjacent same colors
     _preventFourAdjacentCells(grid, gridWidth, gridHeight, random);
     
+    // Additional randomization pass after pattern prevention
+    for (int i = 0; i < gridWidth * gridHeight; i++) {
+      final row1 = random.nextInt(gridHeight);
+      final col1 = random.nextInt(gridWidth);
+      final row2 = random.nextInt(gridHeight);
+      final col2 = random.nextInt(gridWidth);
+      
+      // Only swap if colors are different to maintain distribution
+      if (grid[row1][col1] != grid[row2][col2]) {
+        final temp = grid[row1][col1];
+        grid[row1][col1] = grid[row2][col2];
+        grid[row2][col2] = temp;
+      }
+    }
+    
     // Final equal distribution pass
     _ensureEqualColorDistribution(grid, gridWidth, gridHeight);
+    
+    // Final shuffle to ensure complete randomness
+    for (int pass = 0; pass < 2; pass++) {
+      for (int i = 0; i < gridHeight; i++) {
+        for (int j = 0; j < gridWidth; j++) {
+          final swapI = random.nextInt(gridHeight);
+          final swapJ = random.nextInt(gridWidth);
+          final temp = grid[i][j];
+          grid[i][j] = grid[swapI][swapJ];
+          grid[swapI][swapJ] = temp;
+        }
+      }
+    }
     
     return grid;
   }

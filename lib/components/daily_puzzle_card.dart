@@ -73,135 +73,139 @@ class DailyPuzzleCardState extends State<DailyPuzzleCard> {
       tablet: 14,
     );
 
-    // Border colors matching WoodButton style
-    const lightBorderColor = Color(0xFFDBEAFE); // Light blue border
-    const embossColor = Color(0xFF93C5FD); // Light blue for embossed edge
+    final horizontalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 24,
+    );
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: spacing),
+      padding: EdgeInsets.only(
+        left: horizontalPadding,
+        right: horizontalPadding,
+        top: ResponsiveUtils.getResponsiveSpacing(
+          context,
+          smallPhone: 40,
+          mediumPhone: 44,
+          largePhone: 48,
+          tablet: 52,
+        ),
+      ),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF2962FF),
-                const Color(0xFF1E88E5),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: lightBorderColor,
-              width: 2.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 0,
-                offset: const Offset(0, 4),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent, // No background color
+                borderRadius: BorderRadius.circular(999), // Full border radius
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.8),
+                  width: 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(spacing),
-            child: Row(
-              children: [
-                // Leading calendar icon with reduced circle size
-                Container(
-                  width: ResponsiveUtils.getResponsiveSpacing(
-                    context,
-                    smallPhone: 40,
-                    mediumPhone: 44,
-                    largePhone: 48,
-                    tablet: 52,
-                  ),
-                  height: ResponsiveUtils.getResponsiveSpacing(
-                    context,
-                    smallPhone: 40,
-                    mediumPhone: 44,
-                    largePhone: 48,
-                    tablet: 52,
-                  ),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
-                  ),
-                  child: Icon(
-                    Icons.calendar_today,
-                    color: Colors.white,
-                    size: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      smallPhone: 26,
-                      mediumPhone: 28,
-                      largePhone: 30,
-                      tablet: 32,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: spacing * 2,
+                  vertical: spacing * 1.5,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Calendar icon
+                    Icon(
+                      Icons.calendar_today,
+                      color: Colors.white,
+                      size: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        smallPhone: 20,
+                        mediumPhone: 22,
+                        largePhone: 24,
+                        tablet: 26,
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(width: spacing),
-                // Header with title and description
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        'Daily Challenge',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            smallPhone: 18,
-                            mediumPhone: 20,
-                            largePhone: 22,
-                            tablet: 24,
-                          ),
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
+                    SizedBox(width: spacing),
+                    // Button name
+                    Text(
+                      'Daily Challenge',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 16,
+                          mediumPhone: 18,
+                          largePhone: 20,
+                          tablet: 22,
                         ),
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
                       ),
-                      SizedBox(height: spacing * 0.3),
-                      // Description with completion status
-                      Text(
-                        _isCompleted
-                            ? 'Today\'s challenge completed! View your progress.'
-                            : 'Play a new puzzle every day and build your streak.',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            smallPhone: 13,
-                            mediumPhone: 14,
-                            largePhone: 15,
-                            tablet: 16,
-                          ),
-                          fontWeight: FontWeight.normal,
-                          letterSpacing: 0.2,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                // Right-pointing chevron icon
-                Icon(
-                  Icons.chevron_right,
+              ),
+            ),
+            // Badge icon at top-right corner - improved design
+            Positioned(
+              top: -6,
+              right: -6,
+              child: Container(
+                width: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 22,
+                  mediumPhone: 24,
+                  largePhone: 26,
+                  tablet: 28,
+                ),
+                height: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 22,
+                  mediumPhone: 24,
+                  largePhone: 26,
+                  tablet: 28,
+                ),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _isCompleted 
+                      ? const Color(0xFF22C55E) // Green for completed
+                      : const Color(0xFFEF4444), // Red for not completed
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 3,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 1.5),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isCompleted 
+                      ? Icons.check 
+                      : Icons.priority_high,
                   color: Colors.white,
                   size: ResponsiveUtils.getResponsiveFontSize(
                     context,
-                    smallPhone: 24,
-                    mediumPhone: 26,
-                    largePhone: 28,
-                    tablet: 30,
+                    smallPhone: 14,
+                    mediumPhone: 16,
+                    largePhone: 18,
+                    tablet: 20,
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -1322,7 +1322,7 @@ class _GameOverDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.6),
+      backgroundColor: Colors.black.withOpacity(0.2),
       body: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -1386,29 +1386,6 @@ class _GameOverDialog extends StatelessWidget {
                     )),
                     // Special message for daily puzzle win
                     if (isDailyPuzzle && didWin) ...[
-                      Text(
-                        "SYNCED",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            smallPhone: 20,
-                            mediumPhone: 22,
-                            largePhone: 24,
-                            tablet: 28,
-                          ),
-                          color: const Color(0xFF00D9FF), // Cyan
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                        context,
-                        smallPhone: 8,
-                        mediumPhone: 10,
-                        largePhone: 12,
-                        tablet: 14,
-                      )),
                       Text(
                         "Today's Challenge Completed!",
                         textAlign: TextAlign.center,
@@ -1499,59 +1476,69 @@ class _GameOverDialog extends StatelessWidget {
                       tablet: 36,
                     )),
                     // Buttons row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Home button (left)
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              right: ResponsiveUtils.getResponsiveSpacing(
-                                context,
-                                smallPhone: 4,
-                                mediumPhone: 6,
-                                largePhone: 8,
-                                tablet: 10,
-                              ),
-                            ),
-                            child: _PopupButton(
-                              context: context,
-                              onTap: onBackToHome,
-                              text: "Home",
-                              isPrimary: false,
-                              icon: Icons.home,
-                            ),
-                          ),
-                        ),
-                        // Primary action button (right)
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: ResponsiveUtils.getResponsiveSpacing(
-                                context,
-                                smallPhone: 4,
-                                mediumPhone: 6,
-                                largePhone: 8,
-                                tablet: 10,
-                              ),
-                            ),
-                            child: didWin && onNextLevel != null
-                                ? _PopupButton(
-                                    context: context,
-                                    onTap: onNextLevel!,
-                                    text: AppConstants.nextLevelText,
-                                    isPrimary: true,
-                                  )
-                                : _PopupButton(
-                                    context: context,
-                                    onTap: onRestart,
-                                    text: AppConstants.playAgainText,
-                                    isPrimary: didWin,
+                    isDailyPuzzle
+                        ? // For daily puzzles, show only Home button
+                        _PopupButton(
+                            context: context,
+                            onTap: onBackToHome,
+                            text: "Home",
+                            isPrimary: true,
+                            icon: Icons.home,
+                          )
+                        : // For regular levels, show both buttons
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              // Home button (left)
+                              Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: ResponsiveUtils.getResponsiveSpacing(
+                                      context,
+                                      smallPhone: 4,
+                                      mediumPhone: 6,
+                                      largePhone: 8,
+                                      tablet: 10,
+                                    ),
                                   ),
+                                  child: _PopupButton(
+                                    context: context,
+                                    onTap: onBackToHome,
+                                    text: "Home",
+                                    isPrimary: false,
+                                    icon: Icons.home,
+                                  ),
+                                ),
+                              ),
+                              // Primary action button (right)
+                              Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: ResponsiveUtils.getResponsiveSpacing(
+                                      context,
+                                      smallPhone: 4,
+                                      mediumPhone: 6,
+                                      largePhone: 8,
+                                      tablet: 10,
+                                    ),
+                                  ),
+                                  child: didWin && onNextLevel != null
+                                      ? _PopupButton(
+                                          context: context,
+                                          onTap: onNextLevel!,
+                                          text: AppConstants.nextLevelText,
+                                          isPrimary: true,
+                                        )
+                                      : _PopupButton(
+                                          context: context,
+                                          onTap: onRestart,
+                                          text: AppConstants.playAgainText,
+                                          isPrimary: didWin,
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

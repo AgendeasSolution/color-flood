@@ -307,7 +307,7 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
-                    'assets/img/color-flood.png',
+                    'assets/img/color_flood_logo.png',
                     fit: BoxFit.cover,
                   ),
                 ),
