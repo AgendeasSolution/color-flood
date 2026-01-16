@@ -27,6 +27,7 @@ class GameBoard extends StatefulWidget {
 
 class _GameBoardState extends State<GameBoard> {
   late List<List<Color>> _previousGrid;
+  late List<List<bool>> _escapeStates; // Track which tiles are escaping
 
   @override
   void initState() {
@@ -34,8 +35,11 @@ class _GameBoardState extends State<GameBoard> {
     // Validate grid before cloning
     if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
       _previousGrid = _createEmptyGrid();
+      _escapeStates = _createEmptyEscapeStates();
     } else {
       _previousGrid = _cloneGrid(widget.grid);
+      _escapeStates = _createEmptyEscapeStates();
+      _updateEscapeStates();
     }
   }
 
@@ -45,6 +49,7 @@ class _GameBoardState extends State<GameBoard> {
     // Validate current grid
     if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
       _previousGrid = _createEmptyGrid();
+      _escapeStates = _createEmptyEscapeStates();
       return;
     }
     
@@ -55,6 +60,7 @@ class _GameBoardState extends State<GameBoard> {
         oldWidget.grid.length != widget.grid.length ||
         oldWidget.grid.isEmpty) {
       _previousGrid = _cloneGrid(widget.grid);
+      _escapeStates = _createEmptyEscapeStates();
     } else {
       // Update previous grid to the OLD grid state before the change
       try {
@@ -64,6 +70,9 @@ class _GameBoardState extends State<GameBoard> {
         _previousGrid = _cloneGrid(widget.grid);
       }
     }
+    
+    // Update escape states when grid changes
+    _updateEscapeStates();
   }
 
   List<List<Color>> _cloneGrid(List<List<Color>> grid) {
@@ -86,6 +95,368 @@ class _GameBoardState extends State<GameBoard> {
       height,
       (_) => List.generate(width, (_) => Colors.grey),
     );
+  }
+  
+  List<List<bool>> _createEmptyEscapeStates() {
+    final width = widget.gridWidth > 0 ? widget.gridWidth : 6;
+    final height = widget.gridHeight > 0 ? widget.gridHeight : 6;
+    return List.generate(
+      height,
+      (_) => List.generate(width, (_) => false),
+    );
+  }
+  
+  /// Check if a tile should escape (unused tile - all existing neighbors have same color)
+  /// A tile is "unused" if it can't help expand the flood area because all adjacent tiles are the same color
+  bool _shouldEscape(int row, int col) {
+    if (widget.grid.isEmpty) return false;
+    if (row < 0 || row >= widget.grid.length) return false;
+    if (col < 0 || col >= widget.grid[row].length) return false;
+    
+    final currentColor = widget.grid[row][col];
+    
+    // Check all four possible orthogonal neighbors
+    final hasTopNeighbor = row > 0;
+    final topColor = hasTopNeighbor ? widget.grid[row - 1][col] : null;
+    
+    final hasBottomNeighbor = row < widget.grid.length - 1;
+    final bottomColor = hasBottomNeighbor ? widget.grid[row + 1][col] : null;
+    
+    final hasLeftNeighbor = col > 0;
+    final leftColor = hasLeftNeighbor ? widget.grid[row][col - 1] : null;
+    
+    final hasRightNeighbor = col < widget.grid[row].length - 1;
+    final rightColor = hasRightNeighbor ? widget.grid[row][col + 1] : null;
+    
+    // PRIMARY RULE: If ANY orthogonal neighbor has different color, don't escape
+    if ((hasTopNeighbor && topColor != currentColor) ||
+        (hasBottomNeighbor && bottomColor != currentColor) ||
+        (hasLeftNeighbor && leftColor != currentColor) ||
+        (hasRightNeighbor && rightColor != currentColor)) {
+      return false;
+    }
+    
+    // Special case 1: No top and left neighbors
+    if (!hasTopNeighbor && !hasLeftNeighbor) {
+      // Check if bottom and right both match
+      if (hasBottomNeighbor && hasRightNeighbor &&
+          bottomColor == currentColor && rightColor == currentColor) {
+        return true;
+      }
+      
+      // Also check left bottom diagonal (row+1, col-1)
+      final hasLeftBottomDiagonal = (row + 1) < widget.grid.length && (col - 1) >= 0;
+      if (hasLeftBottomDiagonal) {
+        final leftBottomDiagonalColor = widget.grid[row + 1][col - 1];
+        if (leftBottomDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 2: No top and right neighbors
+    if (!hasTopNeighbor && !hasRightNeighbor) {
+      // Check if bottom and left both match
+      if (hasBottomNeighbor && hasLeftNeighbor &&
+          bottomColor == currentColor && leftColor == currentColor) {
+        return true;
+      }
+      
+      // Also check right bottom diagonal (row+1, col+1)
+      final hasRightBottomDiagonal = (row + 1) < widget.grid.length && 
+                                     (col + 1) < widget.grid[row + 1].length;
+      if (hasRightBottomDiagonal) {
+        final rightBottomDiagonalColor = widget.grid[row + 1][col + 1];
+        if (rightBottomDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 2b: No top neighbor, but right neighbor and right-bottom diagonal both match
+    if (!hasTopNeighbor && hasRightNeighbor && rightColor == currentColor) {
+      // Check right bottom diagonal (row+1, col+1)
+      final hasRightBottomDiagonal = (row + 1) < widget.grid.length && 
+                                     (col + 1) < widget.grid[row + 1].length;
+      if (hasRightBottomDiagonal) {
+        final rightBottomDiagonalColor = widget.grid[row + 1][col + 1];
+        if (rightBottomDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 2c: No top neighbor, but left neighbor and left-bottom diagonal both match
+    if (!hasTopNeighbor && hasLeftNeighbor && leftColor == currentColor) {
+      // Check left bottom diagonal (row+1, col-1)
+      final hasLeftBottomDiagonal = (row + 1) < widget.grid.length && (col - 1) >= 0;
+      if (hasLeftBottomDiagonal) {
+        final leftBottomDiagonalColor = widget.grid[row + 1][col - 1];
+        if (leftBottomDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 3: No bottom and left neighbors
+    if (!hasBottomNeighbor && !hasLeftNeighbor) {
+      // Check if top and right both match
+      if (hasTopNeighbor && hasRightNeighbor &&
+          topColor == currentColor && rightColor == currentColor) {
+        return true;
+      }
+    }
+    
+    // Special case 4: No bottom and right neighbors
+    if (!hasBottomNeighbor && !hasRightNeighbor) {
+      // Check if top and left both match
+      if (hasTopNeighbor && hasLeftNeighbor &&
+          topColor == currentColor && leftColor == currentColor) {
+        return true;
+      }
+      
+      // Also check top-right diagonal (row-1, col+1)
+      final hasTopRightDiagonal = (row - 1) >= 0 && 
+                                   (col + 1) < widget.grid[row - 1].length;
+      if (hasTopRightDiagonal) {
+        final topRightDiagonalColor = widget.grid[row - 1][col + 1];
+        if (topRightDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 4b: No bottom and left neighbors
+    if (!hasBottomNeighbor && !hasLeftNeighbor) {
+      // Check top-left diagonal (row-1, col-1)
+      final hasTopLeftDiagonal = (row - 1) >= 0 && (col - 1) >= 0;
+      if (hasTopLeftDiagonal) {
+        final topLeftDiagonalColor = widget.grid[row - 1][col - 1];
+        if (topLeftDiagonalColor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Special case 5: No top, left, or right neighbors
+    if (!hasTopNeighbor && !hasLeftNeighbor && !hasRightNeighbor) {
+      // Check bottom-left diagonal (row+1, col-1)
+      if ((row + 1) < widget.grid.length && (col - 1) >= 0) {
+        final bottomLeftDiagonalColor = widget.grid[row + 1][col - 1];
+        if (bottomLeftDiagonalColor == currentColor) {
+          return true; // Escape if left-bottom diagonal matches
+        }
+      }
+      
+      // Check bottom-right diagonal (row+1, col+1)
+      if ((row + 1) < widget.grid.length && 
+          (col + 1) < widget.grid[row + 1].length) {
+        final bottomRightDiagonalColor = widget.grid[row + 1][col + 1];
+        if (bottomRightDiagonalColor == currentColor) {
+          return true; // Escape if right-bottom diagonal matches
+        }
+      }
+    }
+    
+    // At this point, all existing orthogonal neighbors match (or don't exist)
+    // Check if we have any orthogonal neighbors
+    final hasAnyOrthogonalNeighbor = hasTopNeighbor || hasBottomNeighbor || 
+                                     hasLeftNeighbor || hasRightNeighbor;
+    
+    // If no orthogonal neighbors exist, don't escape (isolated tile)
+    if (!hasAnyOrthogonalNeighbor) return false;
+    
+    // Special case: If diagonal has different color, but its top and right/left match current tile
+    // Check bottom-right diagonal (row+1, col+1)
+    if ((row + 1) < widget.grid.length && 
+        (col + 1) < widget.grid[row + 1].length) {
+      final bottomRightDiagonalColor = widget.grid[row + 1][col + 1];
+      if (bottomRightDiagonalColor != currentColor) {
+        // Check the diagonal's top neighbor (row, col+1) - right neighbor of current tile
+        final diagonalTopNeighbor = hasRightNeighbor ? rightColor : null;
+        // Check the diagonal's right neighbor (row+1, col+2)
+        final hasDiagonalRightNeighbor = (col + 2) < widget.grid[row + 1].length;
+        final diagonalRightNeighbor = hasDiagonalRightNeighbor 
+            ? widget.grid[row + 1][col + 2] 
+            : null;
+        // Check the diagonal's left neighbor (row+1, col) - bottom neighbor of current tile
+        final diagonalLeftNeighbor = hasBottomNeighbor ? bottomColor : null;
+        
+        // If diagonal's top and right match current tile, escape
+        if (diagonalTopNeighbor == currentColor && 
+            diagonalRightNeighbor == currentColor) {
+          return true;
+        }
+        // If diagonal's top and left match current tile, escape
+        if (diagonalTopNeighbor == currentColor && 
+            diagonalLeftNeighbor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Check bottom-left diagonal (row+1, col-1)
+    if ((row + 1) < widget.grid.length && (col - 1) >= 0) {
+      final bottomLeftDiagonalColor = widget.grid[row + 1][col - 1];
+      if (bottomLeftDiagonalColor != currentColor) {
+        // Check the diagonal's top neighbor (row, col-1) - left neighbor of current tile
+        final diagonalTopNeighbor = hasLeftNeighbor ? leftColor : null;
+        // Check the diagonal's left neighbor (row+1, col-2)
+        final hasDiagonalLeftNeighbor = (col - 2) >= 0;
+        final diagonalLeftNeighbor = hasDiagonalLeftNeighbor 
+            ? widget.grid[row + 1][col - 2] 
+            : null;
+        // Check the diagonal's right neighbor (row+1, col) - bottom neighbor of current tile
+        final diagonalRightNeighbor = hasBottomNeighbor ? bottomColor : null;
+        
+        // If diagonal's top and left match current tile, escape
+        if (diagonalTopNeighbor == currentColor && 
+            diagonalLeftNeighbor == currentColor) {
+          return true;
+        }
+        // If diagonal's top and right match current tile, escape
+        if (diagonalTopNeighbor == currentColor && 
+            diagonalRightNeighbor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Check top-right diagonal (row-1, col+1)
+    if ((row - 1) >= 0 && (col + 1) < widget.grid[row - 1].length) {
+      final topRightDiagonalColor = widget.grid[row - 1][col + 1];
+      if (topRightDiagonalColor != currentColor) {
+        // Check the diagonal's bottom neighbor (row, col+1) - right neighbor of current tile
+        final diagonalBottomNeighbor = hasRightNeighbor ? rightColor : null;
+        // Check the diagonal's right neighbor (row-1, col+2)
+        final hasDiagonalRightNeighbor = (col + 2) < widget.grid[row - 1].length;
+        final diagonalRightNeighbor = hasDiagonalRightNeighbor 
+            ? widget.grid[row - 1][col + 2] 
+            : null;
+        // Check the diagonal's left neighbor (row-1, col) - top neighbor of current tile
+        final diagonalLeftNeighbor = hasTopNeighbor ? topColor : null;
+        
+        // If diagonal's bottom and right match current tile, escape
+        if (diagonalBottomNeighbor == currentColor && 
+            diagonalRightNeighbor == currentColor) {
+          return true;
+        }
+        // If diagonal's bottom and left match current tile, escape
+        if (diagonalBottomNeighbor == currentColor && 
+            diagonalLeftNeighbor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Check top-left diagonal (row-1, col-1)
+    if ((row - 1) >= 0 && (col - 1) >= 0) {
+      final topLeftDiagonalColor = widget.grid[row - 1][col - 1];
+      if (topLeftDiagonalColor != currentColor) {
+        // Check the diagonal's bottom neighbor (row, col-1) - left neighbor of current tile
+        final diagonalBottomNeighbor = hasLeftNeighbor ? leftColor : null;
+        // Check the diagonal's left neighbor (row-1, col-2)
+        final hasDiagonalLeftNeighbor = (col - 2) >= 0;
+        final diagonalLeftNeighbor = hasDiagonalLeftNeighbor 
+            ? widget.grid[row - 1][col - 2] 
+            : null;
+        // Check the diagonal's right neighbor (row-1, col) - top neighbor of current tile
+        final diagonalRightNeighbor = hasTopNeighbor ? topColor : null;
+        
+        // If diagonal's bottom and left match current tile, escape
+        if (diagonalBottomNeighbor == currentColor && 
+            diagonalLeftNeighbor == currentColor) {
+          return true;
+        }
+        // If diagonal's bottom and right match current tile, escape
+        if (diagonalBottomNeighbor == currentColor && 
+            diagonalRightNeighbor == currentColor) {
+          return true;
+        }
+      }
+    }
+    
+    // Check diagonal neighbors - if any diagonal has different color, don't escape
+    // Top-left diagonal (row-1, col-1)
+    if ((row - 1) >= 0 && (col - 1) >= 0) {
+      final topLeftDiagonalColor = widget.grid[row - 1][col - 1];
+      if (topLeftDiagonalColor != currentColor) {
+        return false; // Don't escape if any diagonal has different color
+      }
+    }
+    
+    // Top-right diagonal (row-1, col+1)
+    if ((row - 1) >= 0 && (col + 1) < widget.grid[row - 1].length) {
+      final topRightDiagonalColor = widget.grid[row - 1][col + 1];
+      if (topRightDiagonalColor != currentColor) {
+        return false; // Don't escape if any diagonal has different color
+      }
+    }
+    
+    // Bottom-left diagonal (row+1, col-1)
+    if ((row + 1) < widget.grid.length && (col - 1) >= 0) {
+      final bottomLeftDiagonalColor = widget.grid[row + 1][col - 1];
+      if (bottomLeftDiagonalColor != currentColor) {
+        return false; // Don't escape if any diagonal has different color
+      }
+    }
+    
+    // Bottom-right diagonal (row+1, col+1)
+    if ((row + 1) < widget.grid.length && 
+        (col + 1) < widget.grid[row + 1].length) {
+      final bottomRightDiagonalColor = widget.grid[row + 1][col + 1];
+      if (bottomRightDiagonalColor != currentColor) {
+        return false; // Don't escape if any diagonal has different color
+      }
+    }
+    
+    // All orthogonal neighbors match and all diagonal neighbors match (or don't exist)
+    // Tile should escape
+    return true;
+  }
+  
+  /// Update escape states for all tiles
+  void _updateEscapeStates() {
+    if (widget.grid.isEmpty || widget.gridWidth <= 0 || widget.gridHeight <= 0) {
+      _escapeStates = _createEmptyEscapeStates();
+      return;
+    }
+    
+    // Reset escape states
+    _escapeStates = _createEmptyEscapeStates();
+    
+    // Check if all tiles have the same color (game solved)
+    bool allTilesSameColor = true;
+    if (widget.grid.isNotEmpty && widget.grid[0].isNotEmpty) {
+      final firstColor = widget.grid[0][0];
+      for (int row = 0; row < widget.grid.length; row++) {
+        for (int col = 0; col < widget.grid[row].length; col++) {
+          if (widget.grid[row][col] != firstColor) {
+            allTilesSameColor = false;
+            break;
+          }
+        }
+        if (!allTilesSameColor) break;
+      }
+    }
+    
+    // If all tiles are the same color, make all tiles escape
+    if (allTilesSameColor) {
+      for (int row = 0; row < widget.grid.length; row++) {
+        for (int col = 0; col < widget.grid[row].length; col++) {
+          _escapeStates[row][col] = true;
+        }
+      }
+    } else {
+      // Otherwise, check each tile to see if it should escape normally
+      for (int row = 0; row < widget.grid.length; row++) {
+        for (int col = 0; col < widget.grid[row].length; col++) {
+          if (_shouldEscape(row, col)) {
+            _escapeStates[row][col] = true;
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -160,10 +531,23 @@ class _GameBoardState extends State<GameBoard> {
                       
                       final isChanging = currentColor != previousColor;
                       
+                      // Check if this tile should escape
+                      bool isEscaping = false;
+                      try {
+                        if (row < _escapeStates.length && col < _escapeStates[row].length) {
+                          isEscaping = _escapeStates[row][col];
+                        }
+                      } catch (e) {
+                        isEscaping = false;
+                      }
+                      
                       return _AnimatedCell(
                         color: currentColor,
                         previousColor: previousColor,
                         isChanging: isChanging,
+                        isEscaping: isEscaping,
+                        row: row,
+                        col: col,
                       );
                     } catch (e) {
                       // Return safe fallback cell
@@ -213,11 +597,17 @@ class _AnimatedCell extends StatefulWidget {
   final Color color;
   final Color previousColor;
   final bool isChanging;
+  final bool isEscaping;
+  final int row;
+  final int col;
 
   const _AnimatedCell({
     required this.color,
     required this.previousColor,
     required this.isChanging,
+    required this.isEscaping,
+    required this.row,
+    required this.col,
   });
 
   @override
@@ -225,9 +615,12 @@ class _AnimatedCell extends StatefulWidget {
 }
 
 class _AnimatedCellState extends State<_AnimatedCell>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _escapeController;
   late Animation<double> _animation;
+  late Animation<double> _escapeAnimation;
+  bool _hasEscaped = false;
 
   @override
   void initState() {
@@ -241,11 +634,28 @@ class _AnimatedCellState extends State<_AnimatedCell>
       curve: Curves.easeInOut,
     );
     
+    // Escape animation controller
+    _escapeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _escapeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _escapeController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    
     // Start animation if color is changing
     if (widget.isChanging) {
       _controller.forward(from: 0.0);
     } else {
       _controller.value = 1.0; // Already at final state
+    }
+    
+    // Start escape animation if tile should escape
+    if (widget.isEscaping && !_hasEscaped) {
+      _startEscapeAnimation();
     }
   }
 
@@ -259,11 +669,40 @@ class _AnimatedCellState extends State<_AnimatedCell>
     } else if (!widget.isChanging) {
       _controller.value = 1.0;
     }
+    
+    // Handle escape animation
+    if (widget.isEscaping && !oldWidget.isEscaping && !_hasEscaped) {
+      _startEscapeAnimation();
+    } else if (!widget.isEscaping && oldWidget.isEscaping) {
+      // Reset escape state if tile no longer should escape
+      _hasEscaped = false;
+      _escapeController.reset();
+    }
+  }
+  
+  void _startEscapeAnimation() {
+    if (_hasEscaped) return;
+    
+    // Add delay based on position for staggered effect
+    final delay = (widget.row + widget.col) * 30; // 30ms delay per position
+    
+    Future.delayed(Duration(milliseconds: delay), () {
+      if (mounted && widget.isEscaping) {
+        _escapeController.forward().then((_) {
+          if (mounted) {
+            setState(() {
+              _hasEscaped = true;
+            });
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _escapeController.dispose();
     super.dispose();
   }
 
@@ -272,28 +711,40 @@ class _AnimatedCellState extends State<_AnimatedCell>
     return LayoutBuilder(
       builder: (context, constraints) {
         final cellSize = constraints.maxWidth;
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Stack(
-          children: [
-                // Previous color (base layer) with 3D gem effect
-                _buildGemCell(
-                  widget.previousColor,
-                  cellSize,
-                ),
-                // New color with swipe animation and 3D gem effect
-                ClipRect(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: _animation.value,
-                    child: _buildGemCell(
-                      widget.color,
+        
+        // If tile has escaped, return empty container
+        if (_hasEscaped) {
+          return const SizedBox.shrink();
+        }
+        
+        return AnimatedBuilder(
+          animation: Listenable.merge([_animation, _escapeAnimation]),
+          builder: (context, child) {
+            return Opacity(
+              opacity: _escapeAnimation.value,
+              child: Transform.scale(
+                scale: _escapeAnimation.value,
+                child: Stack(
+                  children: [
+                    // Previous color (base layer) with 3D gem effect
+                    _buildGemCell(
+                      widget.previousColor,
                       cellSize,
                     ),
-                  ),
+                    // New color with swipe animation and 3D gem effect
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _animation.value,
+                        child: _buildGemCell(
+                          widget.color,
+                          cellSize,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );

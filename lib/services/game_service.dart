@@ -70,12 +70,108 @@ class GameService {
         if (filledGrid[x][y] == targetColor) {
           filledGrid[x][y] = replacementColor;
 
+          // Standard orthogonal neighbors
           final neighbors = [
             Point(x + 1, y),
             Point(x - 1, y),
             Point(x, y + 1),
             Point(x, y - 1),
           ];
+
+          // Check if there are no tiles above or below (isolated vertically)
+          final hasNoTopTile = x == 0;
+          final hasNoBottomTile = (x + 1) >= filledGrid.length;
+          final isVerticallyIsolated = hasNoTopTile && hasNoBottomTile;
+          
+          // If vertically isolated, check left and right connections
+          if (isVerticallyIsolated) {
+            // Check left tile
+            if (y > 0) {
+              final leftX = x;
+              final leftY = y - 1;
+              if (leftY >= 0 &&
+                  leftY < filledGrid[leftX].length &&
+                  !visited.contains(Point(leftX, leftY)) &&
+                  filledGrid[leftX][leftY] == targetColor) {
+                neighbors.add(Point(leftX, leftY));
+              }
+            }
+            
+            // Check right tile
+            if ((y + 1) < filledGrid[x].length) {
+              final rightX = x;
+              final rightY = y + 1;
+              if (rightY < filledGrid[rightX].length &&
+                  !visited.contains(Point(rightX, rightY)) &&
+                  filledGrid[rightX][rightY] == targetColor) {
+                neighbors.add(Point(rightX, rightY));
+              }
+            }
+          }
+
+          // Check if we're at the right edge (no tile to the right)
+          final isAtRightEdge = (y + 1) >= filledGrid[x].length;
+          
+          // If at right edge, check bottom tile and its connections
+          if (isAtRightEdge) {
+            final bottomX = x + 1;
+            final bottomY = y;
+            
+            // If bottom tile exists and has the same color
+            if (bottomX < filledGrid.length &&
+                bottomY < filledGrid[bottomX].length &&
+                filledGrid[bottomX][bottomY] == targetColor) {
+              // Ensure bottom tile is in neighbors (it should be, but double-check)
+              final bottomPoint = Point(bottomX, bottomY);
+              if (!neighbors.contains(bottomPoint) && 
+                  !visited.contains(bottomPoint)) {
+                neighbors.add(bottomPoint);
+              }
+              
+              // Also check bottom-right diagonal if bottom tile is at right edge
+              final bottomRightX = bottomX;
+              final bottomRightY = bottomY + 1;
+              
+              if (bottomRightX < filledGrid.length &&
+                  bottomRightY < filledGrid[bottomRightX].length &&
+                  !visited.contains(Point(bottomRightX, bottomRightY)) &&
+                  filledGrid[bottomRightX][bottomRightY] == targetColor) {
+                neighbors.add(Point(bottomRightX, bottomRightY));
+              }
+            }
+          }
+          
+          // Check if we're at the left edge (no tile to the left)
+          final isAtLeftEdge = y == 0;
+          
+          // If at left edge, check bottom tile and its connections
+          if (isAtLeftEdge) {
+            final bottomX = x + 1;
+            final bottomY = y;
+            
+            // If bottom tile exists and has the same color
+            if (bottomX < filledGrid.length &&
+                bottomY < filledGrid[bottomX].length &&
+                filledGrid[bottomX][bottomY] == targetColor) {
+              // Ensure bottom tile is in neighbors (it should be, but double-check)
+              final bottomPoint = Point(bottomX, bottomY);
+              if (!neighbors.contains(bottomPoint) && 
+                  !visited.contains(bottomPoint)) {
+                neighbors.add(bottomPoint);
+              }
+              
+              // Also check if bottom tile has a right neighbor with same color
+              final bottomRightX = bottomX;
+              final bottomRightY = bottomY + 1;
+              
+              if (bottomRightX < filledGrid.length &&
+                  bottomRightY < filledGrid[bottomRightX].length &&
+                  !visited.contains(Point(bottomRightX, bottomRightY)) &&
+                  filledGrid[bottomRightX][bottomRightY] == targetColor) {
+                neighbors.add(Point(bottomRightX, bottomRightY));
+              }
+            }
+          }
 
           for (final neighbor in neighbors) {
             final nx = neighbor.x;
@@ -1121,13 +1217,108 @@ class GameService {
         final x = point.x;
         final y = point.y;
 
-        // Check orthogonal neighbors only
+        // Check orthogonal neighbors
         final neighbors = [
           Point(x + 1, y),
           Point(x - 1, y),
           Point(x, y + 1),
           Point(x, y - 1),
         ];
+
+        // Check if there are no tiles above or below (isolated vertically)
+        final hasNoTopTile = x == 0;
+        final hasNoBottomTile = (x + 1) >= grid.length;
+        final isVerticallyIsolated = hasNoTopTile && hasNoBottomTile;
+        
+        // If vertically isolated, check left and right connections
+        if (isVerticallyIsolated) {
+          // Check left tile
+          if (y > 0) {
+            final leftX = x;
+            final leftY = y - 1;
+            if (leftY >= 0 &&
+                leftY < grid[leftX].length &&
+                !floodArea.contains(Point(leftX, leftY)) &&
+                grid[leftX][leftY] == startColor) {
+              neighbors.add(Point(leftX, leftY));
+            }
+          }
+          
+          // Check right tile
+          if ((y + 1) < grid[x].length) {
+            final rightX = x;
+            final rightY = y + 1;
+            if (rightY < grid[rightX].length &&
+                !floodArea.contains(Point(rightX, rightY)) &&
+                grid[rightX][rightY] == startColor) {
+              neighbors.add(Point(rightX, rightY));
+            }
+          }
+        }
+
+        // Check if we're at the right edge (no tile to the right)
+        final isAtRightEdge = (y + 1) >= grid[x].length;
+        
+        // If at right edge, check bottom tile and its connections
+        if (isAtRightEdge) {
+          final bottomX = x + 1;
+          final bottomY = y;
+          
+          // If bottom tile exists and has the same color
+          if (bottomX < grid.length &&
+              bottomY < grid[bottomX].length &&
+              grid[bottomX][bottomY] == startColor) {
+            // Ensure bottom tile is in neighbors (it should be, but double-check)
+            final bottomPoint = Point(bottomX, bottomY);
+            if (!neighbors.contains(bottomPoint) && 
+                !floodArea.contains(bottomPoint)) {
+              neighbors.add(bottomPoint);
+            }
+            
+            // Also check bottom-right diagonal if bottom tile is at right edge
+            final bottomRightX = bottomX;
+            final bottomRightY = bottomY + 1;
+            
+            if (bottomRightX < grid.length &&
+                bottomRightY < grid[bottomRightX].length &&
+                !floodArea.contains(Point(bottomRightX, bottomRightY)) &&
+                grid[bottomRightX][bottomRightY] == startColor) {
+              neighbors.add(Point(bottomRightX, bottomRightY));
+            }
+          }
+        }
+        
+        // Check if we're at the left edge (no tile to the left)
+        final isAtLeftEdge = y == 0;
+        
+        // If at left edge, check bottom tile and its connections
+        if (isAtLeftEdge) {
+          final bottomX = x + 1;
+          final bottomY = y;
+          
+          // If bottom tile exists and has the same color
+          if (bottomX < grid.length &&
+              bottomY < grid[bottomX].length &&
+              grid[bottomX][bottomY] == startColor) {
+            // Ensure bottom tile is in neighbors (it should be, but double-check)
+            final bottomPoint = Point(bottomX, bottomY);
+            if (!neighbors.contains(bottomPoint) && 
+                !floodArea.contains(bottomPoint)) {
+              neighbors.add(bottomPoint);
+            }
+            
+            // Also check if bottom tile has a right neighbor with same color
+            final bottomRightX = bottomX;
+            final bottomRightY = bottomY + 1;
+            
+            if (bottomRightX < grid.length &&
+                bottomRightY < grid[bottomRightX].length &&
+                !floodArea.contains(Point(bottomRightX, bottomRightY)) &&
+                grid[bottomRightX][bottomRightY] == startColor) {
+              neighbors.add(Point(bottomRightX, bottomRightY));
+            }
+          }
+        }
 
         for (final neighbor in neighbors) {
           final nx = neighbor.x;

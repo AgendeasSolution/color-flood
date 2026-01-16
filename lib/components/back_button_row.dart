@@ -6,6 +6,7 @@ import 'wood_button.dart';
 class BackButtonRow extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback? onReset;
+  final VoidCallback? onUndo;
   final Widget? centerWidget;
   final bool showResetBadge;
   final EdgeInsetsGeometry? padding;
@@ -14,6 +15,7 @@ class BackButtonRow extends StatelessWidget {
     super.key,
     required this.onBack,
     this.onReset,
+    this.onUndo,
     this.centerWidget,
     this.showResetBadge = false,
     this.padding,
@@ -41,41 +43,68 @@ class BackButtonRow extends StatelessWidget {
         // No top padding to remove margin
       ),
       // Transparent background
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Back Button (Left)
-          WoodButton(
-            onTap: onBack,
-            size: buttonSize,
-            icon: Icon(
-              Icons.arrow_back,
-              color: Colors.white, // White for contrast on blue
-              size: buttonSize * 0.5,
-            ),
+          // Left side buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Back Button (Left)
+              WoodButton(
+                onTap: onBack,
+                size: buttonSize,
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Colors.white, // White for contrast on blue
+                  size: buttonSize * 0.5,
+                ),
+              ),
+            ],
           ),
 
-          // Center Widget (Level number, etc.)
+          // Center Widget (Level number, etc.) - Centered independently
           if (centerWidget != null)
-            Expanded(
-              child: Center(
-                child: centerWidget!,
-              ),
+            Center(
+              child: centerWidget!,
             ),
 
-          // Reset Button (Right)
-          if (onReset != null)
-            WoodButton(
-              onTap: onReset!,
-              size: buttonSize,
-              showBadge: showResetBadge,
-              icon: Icon(
-                Icons.refresh,
-                color: Colors.white, // White for contrast on blue
-                size: buttonSize * 0.5,
-              ),
-            ),
+          // Right side buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Undo Button (Left of Reset)
+              if (onUndo != null)
+                WoodButton(
+                  onTap: onUndo!,
+                  size: buttonSize,
+                  icon: Icon(
+                    Icons.undo,
+                    color: Colors.white, // White for contrast on blue
+                    size: buttonSize * 0.5,
+                  ),
+                ),
+              
+              // Spacing between undo and reset
+              if (onUndo != null && onReset != null)
+                SizedBox(width: spacing * 0.5),
+
+              // Reset Button (Right)
+              if (onReset != null)
+                WoodButton(
+                  onTap: onReset!,
+                  size: buttonSize,
+                  showBadge: showResetBadge,
+                  icon: Icon(
+                    Icons.refresh,
+                    color: Colors.white, // White for contrast on blue
+                    size: buttonSize * 0.5,
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );

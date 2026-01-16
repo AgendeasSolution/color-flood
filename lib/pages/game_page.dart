@@ -19,6 +19,14 @@ import '../components/animated_background.dart';
 import '../utils/responsive_utils.dart';
 import 'daily_challenge_screen.dart';
 
+/// Helper class to store game state for undo
+class _UndoState {
+  final List<List<Color>> grid;
+  final int moves;
+  
+  _UndoState(this.grid, this.moves);
+}
+
 /// Main game page where the Color Flood game is played
 class GamePage extends StatefulWidget {
   final int? initialLevel;
@@ -43,6 +51,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   final AudioService _audioService = AudioService();
   final DailyPuzzleService _dailyPuzzleService = DailyPuzzleService.instance;
   bool _isDailyPuzzle = false;
+  
+  // Undo state - history stack to allow multiple undos
+  final List<_UndoState> _undoHistory = [];
 
   // Animation controllers
   late AnimationController _popupAnimationController;
@@ -171,6 +182,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               _moves = 0;
               _isGameOver = false;
               _gameState = GameState.playing;
+              _undoHistory.clear(); // Clear undo history
             });
             return;
           }
@@ -213,6 +225,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           _moves = 0;
           _isGameOver = false;
           _gameState = GameState.playing;
+          _undoHistory.clear(); // Clear undo history
         });
       }
     } catch (e) {
@@ -224,12 +237,31 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             _moves = 0;
             _isGameOver = false;
             _gameState = GameState.playing;
+            _undoHistory.clear(); // Clear undo history
           });
         } catch (e2) {
           // App should continue even if game can't start
         }
       }
     }
+  }
+
+  void _handleUndo() {
+    if (!mounted) return;
+    if (_isGameOver || _gameState != GameState.playing || _isSolving) return;
+    if (_undoHistory.isEmpty) return; // No previous state to undo to
+    
+    _audioService.playClickSound();
+    
+    // Pop the last state from history
+    final previousState = _undoHistory.removeLast();
+    
+    setState(() {
+      _gameConfig = _gameConfig.copyWith(
+        grid: _gameService.cloneGrid(previousState.grid),
+      );
+      _moves = previousState.moves;
+    });
   }
 
   Future<void> _restartCurrentLevel() async {
@@ -252,6 +284,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         grid: _gameService.cloneGrid(_gameConfig.originalGrid),
       );
       _moves = 0;
+      _undoHistory.clear(); // Clear undo history on restart
       _isGameOver = false;
       _gameState = GameState.playing;
     });
@@ -414,6 +447,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         // Continue even if audio fails
       }
 
+      // Save current state to undo history before making move
+      _undoHistory.add(_UndoState(
+        _gameService.cloneGrid(_gameConfig.grid),
+        _moves,
+      ));
+
       // Apply move with validation
       final newGrid = _gameService.applyMove(_gameConfig.grid, newColor);
       
@@ -549,8 +588,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         } catch (e) {
           // Continue even if audio fails
         }
-        _endGame(GameResult.win);
-        _markLevelCompleted(); // Move this after _endGame to ensure it's called
+        // Delay to allow all tiles to escape before showing popup
+        // Maximum delay based on grid size for staggered escape animation
+        final maxDelay = (_gameConfig.gridWidth + _gameConfig.gridHeight) * 30 + 500; // 30ms per position + 500ms buffer
+        Future.delayed(Duration(milliseconds: maxDelay), () {
+          if (mounted) {
+            _endGame(GameResult.win);
+            _markLevelCompleted(); // Move this after _endGame to ensure it's called
+          }
+        });
       } else if (_moves >= _gameConfig.maxMoves) {
         try {
           _audioService.playFailSound();
@@ -637,7 +683,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             }
             await _restartCurrentLevel();
           },
-          onBackToHome: _isDailyPuzzle ? () async {
+          onBackToHome: () async {
             try {
               _audioService.playClickSound();
             } catch (e) {
@@ -664,26 +710,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               InterstitialAdService.instance.preloadAd();
             }
             
-            // Navigate back to Daily Challenge Screen (not home)
+            // Navigate back to home
             if (mounted && context.mounted) {
               try {
-                // Pop game page, then navigate to daily challenge screen
                 Navigator.of(context).pop();
-                await Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const DailyChallengeScreen(),
-                  ),
-                );
               } catch (e) {
-                // If navigation fails, just pop to home
-                try {
-                  Navigator.of(context).pop();
-                } catch (e2) {
-                  // Continue even if navigation fails
-                }
+                // Continue even if navigation fails
               }
             }
-          } : null,
+          },
         ),
         transitionBuilder: (context, anim1, anim2, child) {
           try {
@@ -781,35 +816,123 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             SafeArea(
               child: Stack(
                 children: [
-                  // Main game content
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Game Board - Moved down slightly
-                        GameBoard(
-                          grid: _gameConfig.grid,
-                          gridWidth: _gameConfig.gridWidth,
-                          gridHeight: _gameConfig.gridHeight,
-                          gameStarted: true, // Always show the game board
-                        ),
+                  // Game Board and Color Palette Container (full height from below moves counter to screen bottom minus 70px)
+                  Builder(
+                    builder: (context) {
+                      final mediaQuery = MediaQuery.of(context);
+                      final screenHeight = mediaQuery.size.height;
+                      final safeAreaTop = mediaQuery.padding.top;
+                      
+                      // Calculate moves counter top position (relative to SafeArea top = 0)
+                      final movesCounterTop = ResponsiveUtils.getResponsiveValue(
+                        context: context,
+                        smallPhone: 50.0,
+                        mediumPhone: 52.0,
+                        largePhone: 54.0,
+                        tablet: 56.0,
+                      );
+                      
+                      // Estimate moves counter height (padding + content)
+                      final movesCounterHeight = ResponsiveUtils.getResponsiveValue(
+                        context: context,
+                        smallPhone: 50.0,
+                        mediumPhone: 55.0,
+                        largePhone: 60.0,
+                        tablet: 65.0,
+                      );
+                      
+                      // Use same spacing below moves counter as top spacing
+                      final movesCounterBottomSpacing = movesCounterTop;
+                      
+                      // Calculate game area top position (absolute from screen top)
+                      // SafeArea top + moves counter top + moves counter height + spacing
+                      final gameAreaTop = safeAreaTop + movesCounterTop + movesCounterHeight + movesCounterBottomSpacing;
+                      
+                      // Ad banner height (70px from screen bottom)
+                      final adBannerHeight = 70.0;
+                      
+                      // Calculate game area bottom position (70px from screen bottom)
+                      final gameAreaBottom = adBannerHeight;
+                      
+                      return Positioned(
+                        top: gameAreaTop,
+                        bottom: gameAreaBottom,
+                        left: 0,
+                        right: 0,
+                        child: LayoutBuilder(
+                          builder: (context, areaConstraints) {
+                            // Calculate available space for content
+                            final availableWidth = areaConstraints.maxWidth;
+                            final availableHeight = areaConstraints.maxHeight;
+                            
+                            return Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: availableWidth,
+                                  maxHeight: availableHeight,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Game Board - constrained to fit available space
+                                    LayoutBuilder(
+                                      builder: (context, boardConstraints) {
+                                        // Calculate max size for game board (leave space for color palette)
+                                        final colorPaletteEstimate = ResponsiveUtils.getResponsiveValue(
+                                          context: context,
+                                          smallPhone: 80.0,
+                                          mediumPhone: 90.0,
+                                          largePhone: 100.0,
+                                          tablet: 110.0,
+                                        );
+                                        final spacing = ResponsiveUtils.getResponsiveSpacing(
+                                          context,
+                                          smallPhone: 12,
+                                          mediumPhone: 16,
+                                          largePhone: 20,
+                                          tablet: 40,
+                                        );
+                                        final maxBoardHeight = (availableHeight - colorPaletteEstimate - spacing).clamp(0.0, availableHeight);
+                                        
+                                        return ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxWidth: availableWidth,
+                                            maxHeight: maxBoardHeight,
+                                          ),
+                                          child: GameBoard(
+                                            grid: _gameConfig.grid,
+                                            gridWidth: _gameConfig.gridWidth,
+                                            gridHeight: _gameConfig.gridHeight,
+                                            gameStarted: true,
+                                          ),
+                                        );
+                                      },
+                                    ),
 
-                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                          context,
-                          smallPhone: 12,
-                          mediumPhone: 16,
-                          largePhone: 20,
-                          tablet: 40,
-                        )),
+                                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                                      context,
+                                      smallPhone: 12,
+                                      mediumPhone: 16,
+                                      largePhone: 20,
+                                      tablet: 40,
+                                    )),
 
-                        // Color Palette
-                        ColorPalette(
-                          colors: GameConstants.gameColors,
-                          onColorSelected: _handleColorSelection,
-                          isDisabled: _isGameOver || _isSolving,
+                                    // Color Palette
+                                    ColorPalette(
+                                      colors: GameConstants.gameColors,
+                                      onColorSelected: _handleColorSelection,
+                                      isDisabled: _isGameOver || _isSolving,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
 
                   // HUD Elements
@@ -823,7 +946,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               left: 0,
               right: 0,
               bottom: 0,
-              child: const AdBanner(height: 90),
+              child: const AdBanner(height: 70),
             ),
           ],
         ),
@@ -841,7 +964,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           right: 0,
           child: BackButtonRow(
             onBack: _handleExit,
-            onReset: _restartCurrentLevel,
+            onReset: _isGameOver ? null : _restartCurrentLevel,
+            onUndo: _isGameOver ? null : (_undoHistory.isNotEmpty ? _handleUndo : null),
             centerWidget: _isDailyPuzzle
                 ? Text(
                     AppConstants.todaysChallengeLabel,
@@ -902,19 +1026,20 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           ),
         ),
 
-        // Moves Counter (Below Back Button Row)
-        Positioned(
-          top: ResponsiveUtils.getResponsiveValue(
-            context: context,
-            smallPhone: 60.0,
-            mediumPhone: 65.0,
-            largePhone: 70.0,
-            tablet: 80.0,
-          ),
-          left: 0,
-          right: 0,
-          child: Center(
-            child: ClipRRect(
+        // Moves Counter (Below Back Button Row) - Hide when game is over
+        if (!_isGameOver)
+          Positioned(
+            top: ResponsiveUtils.getResponsiveValue(
+              context: context,
+              smallPhone: 50.0,
+              mediumPhone: 52.0,
+              largePhone: 54.0,
+              tablet: 56.0,
+            ),
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -1178,7 +1303,7 @@ class _GameOverDialog extends StatelessWidget {
   final bool isDailyPuzzle;
   final VoidCallback? onNextLevel;
   final VoidCallback onRestart;
-  final VoidCallback? onBackToHome;
+  final VoidCallback onBackToHome;
 
   const _GameOverDialog({
     required this.didWin,
@@ -1188,18 +1313,18 @@ class _GameOverDialog extends StatelessWidget {
     this.isDailyPuzzle = false,
     this.onNextLevel,
     required this.onRestart,
-    this.onBackToHome,
+    required this.onBackToHome,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.4),
+      backgroundColor: Colors.black.withOpacity(0.6),
       body: Center(
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               width: min(500, MediaQuery.of(context).size.width * 0.9),
               padding: ResponsiveUtils.getResponsivePadding(
@@ -1212,14 +1337,25 @@ class _GameOverDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withOpacity(0.25),
-                    Colors.white.withOpacity(0.1),
+                    const Color(0xFF1F2937).withOpacity(0.95),
+                    const Color(0xFF111827).withOpacity(0.95),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFF3B82F6).withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Material(
                 color: Colors.transparent,
@@ -1354,60 +1490,65 @@ class _GameOverDialog extends StatelessWidget {
                     ],
                     SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
                       context,
-                      smallPhone: 16,
-                      mediumPhone: 20,
-                      largePhone: 24,
-                      tablet: 32,
-                    )),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        if (!isDailyPuzzle)
-                          _StatItem(
-                            label: AppConstants.levelStatLabel,
-                            value: "$level",
-                            context: context,
-                          ),
-                        _StatItem(
-                          label: AppConstants.movesUsedStatLabel,
-                          value: "$moves",
-                          context: context,
-                        ),
-                        _StatItem(
-                          label: AppConstants.maxMovesStatLabel,
-                          value: "$maxMoves",
-                          context: context,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                      context,
                       smallPhone: 20,
                       mediumPhone: 24,
                       largePhone: 28,
                       tablet: 36,
                     )),
-                    if (didWin && onNextLevel != null)
-                      _PopupButton(
-                        context: context,
-                        onTap: onNextLevel!,
-                        text: AppConstants.nextLevelText,
-                        isPrimary: true,
-                      )
-                    else if (didWin && isDailyPuzzle && onBackToHome != null)
-                      _PopupButton(
-                        context: context,
-                        onTap: onBackToHome!,
-                        text: "Back to Home",
-                        isPrimary: true,
-                      )
-                    else
-                      _PopupButton(
-                        context: context,
-                        onTap: onRestart,
-                        text: AppConstants.playAgainText,
-                        isPrimary: false,
-                      ),
+                    // Buttons row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Home button (left)
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                smallPhone: 4,
+                                mediumPhone: 6,
+                                largePhone: 8,
+                                tablet: 10,
+                              ),
+                            ),
+                            child: _PopupButton(
+                              context: context,
+                              onTap: onBackToHome,
+                              text: "Home",
+                              isPrimary: false,
+                              icon: Icons.home,
+                            ),
+                          ),
+                        ),
+                        // Primary action button (right)
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                smallPhone: 4,
+                                mediumPhone: 6,
+                                largePhone: 8,
+                                tablet: 10,
+                              ),
+                            ),
+                            child: didWin && onNextLevel != null
+                                ? _PopupButton(
+                                    context: context,
+                                    onTap: onNextLevel!,
+                                    text: AppConstants.nextLevelText,
+                                    isPrimary: true,
+                                  )
+                                : _PopupButton(
+                                    context: context,
+                                    onTap: onRestart,
+                                    text: AppConstants.playAgainText,
+                                    isPrimary: didWin,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1766,13 +1907,13 @@ class _PopupButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 44),
         padding: ResponsiveUtils.getResponsivePadding(
           context,
-          smallPhone: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-          mediumPhone: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          largePhone: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          tablet: const EdgeInsets.symmetric(vertical: 18, horizontal: 32),
+          smallPhone: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          mediumPhone: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          largePhone: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          tablet: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -1821,47 +1962,54 @@ class _PopupButton extends StatelessWidget {
           ],
         ),
         child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  color: Colors.white,
-                  size: ResponsiveUtils.getResponsiveFontSize(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    color: Colors.white,
+                    size: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      smallPhone: 16,
+                      mediumPhone: 17,
+                      largePhone: 18,
+                      tablet: 20,
+                    ),
+                  ),
+                  SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
                     context,
-                    smallPhone: 18,
-                    mediumPhone: 19,
-                    largePhone: 20,
-                    tablet: 22,
+                    smallPhone: 4,
+                    mediumPhone: 5,
+                    largePhone: 6,
+                    tablet: 8,
+                  )),
+                ],
+                Flexible(
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        smallPhone: 14,
+                        mediumPhone: 15,
+                        largePhone: 16,
+                        tablet: 18,
+                      ),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
-                  context,
-                  smallPhone: 6,
-                  mediumPhone: 7,
-                  largePhone: 8,
-                  tablet: 10,
-                )),
               ],
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: ResponsiveUtils.getResponsiveFontSize(
-                    context,
-                    smallPhone: 16,
-                    mediumPhone: 17,
-                    largePhone: 18,
-                    tablet: 20,
-                  ),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

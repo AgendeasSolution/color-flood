@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import '../constants/game_constants.dart';
 import '../components/color_flood_logo.dart';
-import '../components/level_selection_carousel.dart';
 import '../components/how_to_play_dialog.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
@@ -35,6 +34,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
   late Animation<double> _fadeAnimation;
   Map<int, LevelStatus> _levelStatuses = {}; // Track level unlock status
+  int _currentLevel = 1; // Track current level to display
   final LevelProgressionService _levelService = LevelProgressionService.instance;
   final AudioService _audioService = AudioService();
   final DailyPuzzleService _dailyPuzzleService = DailyPuzzleService.instance;
@@ -169,10 +169,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadLevelStatuses() async {
     try {
       final statuses = await _levelService.getAllLevelStatuses();
+      final currentLevel = await _levelService.getHighestUnlockedLevel();
       if (mounted) {
         setState(() {
           // Validate statuses map before setting
           _levelStatuses = statuses.isNotEmpty ? statuses : <int, LevelStatus>{};
+          // Set current level (highest unlocked level)
+          _currentLevel = currentLevel;
         });
       }
     } catch (e) {
@@ -181,6 +184,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         setState(() {
           // Set empty statuses as fallback
           _levelStatuses = <int, LevelStatus>{};
+          _currentLevel = 1; // Default to level 1
         });
       }
     }
@@ -194,6 +198,349 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildLevelSectionHeader() {
     return const SizedBox.shrink(); // Remove the "Select Level" label
+  }
+
+  Widget _buildCurrentLevelDisplay() {
+    // Get status for current level
+    final status = _levelStatuses[_currentLevel] ?? LevelStatus.unlocked;
+    final effectiveStatus = status == LevelStatus.locked ? LevelStatus.unlocked : status;
+    
+    return Center(
+      child: _buildSingleLevelButton(_currentLevel, effectiveStatus),
+    );
+  }
+
+  Widget _buildSingleLevelButton(int level, LevelStatus status) {
+    // Get base color based on status
+    Color baseColor;
+    switch (status) {
+      case LevelStatus.completed:
+        baseColor = const Color(0xFF22C55E);
+        break;
+      case LevelStatus.unlocked:
+        baseColor = const Color(0xFF3B82F6);
+        break;
+      case LevelStatus.locked:
+        baseColor = const Color(0xFF6B7280);
+        break;
+    }
+    
+    // Calculate size based on screen width - make it larger to accommodate "Level X" text
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 12,
+      mediumPhone: 14,
+      largePhone: 16,
+      tablet: 24,
+    );
+    final availableWidth = screenWidth - (horizontalPadding * 2);
+    final buttonSize = (availableWidth * 0.5).clamp(150.0, 250.0);
+    
+    return GestureDetector(
+      onTap: () => _onLevelSelected(level),
+      child: _buildGameboardTile(buttonSize, baseColor, level, status),
+    );
+  }
+
+  Widget _buildGameboardTile(double size, Color baseColor, int level, LevelStatus status) {
+    final borderRadius = size * 0.08;
+    
+    // Helper functions for color manipulation
+    Color lightenColor(Color color, double amount) {
+      final hsl = HSLColor.fromColor(color);
+      final lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
+      return hsl.withLightness(lightness).toColor();
+    }
+    
+    Color darkenColor(Color color, double amount) {
+      final hsl = HSLColor.fromColor(color);
+      final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
+      return hsl.withLightness(lightness).toColor();
+    }
+    
+    final tileColor = baseColor;
+    
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: Offset(size * 0.04, size * 0.04),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: -1,
+              offset: Offset(size * 0.02, size * 0.02),
+            ),
+            BoxShadow(
+              color: tileColor.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  gradient: RadialGradient(
+                    center: Alignment.topLeft,
+                    radius: 1.2,
+                    colors: [
+                      lightenColor(tileColor, 0.2),
+                      tileColor,
+                      darkenColor(tileColor, 0.25),
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              Center(
+                child: _buildLevelContent(level, status),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExploreMoreGamesSection(double horizontalPadding, double buttonSpacing) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        left: horizontalPadding,
+        right: horizontalPadding,
+        bottom: 70, // Space for ad banner (90px) + small gap (10px)
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.white.withOpacity(0.85),
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                AppConstants.exploreMoreGamesLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: buttonSpacing * 0.75),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildExternalNavigationButton(
+                icon: Icons.phone_android,
+                label: AppConstants.mobileGamesLabel,
+                onTap: _navigateToOtherGames,
+                iconColor: const Color(0xFF60A5FA), // Light blue for mobile
+                gradientColors: [
+                  const Color(0xFF3B82F6).withOpacity(0.25), // Blue
+                  const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
+                ],
+              ),
+              SizedBox(width: buttonSpacing),
+              _buildExternalNavigationButton(
+                icon: Icons.laptop,
+                label: AppConstants.webGamesLabel,
+                onTap: _openWebGames,
+                iconColor: const Color(0xFF34D399), // Light green for laptop
+                gradientColors: [
+                  const Color(0xFF10B981).withOpacity(0.25), // Green
+                  const Color(0xFF059669).withOpacity(0.15), // Darker green
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelContent(int level, LevelStatus status) {
+    final iconSize = ResponsiveUtils.getResponsiveIconSize(
+      context,
+      smallPhone: 20,
+      mediumPhone: 24,
+      largePhone: 28,
+      tablet: 32,
+    );
+    final titleTextSize = ResponsiveUtils.getResponsiveFontSize(
+      context,
+      smallPhone: 24,
+      mediumPhone: 28,
+      largePhone: 32,
+      tablet: 36,
+    );
+    final levelTextSize = ResponsiveUtils.getResponsiveFontSize(
+      context,
+      smallPhone: 32,
+      mediumPhone: 36,
+      largePhone: 40,
+      tablet: 48,
+    );
+    final padding = ResponsiveUtils.getResponsiveSpacing(
+      context,
+      smallPhone: 8,
+      mediumPhone: 10,
+      largePhone: 12,
+      tablet: 14,
+    );
+    
+    if (status == LevelStatus.completed) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Level',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: titleTextSize,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.6),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: padding * 0.3),
+          Text(
+            level.toString(),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: levelTextSize,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.8),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+                Shadow(
+                  color: const Color(0xFF22C55E).withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: padding * 0.5),
+          Container(
+            padding: EdgeInsets.all(padding - 4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  Colors.white.withOpacity(0.95),
+                  Colors.white.withOpacity(0.7),
+                  const Color(0xFF22C55E).withOpacity(0.3),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22C55E).withOpacity(0.6),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.4),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.check_circle,
+              color: const Color(0xFF22C55E),
+              size: iconSize * 0.6,
+            ),
+          ),
+        ],
+      );
+    }
+    
+    // Unlocked but not completed
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Level',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: titleTextSize,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.0,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.6),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: padding * 0.3),
+        Text(
+          level.toString(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: levelTextSize,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.8),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+              Shadow(
+                color: const Color(0xFF3B82F6).withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 0),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _showSettings() {
@@ -409,127 +756,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Color Flood Logo
                   const ColorFloodLogo(),
                   
-                  // Scrollable content
+                  // Content area
                   Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Spacing between logo and daily puzzle
-                          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                            context,
-                           smallPhone: 12,
-                            mediumPhone: 14,
-                            largePhone: 16,
-                            tablet: 20,
-                          )),
-                          
-                          // Daily Puzzle Section
-                          DailyPuzzleCard(
+                    child: Column(
+                      children: [
+                        // Daily Puzzle Section - Fixed at top
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: ResponsiveUtils.getResponsiveSpacing(
+                              context,
+                              smallPhone: 12,
+                              mediumPhone: 14,
+                              largePhone: 16,
+                              tablet: 20,
+                            ),
+                          ),
+                          child: DailyPuzzleCard(
                             key: _dailyPuzzleCardKey,
                             onTap: _navigateToDailyPuzzle,
                           ),
-                          
-                          // Spacing between daily puzzle and level selection
-                          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                            context,
-                            smallPhone: 8,
-                            mediumPhone: 9,
-                            largePhone: 10,
-                            tablet: 12,
-                          )),
-                          
-                          // Level Selection Carousel
-                          LevelSelectionCarousel(
-                            onLevelSelected: _onLevelSelected,
-                            levelStatuses: _levelStatuses,
-                            customHeader: _buildLevelSectionHeader(),
-                            compactTopSpacing: true,
+                        ),
+                        
+                        // Level Card - Centered in remaining space
+                        Expanded(
+                          child: Center(
+                            child: _buildCurrentLevelDisplay(),
                           ),
-                          
-                          // Spacing before explore more games
-                          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                            context,
-                            smallPhone: 24,
-                            mediumPhone: 28,
-                            largePhone: 32,
-                            tablet: 40,
-                          )),
-                          
-                          // Explore More Games Section
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      color: Colors.white.withOpacity(0.85),
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      AppConstants.exploreMoreGamesLabel,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: buttonSpacing * 0.75),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildExternalNavigationButton(
-                                      icon: Icons.phone_android,
-                                      label: AppConstants.mobileGamesLabel,
-                                      onTap: _navigateToOtherGames,
-                                      iconColor: const Color(0xFF60A5FA), // Light blue for mobile
-                                      gradientColors: [
-                                        const Color(0xFF3B82F6).withOpacity(0.25), // Blue
-                                        const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
-                                      ],
-                                    ),
-                                    SizedBox(width: buttonSpacing),
-                                    _buildExternalNavigationButton(
-                                      icon: Icons.laptop,
-                                      label: AppConstants.webGamesLabel,
-                                      onTap: _openWebGames,
-                                      iconColor: const Color(0xFF34D399), // Light green for laptop
-                                      gradientColors: [
-                                        const Color(0xFF10B981).withOpacity(0.25), // Green
-                                        const Color(0xFF059669).withOpacity(0.15), // Darker green
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // Bottom spacing for ad banner
-                          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
-                            context,
-                            smallPhone: 100,
-                            mediumPhone: 100,
-                            largePhone: 100,
-                            tablet: 100,
-                          )),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
+                  
+                  // Explore More Games Section - Fixed at bottom
+                  _buildExploreMoreGamesSection(horizontalPadding, buttonSpacing),
                 ],
               ),
             ),
@@ -566,6 +825,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           
           // Fixed Ad Banner at bottom of screen (behind pop-up)
+          // Positioned above the Explore More Games section
           Positioned(
             left: 0,
             right: 0,
