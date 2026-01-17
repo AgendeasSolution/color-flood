@@ -8,7 +8,7 @@ class AppConstants {
   static const String levelCompleteText = 'Level Complete!';
   static const String gameOverText = 'Game Over';
   static const String startPlayingText = 'Start Playing 🚀';
-  static const String nextLevelText = 'Next Level ➡️';
+  static const String nextLevelText = 'Next Level';
   static const String playAgainText = 'Play Again 🔄';
 
   // External navigation labels

@@ -1402,7 +1402,7 @@ class _GameOverDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.2),
+      backgroundColor: Colors.black.withOpacity(0.3),
       body: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -1420,8 +1420,8 @@ class _GameOverDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1F2937).withOpacity(0.95),
-                    const Color(0xFF111827).withOpacity(0.95),
+                    const Color(0xFF1F2937).withOpacity(0.3),
+                    const Color(0xFF111827).withOpacity(0.3),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1693,7 +1693,7 @@ class _GameCompletedDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.4),
+      backgroundColor: Colors.black.withOpacity(0.3),
       body: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
@@ -1711,14 +1711,14 @@ class _GameCompletedDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withOpacity(0.25),
-                    Colors.white.withOpacity(0.1),
+                    const Color(0xFF1F2937).withOpacity(0.3),
+                    const Color(0xFF111827).withOpacity(0.3),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.6)),
               ),
               child: Material(
                 color: Colors.transparent,
@@ -1828,7 +1828,7 @@ class _ExitConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.6),
+      backgroundColor: Colors.black.withOpacity(0.3),
       body: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -1846,8 +1846,8 @@ class _ExitConfirmationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1F2937).withOpacity(0.95),
-                    const Color(0xFF111827).withOpacity(0.95),
+                    const Color(0xFF1F2937).withOpacity(0.3),
+                    const Color(0xFF111827).withOpacity(0.3),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

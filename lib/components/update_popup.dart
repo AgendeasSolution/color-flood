@@ -154,7 +154,7 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
           GestureDetector(
             onTap: _onLaterPressed,
             child: Container(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withOpacity(0.3),
             ),
           ),
           // Popup content that slides in from bottom
@@ -186,8 +186,8 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.1),
+                const Color(0xFF1F2937).withOpacity(0.3),
+                const Color(0xFF111827).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -421,8 +421,8 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
                       Colors.white.withOpacity(0.10),
                     ]
                   : [
-                      const Color(0xFF22C55E).withOpacity(0.6), // Green from game
-                      const Color(0xFF10B981).withOpacity(0.5),
+                      const Color(0xFF22C55E), // Green from game
+                      const Color(0xFF10B981),
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

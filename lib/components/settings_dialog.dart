@@ -100,7 +100,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.black.withOpacity(0.6),
+      backgroundColor: Colors.black.withOpacity(0.3),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -119,8 +119,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1F2937).withOpacity(0.95),
-                  const Color(0xFF111827).withOpacity(0.95),
+                  const Color(0xFF1F2937).withOpacity(0.3),
+                  const Color(0xFF111827).withOpacity(0.3),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
