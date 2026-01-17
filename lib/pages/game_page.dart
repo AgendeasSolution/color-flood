@@ -68,6 +68,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _preloadInterstitialAd();
     _preloadRewardedAd();
     _showEntryAd();
+    // Stop background music when entering game screen
+    _audioService.stopBackgroundMusic();
   }
 
   void _preloadInterstitialAd() {

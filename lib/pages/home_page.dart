@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -60,12 +59,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _loadLevelStatuses();
         // Refresh daily puzzle card to show updated completion status
         _dailyPuzzleCardKey.currentState?.refresh();
-        // Ensure background music is playing when returning to home screen
+        // Start background music when returning to home screen
         // Add a small delay to ensure navigation is complete
         Future.delayed(const Duration(milliseconds: 100), () {
           if (mounted && _audioService.backgroundMusicEnabled) {
             _hasEnsuredMusic = false; // Reset flag to ensure music plays
-            _audioService.ensureBackgroundMusicPlaying();
+            _audioService.playBackgroundMusic();
           }
         });
       }
@@ -96,7 +95,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-
   void _navigateToLevel(int level) async {
     try {
       // Validate level before navigation
@@ -118,12 +116,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Refresh level statuses when returning from game
       if (mounted) {
         await _loadLevelStatuses();
-        // Ensure background music is playing when returning to home
+        // Start background music when returning to home
         // Add a small delay to ensure navigation animation is complete
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted && _audioService.backgroundMusicEnabled) {
             _hasEnsuredMusic = false; // Reset flag to ensure music plays
-            _audioService.ensureBackgroundMusicPlaying();
+            _audioService.playBackgroundMusic();
           }
         });
       }
@@ -160,6 +158,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await _loadLevelStatuses();
         // Refresh daily puzzle card to show updated completion status
         _dailyPuzzleCardKey.currentState?.refresh();
+        // Start background music when returning to home
+        // Add a small delay to ensure navigation animation is complete
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && _audioService.backgroundMusicEnabled) {
+            _hasEnsuredMusic = false; // Reset flag to ensure music plays
+            _audioService.playBackgroundMusic();
+          }
+        });
       }
     } catch (e) {
       // App should continue working even if navigation fails
@@ -194,10 +200,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _showHowToPlay() {
     _audioService.playClickSound();
     HowToPlayDialog.show(context);
-  }
-
-  Widget _buildLevelSectionHeader() {
-    return const SizedBox.shrink(); // Remove the "Select Level" label
   }
 
   Widget _buildCurrentLevelDisplay() {
@@ -550,12 +552,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         builder: (context) => const OtherGamesScreen(),
       ),
     ).then((_) {
-      // Ensure background music is playing when returning to home
+      // Start background music when returning to home
       // Add a small delay to ensure navigation animation is complete
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted && _audioService.backgroundMusicEnabled) {
           _hasEnsuredMusic = false; // Reset flag to ensure music plays
-          _audioService.ensureBackgroundMusicPlaying();
+          _audioService.playBackgroundMusic();
         }
       });
     });
@@ -667,8 +669,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     // Get responsive spacing values
@@ -679,20 +679,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       largePhone: 16,
       tablet: 24,
     );
-    final verticalPadding = ResponsiveUtils.getResponsiveSpacing(
-      context,
-      smallPhone: 12,
-      mediumPhone: 14,
-      largePhone: 16,
-      tablet: 20,
-    );
-    final logoSpacing = ResponsiveUtils.getResponsiveSpacing(
-      context,
-      smallPhone: 4,
-      mediumPhone: 6,
-      largePhone: 8,
-      tablet: 12,
-    );
     final buttonSpacing = ResponsiveUtils.getResponsiveSpacing(
       context,
       smallPhone: 8,
@@ -700,15 +686,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       largePhone: 12,
       tablet: 16,
     );
-    final bottomSpacing = ResponsiveUtils.getResponsiveSpacing(
-      context,
-      smallPhone: 12,
-      mediumPhone: 16,
-      largePhone: 20,
-      tablet: 24,
-    );
-    
-    // Ensure background music is playing when screen is visible
+    // Start background music when screen is visible
     // Check on every build if music should be playing
     if (_audioService.backgroundMusicEnabled && !_hasEnsuredMusic) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -716,7 +694,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Small delay to ensure everything is ready
           Future.delayed(const Duration(milliseconds: 100), () {
             if (mounted && _audioService.backgroundMusicEnabled) {
-              _audioService.ensureBackgroundMusicPlaying();
+              _audioService.playBackgroundMusic();
               _hasEnsuredMusic = true;
             }
           });
@@ -882,8 +860,4 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
-
-
-
-
 }

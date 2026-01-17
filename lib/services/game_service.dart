@@ -1162,8 +1162,8 @@ class GameService {
         }
       }
 
-      // Use solution moves + 30% buffer
-      final validMaxMoves = (bestSolutionMoves * 1.3).ceil();
+      // Use solution moves + 10% buffer
+      final validMaxMoves = (bestSolutionMoves * 1.1).ceil();
 
       return GameConfig(
         level: validLevel,
