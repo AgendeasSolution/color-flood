@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_constants.dart';
@@ -14,6 +16,7 @@ import '../components/wood_button.dart';
 import '../services/level_progression_service.dart';
 import '../services/audio_service.dart';
 import '../services/daily_puzzle_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/color_utils.dart';
 import 'game_page.dart';
@@ -360,10 +363,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 icon: Icons.phone_android,
                 label: AppConstants.mobileGamesLabel,
                 onTap: _navigateToOtherGames,
-                iconColor: const Color(0xFF60A5FA), // Light blue for mobile
+                iconColor: const Color(0xFF93C5FD),
                 gradientColors: [
-                  const Color(0xFF3B82F6).withOpacity(0.25), // Blue
-                  const Color(0xFF2563EB).withOpacity(0.15), // Darker blue
+                  const Color(0xFF3B82F6).withOpacity(0.5),
+                  const Color(0xFF2563EB).withOpacity(0.35),
                 ],
               ),
               SizedBox(width: buttonSpacing),
@@ -371,10 +374,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 icon: Icons.laptop,
                 label: AppConstants.webGamesLabel,
                 onTap: _openWebGames,
-                iconColor: const Color(0xFF34D399), // Light green for laptop
+                iconColor: const Color(0xFF6EE7B7),
                 gradientColors: [
-                  const Color(0xFF10B981).withOpacity(0.25), // Green
-                  const Color(0xFF059669).withOpacity(0.15), // Darker green
+                  const Color(0xFF10B981).withOpacity(0.5),
+                  const Color(0xFF059669).withOpacity(0.35),
                 ],
               ),
             ],
@@ -563,6 +566,38 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _onBackPressed() async {
+    final shouldExit = await _showExitConfirmationDialog();
+    if (shouldExit == true && mounted) {
+      SystemNavigator.pop();
+    }
+  }
+
+  Future<bool> _showExitConfirmationDialog() async {
+    if (!mounted || !context.mounted) return false;
+    _audioService.playClickSound();
+    try {
+      final result = await showDialog<bool>(
+        context: context,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.3),
+        builder: (dialogContext) => _ExitAppDialog(
+          onConfirm: () {
+            _audioService.playClickSound();
+            Navigator.of(dialogContext).pop(true);
+          },
+          onCancel: () {
+            _audioService.playClickSound();
+            Navigator.of(dialogContext).pop(false);
+          },
+        ),
+      );
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _openWebGames() async {
     _audioService.playClickSound();
     final Uri webUri = Uri.parse('https://www.freegametoplay.com');
@@ -639,8 +674,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               vertical: 12,
             ),
             gradientColors: gradientColors ?? [
-              Colors.white.withOpacity(0.18),
-              Colors.white.withOpacity(0.08),
+              AppColors.surfaceLight.withOpacity(0.9),
+              AppColors.surface.withOpacity(0.95),
             ],
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -702,11 +737,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     }
     
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Animated Background
-          const AnimatedBackground(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          await _onBackPressed();
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Animated Background
+            const AnimatedBackground(),
           
           // Main Content
           SafeArea(
@@ -724,37 +766,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   )),
                   
                   // Color Flood Logo
-                  Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3B82F6).withOpacity(0.5),
-                          blurRadius: 35,
-                          spreadRadius: 12,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
-                          blurRadius: 55,
-                          spreadRadius: 18,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF06B6D4).withOpacity(0.35),
-                          blurRadius: 75,
-                          spreadRadius: 22,
-                        ),
-                      ],
+                  Image.asset(
+                    'assets/img/color_flood_logo.png',
+                    width: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      smallPhone: 215.0,
+                      mediumPhone: 265.0,
+                      largePhone: 315.0,
+                      tablet: 415.0,
                     ),
-                    child: Image.asset(
-                      'assets/img/color_flood_logo.png',
-                      width: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        smallPhone: 215.0,
-                        mediumPhone: 265.0,
-                        largePhone: 315.0,
-                        tablet: 415.0,
-                      ),
-                      fit: BoxFit.contain,
-                    ),
+                    fit: BoxFit.contain,
                   ),
                   
                   // Spacing after logo
@@ -857,6 +878,221 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Update Pop-up (appears on top of ad banner when update is available)
           const UpdatePopup(),
         ],
+      ),
+    ),
+    );
+  }
+}
+
+/// Exit app confirmation dialog shown when user presses back on home screen
+class _ExitAppDialog extends StatelessWidget {
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  const _ExitAppDialog({
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              width: (400.0.clamp(0.0, MediaQuery.of(context).size.width * 0.85)).toDouble(),
+              padding: ResponsiveUtils.getResponsivePadding(
+                context,
+                smallPhone: const EdgeInsets.all(20),
+                mediumPhone: const EdgeInsets.all(22),
+                largePhone: const EdgeInsets.all(24),
+                tablet: const EdgeInsets.all(28),
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.surface.withOpacity(0.95),
+                    AppColors.background.withOpacity(0.98),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.surfaceLight.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Quit game?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 22,
+                          mediumPhone: 24,
+                          largePhone: 26,
+                          tablet: 30,
+                        ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 10,
+                      mediumPhone: 12,
+                      largePhone: 14,
+                      tablet: 16,
+                    )),
+                    Text(
+                      'Are you sure you want to exit?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          smallPhone: 14,
+                          mediumPhone: 15,
+                          largePhone: 16,
+                          tablet: 18,
+                        ),
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(
+                      context,
+                      smallPhone: 20,
+                      mediumPhone: 24,
+                      largePhone: 28,
+                      tablet: 32,
+                    )),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ExitDialogButton(
+                            onTap: onCancel,
+                            text: 'Cancel',
+                            isPrimary: false,
+                          ),
+                        ),
+                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                          context,
+                          smallPhone: 12,
+                          mediumPhone: 14,
+                          largePhone: 16,
+                          tablet: 18,
+                        )),
+                        Expanded(
+                          child: _ExitDialogButton(
+                            onTap: onConfirm,
+                            text: 'Exit',
+                            isPrimary: true,
+                            icon: Icons.exit_to_app,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExitDialogButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final String text;
+  final bool isPrimary;
+  final IconData? icon;
+
+  const _ExitDialogButton({
+    required this.onTap,
+    required this.text,
+    required this.isPrimary,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: ResponsiveUtils.getResponsivePadding(
+          context,
+          smallPhone: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          mediumPhone: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          largePhone: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          tablet: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+        ),
+        decoration: BoxDecoration(
+          color: isPrimary
+              ? AppColors.surfaceLight
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: ResponsiveUtils.getResponsiveFontSize(
+                    context,
+                    smallPhone: 16,
+                    mediumPhone: 18,
+                    largePhone: 18,
+                    tablet: 20,
+                  ),
+                ),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(
+                  context,
+                  smallPhone: 6,
+                  mediumPhone: 8,
+                  largePhone: 8,
+                  tablet: 10,
+                )),
+              ],
+              Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

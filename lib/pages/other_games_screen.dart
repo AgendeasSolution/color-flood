@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../components/animated_background.dart';
+import '../components/back_button_row.dart';
 import '../components/common/banner_ad_widget.dart';
 import '../constants/app_constants.dart';
 import '../models/fgtp_app_model.dart';
@@ -208,7 +209,6 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
   }
 
   Widget _buildHeader(BuildContext context) {
-    final buttonSize = ResponsiveUtils.getResponsiveSpacing(context, baseValue: 44);
     final titleStyle = ResponsiveUtils.getResponsiveTextStyle(
       context,
       baseFontSize: 22,
@@ -217,42 +217,17 @@ class _OtherGamesScreenState extends State<OtherGamesScreen>
       letterSpacing: 1.1,
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: buttonSize,
-            height: buttonSize,
-            child: ElevatedButton(
-              onPressed: () {
-                AudioService.instance.playMouseClickSound();
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.surface.withOpacity(0.7),
-                foregroundColor: AppColors.white,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: AppColors.black.withOpacity(0.3),
-              ),
-              child: const Icon(Icons.chevron_left, size: 26),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'FGTP Labs',
-              style: titleStyle,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(width: buttonSize),
-        ],
+    return BackButtonRow(
+      onBack: () {
+        _audioService.playClickSound();
+        Navigator.of(context).pop();
+      },
+      centerWidget: Text(
+        'FGTP Labs',
+        style: titleStyle,
+        textAlign: TextAlign.center,
       ),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
     );
   }
 

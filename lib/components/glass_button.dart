@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
 /// Glass morphism button component
@@ -37,14 +38,14 @@ class GlassButton extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors ?? [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
+                  AppColors.surfaceLight.withOpacity(0.9),
+                  AppColors.surface.withOpacity(0.95),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: AppColors.surfaceLight.withOpacity(0.6)),
             ),
             child: child,
           ),

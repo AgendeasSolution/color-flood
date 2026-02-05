@@ -221,13 +221,6 @@ class _ColorFloodLogoState extends State<ColorFloodLogo>
           fontSize: fontSize,
           fontWeight: FontWeight.w900,
           color: Colors.white, // This will be masked by the gradient
-          shadows: const [
-            Shadow(
-              color: Color.fromRGBO(0, 0, 0, 0.3),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
       ),
     );

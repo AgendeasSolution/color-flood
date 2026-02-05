@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import '../services/update_service.dart';
 import '../services/audio_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
 /// Update pop-up widget that appears at the bottom of the screen
@@ -186,8 +187,8 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF1F2937).withOpacity(0.3),
-                const Color(0xFF111827).withOpacity(0.3),
+                AppColors.surface.withOpacity(0.95),
+                AppColors.background.withOpacity(0.98),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -197,12 +198,12 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
               topRight: Radius.circular(20),
             ),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
-              width: 1.5,
+              color: AppColors.surfaceLight.withOpacity(0.6),
+              width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(0.5),
                 blurRadius: 20,
                 spreadRadius: 0,
                 offset: const Offset(0, -4),
@@ -414,36 +415,14 @@ class _UpdatePopupState extends State<UpdatePopup> with SingleTickerProviderStat
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isSecondary
-                  ? [
-                      Colors.white.withOpacity(0.18),
-                      Colors.white.withOpacity(0.10),
-                    ]
-                  : [
-                      const Color(0xFF22C55E), // Green from game
-                      const Color(0xFF10B981),
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: isSecondary
+                ? AppColors.surface
+                : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSecondary
-                  ? Colors.white.withOpacity(0.25)
-                  : const Color(0xFF22C55E).withOpacity(0.6),
+              color: Colors.white.withOpacity(0.3),
               width: 1.5,
             ),
-            boxShadow: isSecondary
-                ? []
-                : [
-                    BoxShadow(
-                      color: const Color(0xFF22C55E).withOpacity(0.4),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
           ),
           child: Material(
             color: Colors.transparent,

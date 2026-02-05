@@ -16,6 +16,7 @@ import '../components/color_palette.dart';
 import '../components/back_button_row.dart';
 import '../components/ad_banner.dart';
 import '../components/animated_background.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 import 'daily_challenge_screen.dart';
 
@@ -136,7 +137,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       final result = await showDialog<bool>(
         context: context,
         barrierDismissible: true,
-        barrierColor: Colors.black.withOpacity(0.2),
+        barrierColor: Colors.black.withOpacity(0.3),
         builder: (dialogContext) => _ExitConfirmationDialog(
           onConfirm: () {
             _audioService.playClickSound();
@@ -726,7 +727,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         barrierLabel: '',
-        barrierColor: Colors.black.withOpacity(0.2),
+        barrierColor: Colors.black.withOpacity(0.3),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (dialogContext, anim1, anim2) => _GameOverDialog(
           didWin: result == GameResult.win,
@@ -826,7 +827,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         barrierLabel: '',
-        barrierColor: Colors.black.withOpacity(0.2),
+        barrierColor: Colors.black.withOpacity(0.3),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (context, anim1, anim2) => _GameCompletedDialog(
           onPlayAgain: () {
@@ -1420,15 +1421,15 @@ class _GameOverDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1F2937).withOpacity(0.3),
-                    const Color(0xFF111827).withOpacity(0.3),
+                    AppColors.surface.withOpacity(0.95),
+                    AppColors.background.withOpacity(0.98),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: const Color(0xFF3B82F6).withOpacity(0.6),
+                  color: AppColors.surfaceLight.withOpacity(0.6),
                   width: 2,
                 ),
                 boxShadow: [
@@ -1711,14 +1712,25 @@ class _GameCompletedDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1F2937).withOpacity(0.3),
-                    const Color(0xFF111827).withOpacity(0.3),
+                    AppColors.surface.withOpacity(0.95),
+                    AppColors.background.withOpacity(0.98),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.6)),
+                border: Border.all(
+                  color: AppColors.surfaceLight.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Material(
                 color: Colors.transparent,
@@ -1846,15 +1858,15 @@ class _ExitConfirmationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1F2937).withOpacity(0.3),
-                    const Color(0xFF111827).withOpacity(0.3),
+                    AppColors.surface.withOpacity(0.95),
+                    AppColors.background.withOpacity(0.98),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: const Color(0xFF3B82F6).withOpacity(0.6),
+                  color: AppColors.surfaceLight.withOpacity(0.6),
                   width: 2,
                 ),
                 boxShadow: [
@@ -1986,50 +1998,12 @@ class _PopupButton extends StatelessWidget {
           tablet: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
         ),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isPrimary
-                ? [
-                    const Color(0xFF60A5FA), // Light blue
-                    const Color(0xFF3B82F6), // Base blue
-                    const Color(0xFF2563EB), // Dark blue
-                  ]
-                : [
-                    const Color(0xFF4B5563), // Dark gray
-                    const Color(0xFF374151), // Darker gray
-                    const Color(0xFF1F2937), // Darkest gray
-                  ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
+          color: isPrimary ? AppColors.surfaceLight : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withOpacity(0.9),
-            width: 2,
+            color: Colors.white.withOpacity(0.3),
+            width: 1.5,
           ),
-          boxShadow: [
-            // Outer glow with color tint
-            BoxShadow(
-              color: (isPrimary ? const Color(0xFF3B82F6) : const Color(0xFF4B5563)).withOpacity(0.5),
-              blurRadius: 12,
-              spreadRadius: 0,
-              offset: const Offset(0, 0),
-            ),
-            // Main shadow for depth
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 10,
-              spreadRadius: -1,
-              offset: const Offset(0, 5),
-            ),
-            // Soft outer glow
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 15,
-              spreadRadius: -2,
-              offset: const Offset(0, 7),
-            ),
-          ],
         ),
         child: Center(
           child: FittedBox(

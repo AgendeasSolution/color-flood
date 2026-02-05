@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/audio_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
 /// How to Play popup dialog component
@@ -25,7 +26,7 @@ class HowToPlayDialog extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.2),
+      barrierColor: Colors.black.withOpacity(0.3),
       builder: (context) => const HowToPlayDialog(),
     ).then((_) {
       // Ensure music continues after dialog closes
@@ -70,7 +71,7 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.black.withOpacity(0.3),
+      backgroundColor: Colors.transparent,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -79,15 +80,15 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1F2937).withOpacity(0.3),
-                  const Color(0xFF111827).withOpacity(0.3),
+                  AppColors.surface.withOpacity(0.95),
+                  AppColors.background.withOpacity(0.98),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFF3B82F6).withOpacity(0.6),
+                color: AppColors.surfaceLight.withOpacity(0.6),
                 width: 2,
               ),
               boxShadow: [
@@ -189,10 +190,10 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
             // Close button in a box
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: AppColors.surfaceLight.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.surfaceLight.withOpacity(0.5),
                   width: 1,
                 ),
               ),
@@ -346,14 +347,14 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.15),
-                Colors.white.withOpacity(0.05),
+                AppColors.surfaceLight.withOpacity(0.5),
+                AppColors.surface.withOpacity(0.6),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: AppColors.surfaceLight.withOpacity(0.5)),
           ),
           child: Row(
               children: [
@@ -373,21 +374,15 @@ class _HowToPlayDialogState extends State<HowToPlayDialog> {
                   tablet: 28.0,
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.9),
-                      Colors.white.withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppColors.surfaceLight.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.surfaceLight.withOpacity(0.5)),
                 ),
                 child: Center(
                   child: Text(
                     stepNumber.toString(),
                     style: TextStyle(
-                      color: Colors.grey[800],
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: ResponsiveUtils.getResponsiveFontSize(
                         context,

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/game_constants.dart';
 import '../services/audio_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
 /// Settings dialog component for managing audio settings
@@ -25,7 +26,7 @@ class SettingsDialog extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.2),
+      barrierColor: Colors.black.withOpacity(0.3),
       builder: (context) => const SettingsDialog(),
     ).then((_) {
       // Ensure music continues after dialog closes
@@ -100,7 +101,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.black.withOpacity(0.3),
+      backgroundColor: Colors.transparent,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -119,15 +120,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1F2937).withOpacity(0.3),
-                  const Color(0xFF111827).withOpacity(0.3),
+                  AppColors.surface.withOpacity(0.95),
+                  AppColors.background.withOpacity(0.98),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFF3B82F6).withOpacity(0.6),
+                color: AppColors.surfaceLight.withOpacity(0.6),
                 width: 2,
               ),
               boxShadow: [
@@ -243,14 +244,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.15),
-                Colors.white.withOpacity(0.05),
+                AppColors.surfaceLight.withOpacity(0.5),
+                AppColors.surface.withOpacity(0.6),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: AppColors.surfaceLight.withOpacity(0.5)),
           ),
           child: Row(
             children: [
@@ -264,16 +265,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   tablet: const EdgeInsets.all(12),
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.white.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppColors.surfaceLight.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.surfaceLight.withOpacity(0.5)),
                 ),
                 child: Icon(
                   icon,
@@ -342,10 +336,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
               Switch(
                 value: value,
                 onChanged: onChanged,
-                activeColor: const Color(0xFF3B82F6),
-                activeTrackColor: const Color(0xFF60A5FA),
+                activeTrackColor: AppColors.surfaceLight,
+                activeThumbColor: Colors.white,
                 inactiveThumbColor: Colors.white.withOpacity(0.5),
-                inactiveTrackColor: Colors.white.withOpacity(0.2),
+                inactiveTrackColor: AppColors.surface.withOpacity(0.8),
               ),
             ],
           ),

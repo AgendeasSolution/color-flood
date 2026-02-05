@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
 /// Wood-textured, skeuomorphic circular button component
@@ -43,13 +44,13 @@ class _WoodButtonState extends State<WoodButton> {
     final buttonSize = widget.size ?? ResponsiveUtils.getResponsiveButtonSize(context);
     final pressOffset = _isPressed ? 2.0 : 0.0;
     
-    // More saturated blue colors
-    const blueBaseColor = Color(0xFF3B82F6); // Strong blue
-    const blueLightColor = Color(0xFF60A5FA); // Lighter blue for highlights
-    const blueDarkColor = Color(0xFF2563EB); // Darker blue for depth
+    // Gray colors to match background
+    const grayBaseColor = Color(0xFF1F2937); // Surface
+    const grayLightColor = Color(0xFF374151); // Surface light
+    const grayDarkColor = Color(0xFF111827); // Background
     const iconColor = Color(0xFFFFFFFF); // White for contrast
-    const embossColor = Color(0xFF93C5FD); // Light blue for embossed edge
-    const lightBorderColor = Color(0xFFDBEAFE); // Light blue border
+    const embossColor = Color(0xFF6B7280); // Gray for embossed edge
+    const lightBorderColor = Color(0xFF4B5563); // Gray border
 
     return GestureDetector(
       onTapDown: _onTapDown,
@@ -82,7 +83,7 @@ class _WoodButtonState extends State<WoodButton> {
           child: ClipOval(
             child: Stack(
               children: [
-                // Base blue layer with gradient
+                // Base gray layer with gradient
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -90,9 +91,9 @@ class _WoodButtonState extends State<WoodButton> {
                       center: Alignment.topLeft,
                       radius: 1.2,
                       colors: [
-                        blueLightColor,
-                        blueBaseColor,
-                        blueDarkColor,
+                        grayLightColor,
+                        grayBaseColor,
+                        grayDarkColor,
                       ],
                       stops: const [0.0, 0.5, 1.0],
                     ),
@@ -206,7 +207,7 @@ class _WoodGrainPainter extends CustomPainter {
       final endX = center.dx + endRadius * math.cos(angle);
       final endY = center.dy + endRadius * math.sin(angle);
 
-      grainPaint.color = Color(0xFF2563EB).withOpacity(0.25 - (i % 3) * 0.04);
+      grainPaint.color = AppColors.surfaceLight.withOpacity(0.25 - (i % 3) * 0.04);
       
       final path = Path();
       path.moveTo(startX, startY);
@@ -224,7 +225,7 @@ class _WoodGrainPainter extends CustomPainter {
         final x1 = center.dx - math.sqrt(radius * radius - (y - center.dy) * (y - center.dy));
         final x2 = center.dx + math.sqrt(radius * radius - (y - center.dy) * (y - center.dy));
         
-        grainPaint.color = Color(0xFF2563EB).withOpacity(0.2);
+        grainPaint.color = AppColors.surfaceLight.withOpacity(0.2);
         grainPaint.strokeWidth = 0.8;
         canvas.drawLine(Offset(x1, y), Offset(x2, y), grainPaint);
       }
@@ -240,7 +241,7 @@ class _WoodGrainPainter extends CustomPainter {
       final x = center.dx + dist * math.cos(angle);
       final y = center.dy + dist * math.sin(angle);
       
-      spotPaint.color = Color(0xFF2563EB).withOpacity(0.2);
+      spotPaint.color = AppColors.surfaceLight.withOpacity(0.2);
       canvas.drawCircle(Offset(x, y), 1.2, spotPaint);
     }
   }

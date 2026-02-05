@@ -162,37 +162,16 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           offset: Offset(0, floatingOffset),
                           child: ScaleTransition(
                             scale: _scaleAnimation,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF3B82F6).withOpacity(0.5),
-                                    blurRadius: 35,
-                                    spreadRadius: 12,
-                                  ),
-                                  BoxShadow(
-                                    color: const Color(0xFF8B5CF6).withOpacity(0.4),
-                                    blurRadius: 55,
-                                    spreadRadius: 18,
-                                  ),
-                                  BoxShadow(
-                                    color: const Color(0xFF06B6D4).withOpacity(0.35),
-                                    blurRadius: 75,
-                                    spreadRadius: 22,
-                                  ),
-                                ],
+                            child: Image.asset(
+                              'assets/img/color_flood_logo.png',
+                              width: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                smallPhone: 220.0,
+                                mediumPhone: 275.0,
+                                largePhone: 330.0,
+                                tablet: 440.0,
                               ),
-                              child: Image.asset(
-                                'assets/img/color_flood_logo.png',
-                                width: ResponsiveUtils.getResponsiveFontSize(
-                                  context,
-                                  smallPhone: 220.0,
-                                  mediumPhone: 275.0,
-                                  largePhone: 330.0,
-                                  tablet: 440.0,
-                                ),
-                                fit: BoxFit.contain,
-                              ),
+                              fit: BoxFit.contain,
                             ),
                           ),
                         );
